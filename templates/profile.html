@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile</title>
+    <!-- Link the main stylesheet -->
+    <link rel="stylesheet" href="{{ url_for('serve_static', filename='style.css') }}">
+    <!-- Link Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Styles specific to auth page layout -->
+    <style>
+        .auth-container {
+            max-width: 500px;
+            margin: 40px auto;
+        }
+        .auth-form h1 {
+            font-size: 2.2em;
+            color: var(--text-color-primary);
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .auth-form .form-group { margin-bottom: 20px; }
+        .auth-form .form-group label { 
+            display: block;
+            font-weight: 600;
+            color: var(--text-color-secondary);
+            margin-bottom: 8px; 
+         }
+        .auth-form button[type="submit"] { margin-top: 15px; }
+        .auth-form small {
+             display: block;
+             margin-top: 6px;
+             font-size: 0.85em;
+             color: var(--text-color-secondary);
+         }
+         
+        /* Style for disabled inputs */
+        .form-group input:disabled {
+            background-color: rgba(200, 200, 200, 0.3); /* Greyed out */
+            color: var(--text-color-secondary);
+            cursor: not-allowed;
+            border-color: rgba(120, 120, 120, 0.2);
+        }
+        [data-theme="dark"] .form-group input:disabled {
+             background-color: rgba(50, 50, 50, 0.5); /* Darker greyed out */
+             color: var(--text-color-secondary);
+             border-color: rgba(255, 255, 255, 0.1);
+        }
+
+
+        /* --- Phone Input Group Styling (Copied from register) --- */
+         .phone-input-group {
+             display: flex;
+             gap: 10px;
+         }
+         .phone-input-group select {
+             width: 110px;
+             flex-shrink: 0;
+             padding: 12px 15px;
+             border: 1px solid var(--input-border-color);
+             border-radius: 8px;
+             background-color: var(--input-bg-color);
+             font-size: 1rem;
+             color: var(--input-text-color);
+             box-sizing: border-box;
+             appearance: none;
+             background-image: url("data:image/svg+xml;charset=UTF8,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='%237F2B2B'%3E%3Cpath%20d='M7%2010l5%205%205-5H7z'/%3E%3C/svg%3E");
+             background-repeat: no-repeat;
+             background-position: right 10px center;
+             background-size: 1.2em;
+             padding-right: 30px;
+             font-family: var(--font-family);
+         }
+         [data-theme="dark"] .phone-input-group select {
+             background-image: url("data:image/svg+xml;charset=UTF8,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='%23F0E68C'%3E%3Cpath%20d='M7%2010l5%205%205-5H7z'/%3E%3C/svg%3E");
+         }
+         .phone-input-group input[type="tel"] {
+             flex-grow: 1;
+             width: auto;
+         }
+         /* --- End Phone Input Group --- */
+
+        .flash-messages { list-style: none; padding: 0; margin-bottom: 20px; }
+        .flash-messages li { padding: 10px 15px; margin-bottom: 10px; border-radius: 8px; font-weight: bold; border: 1px solid transparent; }
+        .flash-messages .success { background-color: #d4edda; color: #155724; border-color: #c3e6cb;}
+        .flash-messages .warning { background-color: #fff3cd; color: #856404; border-color: #ffeeba;}
+        .flash-messages .danger { background-color: #f8d7da; color: #721c24; border-color: #f5c6cb;}
+        .flash-messages .info { background-color: #d1ecf1; color: #0c5460; border-color: #bee5eb;}
+        
+        .back-link {
+             text-align: center;
+             margin-top: 25px;
+             color: var(--text-color-secondary);
+         }
+        .back-link a {
+             color: var(--logout-link-color);
+             text-decoration: none;
+             font-weight: 600;
+         }
+        .back-link a:hover {
+             text-decoration: underline;
+         }
+
+         /* Apply input styles from main CSS to all inputs/selects in this form */
+         .auth-form input[type="text"],
+         .auth-form input[type="email"],
+         .auth-form input[type="tel"],
+         .auth-form input[type="password"],
+         .auth-form input[type="number"],
+         .auth-form select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid var(--input-border-color);
+            border-radius: 8px;
+            background-color: var(--input-bg-color);
+            font-family: var(--font-family);
+            font-size: 1rem;
+            color: var(--input-text-color);
+            box-sizing: border-box;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+         }
+        .auth-form input:focus,
+        .auth-form select:focus {
+            outline: none;
+            border-color: var(--input-focus-border-color);
+            box-shadow: 0 0 0 0.2rem var(--input-focus-shadow-color);
+        }
+        .auth-form input::placeholder {
+            color: var(--input-placeholder-color);
+        }
+        
+        /* Checkbox style from main form */
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .checkbox-group label {
+            margin-bottom: 0;
+            font-weight: normal;
+            color: var(--text-color-primary);
+        }
+        .checkbox-group input[type="checkbox"] {
+            width: 1.3em;
+            height: 1.3em;
+            cursor: pointer;
+            accent-color: var(--button-bg-color);
+        }
+
+    </style>
+</head>
+<body>
+    <!-- Use main-content-wrapper to center the auth box -->
+    <div class="main-content-wrapper auth-container">
+        
+        <!-- Display Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <ul class="flash-messages">
+                {% for category, message in messages %}
+                    <!-- Show 'success' messages in green, others in warning/danger colors -->
+                    <li class="{{ category }}">{{ message }}</li>
+                {% endfor %}
+                </ul>
+            {% endif %}
+        {% endwith %}
+
+        <!-- Form container -->
+        <form method="POST" action="{{ url_for('profile') }}" class="glass-form auth-form">
+            <h1>Your Profile</h1>
+
+            <div class="form-group">
+                <label for="name">Full Name:</label>
+                <!-- Pre-fill with current user's data -->
+                <input type="text" id="name" name="name" required value="{{ current_user.name }}">
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <!-- Pre-fill and disable, as this is the login ID -->
+                <input type="email" id="email" name="email" required value="{{ current_user.email }}" disabled>
+                <small>Email cannot be changed.</small>
+            </div>
+
+            <!-- --- MODIFIED PHONE NUMBER FIELD --- -->
+            <div class="form-group">
+                <label for="phone_number_main">Phone Number:</label>
+                
+                <!-- If user already has a phone number, show it as disabled -->
+                {% if current_user.phone_number %}
+                    <input type="tel" id="phone_number_main_display" name="phone_number_main_display" value="{{ current_user.phone_number }}" disabled>
+                    <small>Phone number cannot be changed. Contact support if needed.</small>
+                
+                <!-- Otherwise (e.g., Google login), show the input to ADD one -->
+                {% else %}
+                    <div class="phone-input-group">
+                         <select id="country_code" name="country_code">
+                             <option value="">Code</option> <!-- Default blank -->
+                             <option value="+91">+91 (India)</option>
+                             <option value="+1">+1 (USA/Canada)</option>
+                             <option value="+44">+44 (UK)</option>
+                             <option value="+61">+61 (Australia)</option>
+                             <!-- Add more country codes as needed -->
+                             <option value="">Other</option>
+                         </select>
+                         <input type="tel" id="phone_number_main" name="phone_number_main" placeholder="Add phone number">
+                    </div>
+                     <small>You can add your phone number here (optional).</small>
+                {% endif %}
+            </div>
+            <!-- --- END MODIFIED FIELD --- -->
+            
+            <div class="form-group">
+                <label for="grade">Grade (Optional):</label>
+                <!-- Pre-fill with current user's data -->
+                <input type="text" id="grade" name="grade" placeholder="e.g., 10th, College" value="{{ current_user.grade or '' }}">
+            </div>
+
+            <!-- --- NEW FIELDS --- -->
+            <div class="form-group">
+                <label for="age">Age (Optional):</label>
+                <input type="number" id="age" name="age" placeholder="e.g., 25" value="{{ current_user.age or '' }}" min="1">
+            </div>
+
+            <div class="form-group">
+                <label for="city">City (Optional):</label>
+                <input type="text" id="city" name="city" placeholder="e.g., New York" value="{{ current_user.city or '' }}">
+            </div>
+            
+            <div class="form-group">
+                <label for="postal_code">Postal/ZIP Code (Optional):</label>
+                <input type="text" id="postal_code" name="postal_code" placeholder="e.g., 302017" value="{{ current_user.postal_code or '' }}">
+            </div>
+            
+            <div class="form-group">
+                <label for="timezone">Timezone (Optional):</label>
+                <select id="timezone" name="timezone">
+                    <option value="" {% if not current_user.timezone %}selected{% endif %}>Select your timezone</option>
+                    <option value="Asia/Kolkata" {% if current_user.timezone == 'Asia/Kolkata' %}selected{% endif %}>Asia/Kolkata (IST)</option>
+                    <option value="Europe/London" {% if current_user.timezone == 'Europe/London' %}selected{% endif %}>Europe/London (GMT/BST)</option>
+                    <option value="America/New_York" {% if current_user.timezone == 'America/New_York' %}selected{% endif %}>America/New_York (EST/EDT)</option>
+                    <option value="America/Los_Angeles" {% if current_user.timezone == 'America/Los_Angeles' %}selected{% endif %}>America/Los_Angeles (PST/PDT)</option>
+                    <!-- Add more common timezones as needed -->
+                </select>
+            </div>
+            
+            <div class="form-group checkbox-group">
+                <!-- Check if the user has already consented -->
+                <input type="checkbox" id="whatsapp_consent" name="whatsapp_consent" value="on" {% if current_user.whatsapp_consent %}checked{% endif %}>
+                <label for="whatsapp_consent">I agree to receive messages on WhatsApp.</label>
+            </div>
+
+            <!-- --- ADDED NEWSLETTER CHECKBOX --- -->
+            <div class="form-group checkbox-group" style="margin-top: 10px;">
+                <input type="checkbox" id="newsletter_consent" name="newsletter_consent" value="on" {% if current_user.newsletter_consent %}checked{% endif %}>
+                <label for="newsletter_consent">Subscribe to newsletters, courses, and offers.</label>
+            </div>
+            <!-- --- END NEW FIELDS --- -->
+
+
+            <button type="submit">Update Profile</button>
+
+            <p class="back-link">Back to <a href="{{ url_for('serve_index') }}">Generator</a></p>
+        </form>
+    </div>
+</body>
+</html>
+

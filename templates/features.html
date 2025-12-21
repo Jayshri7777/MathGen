@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}About Us - MathGen{% endblock %}
+
+{% block head_styles %}
+    <style>
+        .content-container {
+            max-width: 800px;
+            width: 100%;
+        }
+        .content-container h1 {
+            font-size: 2.2em;
+            color: var(--text-color-primary);
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .content-container p {
+            font-size: 1.1em;
+            color: var(--text-color-secondary);
+            line-height: 1.8;
+            margin-bottom: 20px;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div class="container content-container">
+        <!-- Wrap content in the glass-form for consistent styling -->
+        <div class="glass-form">
+            <h1>About MathGen</h1>
+            <p>Welcome to Math Worksheet Generator! This tool was built to help students, teachers, and parents create custom math worksheets in seconds.</p>
+            <p>Our mission is to make learning and practicing math more accessible and customizable. By leveraging the power of generative AI, we can create problems tailored to specific grades, topics, and difficulty levels, all with the click of a button.</p>
+            <p>This project uses a Flask backend, a SQLite database for user management, and the Google Gemini API for content generation. We hope you find it useful!</p>
+        </div>
+    </div>
+{% endblock %}

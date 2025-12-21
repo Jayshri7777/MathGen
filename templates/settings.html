@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings</title>
+    <!-- Link the main stylesheet -->
+    <link rel="stylesheet" href="{{ url_for('serve_static', filename='style.css') }}">
+    <!-- Link Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Styles specific to auth page layout -->
+    <style>
+        .auth-container {
+            max-width: 500px;
+            margin: 40px auto;
+        }
+        .auth-form h1 {
+            font-size: 2.2em;
+            color: var(--text-color-primary);
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .auth-form .form-group { margin-bottom: 20px; }
+        .auth-form .form-group label { margin-bottom: 8px; }
+        .auth-form button[type="submit"] { margin-top: 15px; }
+        .auth-form small {
+             display: block;
+             margin-top: 6px;
+             font-size: 0.85em;
+             color: var(--text-color-secondary);
+         }
+         
+        .flash-messages { list-style: none; padding: 0; margin-bottom: 20px; }
+        .flash-messages li { padding: 10px 15px; margin-bottom: 10px; border-radius: 8px; font-weight: bold; border: 1px solid transparent; }
+        .flash-messages .success { background-color: #d4edda; color: #155724; border-color: #c3e6cb;}
+        .flash-messages .warning { background-color: #fff3cd; color: #856404; border-color: #ffeeba;}
+        .flash-messages .danger { background-color: #f8d7da; color: #721c24; border-color: #f5c6cb;}
+        .flash-messages .info { background-color: #d1ecf1; color: #0c5460; border-color: #bee5eb;}
+        
+        .back-link {
+             text-align: center;
+             margin-top: 25px;
+             color: var(--text-color-secondary);
+         }
+        .back-link a {
+             color: var(--logout-link-color);
+             text-decoration: none;
+             font-weight: 600;
+         }
+        .back-link a:hover {
+             text-decoration: underline;
+         }
+    </style>
+</head>
+<body>
+    <!-- Use main-content-wrapper to center the auth box -->
+    <div class="main-content-wrapper auth-container">
+        
+        <!-- Display Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <ul class="flash-messages">
+                {% for category, message in messages %}
+                    <li class="{{ category }}">{{ message }}</li>
+                {% endfor %}
+                </ul>
+            {% endif %}
+        {% endwith %}
+
+        <!-- Form container -->
+        <form method="POST" action="{{ url_for('settings') }}" class="glass-form auth-form">
+            <h1>Settings</h1>
+
+            <!-- Check if user logged in via Google (no password) -->
+            {% if current_user.password_hash %}
+                <h3>Change Password</h3>
+                <div class="form-group">
+                    <label for="old_password">Old Password:</label>
+                    <input type="password" id="old_password" name="old_password" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="new_password1">New Password:</label>
+                    <input type="password" id="new_password1" name="new_password1" required
+                           minlength="8"
+                           pattern="^(?!.*\s)(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*()_+=\-\[\]{};'\\:&quot;|,.<>\/?~`]).{8,}$"
+                           title="Min 8 chars, 1 uppercase, 1 lowercase, 1 digit, 1 special char, no spaces.">
+                    <small>Min 8 chars, 1 uppercase, 1 lowercase, 1 digit, 1 special char, no spaces.</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="new_password2">Confirm New Password:</label>
+                    <input type="password" id="new_password2" name="new_password2" required minlength="8">
+                </div>
+
+                <button type="submit">Change Password</button>
+            {% else %}
+                <h3>Change Password</h3>
+                <p>You logged in using Google, so you don't have a local password to change.</p>
+            {% endif %}
+
+            <p class="back-link">Back to <a href="{{ url_for('serve_index') }}">Generator</a></p>
+        </form>
+    </div>
+</body>
+</html>

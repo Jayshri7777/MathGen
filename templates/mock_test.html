@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+    body {
+        font-family: "Inter", sans-serif;
+    }
+
+    .test-wrapper {
+    max-width: 900px;
+    margin-left: 40px; 
+    padding-top: 20px;
+    text-align: left;
+}
+    .test-header-title {
+        font-size: 32px;
+        font-weight: 800;
+        margin-bottom: 5px;
+        color: #2b2b2b;
+    }
+
+    .test-description {
+        font-size: 17px;
+        color: #4a3b3b;
+        margin-bottom: 15px;
+    }
+
+    .time-left {
+        font-size: 18px;
+        font-weight: 600;
+        margin-bottom: 25px;
+        color: #2b2b2b;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .question-block {
+        background: rgba(255, 255, 255, 0.5);
+        padding: 20px;
+        margin-bottom: 25px;
+        border-radius: 14px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+
+    .question-text {
+        font-size: 19px;
+        font-weight: 700;
+        margin-bottom: 12px;
+        color: #222;
+    }
+
+    .options-list div {
+        margin-bottom: 8px;
+        font-size: 16px;
+        color: #333;
+    }
+
+    .submit-btn {
+    width: 100%;
+    margin-top: 30px;
+    background: linear-gradient(90deg, #a83254, #ff4fa3); 
+    padding: 16px;
+    font-size: 18px;
+    color: white;
+    font-weight: 700;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    transition: 0.2s ease;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.submit-btn:hover {
+    background: #8f2947;      
+    transform: translateY(-2px);
+}
+
+
+    .radio-option {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+    }
+
+    .radio-option input {
+        cursor: pointer;
+        transform: scale(1.2);
+    }
+    /* Override any centering from base.html */
+.page-wrapper, .content, .container, .test-wrapper {
+    width: 95% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding-left: 40px !important; /* shift everything left */
+    text-align: left !important;
+    display: block !important;
+}
+.question-block {
+    margin-left: 0 !important;
+}
+
+
+</style>
+
+<div class="test-wrapper">
+
+    <h2 class="test-header-title">{{ test.title }}</h2>
+    <p class="test-description">{{ test.description }}</p>
+
+    <div class="time-left">⏳ Time Left: <span id="timeLeft">{{ test.duration_minutes }}:00</span></div>
+
+    <form method="POST">
+
+        {% for q in questions %}
+        <div class="question-block">
+
+            <div class="question-text">
+                {{ q.qno }}. {{ q.question_text }}
+            </div>
+
+            <div class="options-list">
+                {% for option in q.options %}
+                <label class="radio-option">
+                    <input type="radio" name="q_{{ q.qno }}" value="{{ loop.index0 }}">
+                    {{ option }}
+                </label>
+                {% endfor %}
+            </div>
+
+        </div>
+        {% endfor %}
+
+        <button class="submit-btn">Submit Test</button>
+
+    </form>
+
+</div>
+
+<script>
+    let totalSeconds = {{ test.duration_minutes }} * 60;
+
+    function updateTimer() {
+        let minutes = Math.floor(totalSeconds / 60);
+        let seconds = totalSeconds % 60;
+
+        document.getElementById("timeLeft").textContent =
+            `${minutes}:${seconds.toString().padStart(2, '0')}`;
+
+        if (totalSeconds <= 0) {
+            document.forms[0].submit();
+        } else {
+            totalSeconds--;
+            setTimeout(updateTimer, 1000);
+        }
+    }
+
+    updateTimer();
+</script>
+
+{% endblock %}

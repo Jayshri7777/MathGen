@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container" style="max-width:1100px; padding:36px 20px; margin:0 auto;">
+
+
+    <!-- PAGE TITLE -->
+    <h2 style="font-weight:700; margin-bottom:28px;">
+        📊 My Scores
+    </h2>
+
+    <!-- SUMMARY CARDS -->
+    <div style="
+        display:grid;
+        grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));
+        gap:22px;
+        margin-bottom:36px;
+    ">
+
+        <!-- TOTAL TESTS -->
+        <div style="
+            background:rgba(255,255,255,0.22);
+            border-radius:16px;
+            padding:22px;
+            backdrop-filter:blur(6px);
+        ">
+            <p style="margin:0; font-size:15px; color:#333;">Total Tests</p>
+            <h3 style="margin:6px 0 0; font-size:28px;">
+                {{ rows|length }}
+            </h3>
+        </div>
+
+        <!-- ACCURACY -->
+        <div style="
+            background:rgba(255,255,255,0.22);
+            border-radius:16px;
+            padding:22px;
+            backdrop-filter:blur(6px);
+        ">
+            <p style="margin:0; font-size:15px; color:#333;">Accuracy</p>
+            <h3 style="margin:6px 0 0; font-size:28px;">
+                {{ accuracy }}%
+            </h3>
+        </div>
+
+        <!-- AVERAGE SCORE -->
+        <div style="
+            background:rgba(255,255,255,0.22);
+            border-radius:16px;
+            padding:22px;
+            backdrop-filter:blur(6px);
+        ">
+            <p style="margin:0; font-size:15px; color:#333;">Average Score</p>
+            <h3 style="margin:6px 0 0; font-size:28px;">
+                {{ avg_score }} / {{ max_total }}
+            </h3>
+        </div>
+
+    </div>
+
+    <!-- SCORES TABLE -->
+    <div style="
+        background:rgba(255,255,255,0.18);
+        border-radius:18px;
+        padding:20px;
+    ">
+
+        <table style="
+            width:100%;
+            border-collapse:separate;
+            border-spacing:0 12px;
+            font-size:15px;
+        ">
+
+            <thead>
+                <tr style="color:#333;">
+                    <th style="padding:10px;">#</th>
+                    <th style="padding:10px;">Test</th>
+                    <th style="padding:10px;">Score</th>
+                    <th style="padding:10px;">Date</th>
+                    <th style="padding:10px;">Review</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for r in rows %}
+                <tr style="
+                    background:rgba(255,255,255,0.25);
+                    border-radius:12px;
+                    transition:0.25s;
+                "
+                onmouseover="this.style.background='rgba(255,255,255,0.35)'"
+                onmouseout="this.style.background='rgba(255,255,255,0.25)'"
+                >
+
+                    <td style="padding:14px; font-weight:600;">
+                        {{ loop.index }}
+                    </td>
+
+                    <td style="padding:14px;">
+                        {{ r.test_title }}
+                    </td>
+
+                    <td style="padding:14px; font-weight:600;">
+                        {{ r.score }} / {{ r.total }}
+                    </td>
+
+                    <td style="padding:14px;">
+                        {{ r.date }}
+                    </td>
+
+                    <td style="padding:14px;">
+                        <a href="{{ url_for('review_attempt', attempt_id=r.attempt_id) }}"
+                           style="
+                               padding:6px 14px;
+                               background:#8b2c3a;
+                               color:#fff;
+                               border-radius:8px;
+                               text-decoration:none;
+                               font-size:14px;
+                               font-weight:600;
+                           ">
+                            View
+                        </a>
+                    </td>
+
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" style="
+                        padding:26px;
+                        text-align:center;
+                        font-size:16px;
+                        color:#444;
+                    ">
+                        No test attempts yet 🚀
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+{% endblock %}

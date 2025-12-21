@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container" style="max-width:1100px;">
+  <h2>Competitive Exams</h2>
+  <p>Take mocks prepared for competitive tests.</p>
+
+  <div>
+    {% for t in tests %}
+      <div style="margin:18px 0; padding:14px; border-radius:10px; background:rgba(255,255,255,0.08);">
+        <h3>{{ t.title }}</h3>
+        <p>{{ t.description }}</p>
+
+        <a class="mock-test-btn" href="{{ url_for('mock_test', test_id=test.id) }}">
+    Take Mock Test
+</a>
+
+      </div>
+    {% else %}
+      <p>No competitive tests yet.</p>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

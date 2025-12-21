@@ -1,0 +1,252 @@
+{% extends "base.html" %}
+{% block content %}
+
+{% set errors = errors or {} %}
+{% set form = form or {} %}
+
+<style>
+/* ---------- REGISTER WRAPPER ---------- */
+.register-wrapper {
+    display: flex;
+    justify-content: center;
+    padding: 60px 20px;
+}
+
+.register-card {
+    width: 100%;
+    max-width: 600px;
+    background: rgba(255, 255, 255, 0.18);
+    backdrop-filter: blur(8px);
+    border-radius: 16px;
+    padding: 35px 40px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+}
+
+.register-card h2 {
+    text-align: center;
+    font-weight: 700;
+    margin-bottom: 30px;
+}
+
+/* ---------- FORM GROUP ---------- */
+.form-group {
+    margin-bottom: 18px;
+}
+
+.form-group label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+
+/* Inputs */
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 8px;
+    border: 1.5px solid transparent;
+    outline: none;
+    font-size: 15px;
+    background: #fff;
+    transition: border 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Focus */
+.form-group input:focus,
+.form-group select:focus {
+    border-color: #c44536;
+    box-shadow: 0 0 0 2px rgba(196, 69, 54, 0.15);
+}
+
+/* ❌ ERROR INPUT HIGHLIGHT */
+.input-error {
+    border-color: #e63946 !important;
+    box-shadow: 0 0 0 2px rgba(230, 57, 70, 0.15);
+}
+
+/* ---------- PHONE GROUP ---------- */
+.phone-group {
+    display: flex;
+    gap: 10px;
+}
+
+.phone-group select { width: 35%; }
+.phone-group input { width: 65%; }
+
+/* ---------- ERROR TEXT ---------- */
+.error-text {
+    font-size: 12px;
+    color: #e63946;
+    margin-top: 4px;
+}
+
+/* ---------- REGISTER BUTTON ---------- */
+.register-btn {
+    width: 100%;
+    margin-top: 25px;
+    padding: 14px;
+    font-size: 16px;
+    font-weight: 700;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    background: linear-gradient(135deg, #9e2a2b, #c44536);
+    color: white;
+}
+
+.register-btn:hover {
+    opacity: 0.95;
+}
+
+/* ---------- OR DIVIDER ---------- */
+.or-divider {
+    text-align: center;
+    margin: 18px 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #7a3a3a;
+}
+
+/* ---------- GOOGLE BUTTON ---------- */
+.google-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 12px;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    text-decoration: none;
+    background: #ffffff;
+    color: #333;
+    border: 1px solid #ddd;
+}
+
+.google-btn:hover {
+    background: #f5f5f5;
+}
+
+.google-btn img {
+    width: 18px;
+    height: 18px;
+}
+</style>
+
+<div class="register-wrapper">
+    <div class="register-card">
+
+        <h2>Create Account</h2>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div style="padding:10px;border-radius:6px;font-size:14px;background:#ffe6e6;color:#8a1f1f;margin-bottom:10px;">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        <form method="POST" action="{{ url_for('register') }}">
+
+            <div class="form-group">
+                <label>Full Name</label>
+                <input type="text" name="name" value="{{ form.name or '' }}" required>
+            </div>
+
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" name="email"
+                       value="{% if not errors.email %}{{ form.email }}{% endif %}"
+                       class="{% if errors.email %}input-error{% endif %}" required>
+                {% if errors.email %}
+                <div class="error-text">{{ errors.email }}</div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label>Phone Number</label>
+                <div class="phone-group">
+                    <select name="country_code">
+                        <option value="+91">+91</option>
+                        <option value="+1">+1</option>
+                        <option value="+44">+44</option>
+                    </select>
+                    <input type="text" name="phone_number_main"
+                           value="{% if not errors.phone %}{{ form.phone_number_main }}{% endif %}"
+                           class="{% if errors.phone %}input-error{% endif %}" required>
+                </div>
+                {% if errors.phone %}
+                <div class="error-text">{{ errors.phone }}</div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label>Board</label>
+                <select name="board" required class="{% if errors.board %}input-error{% endif %}">
+                    <option value="">Select Board</option>
+                    {% for b in ['CBSE','ICSE','State Board','IB','IGCSE','College'] %}
+                    <option value="{{ b }}" {% if form.board == b %}selected{% endif %}>{{ b }}</option>
+                    {% endfor %}
+                </select>
+                {% if errors.board %}
+                <div class="error-text">{{ errors.board }}</div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label>Grade</label>
+                <input type="number" name="grade"
+                       value="{% if not errors.grade %}{{ form.grade }}{% endif %}"
+                       class="{% if errors.grade %}input-error{% endif %}" required>
+                {% if errors.grade %}
+                <div class="error-text">{{ errors.grade }}</div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" name="password"
+                       class="{% if errors.password %}input-error{% endif %}" required>
+                {% if errors.password %}
+                <div class="error-text">{{ errors.password }}</div>
+                {% endif %}
+                <div class="password-rules">
+                    Password must contain:
+                    <ul>
+                        <li>At least 8 characters</li>
+                        <li>One uppercase letter (A–Z)</li>
+                        <li>One lowercase letter (a–z)</li>
+                        <li>One number (0–9)</li>
+                        <li>One special character (!@#$%^&*)</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Confirm Password</label>
+                <input type="password" name="confirm_password"
+                       class="{% if errors.confirm_password %}input-error{% endif %}" required>
+                {% if errors.confirm_password %}
+                <div class="error-text">{{ errors.confirm_password }}</div>
+                {% endif %}
+            </div>
+
+            <button type="submit" class="register-btn">Register</button>
+
+            <div class="or-divider">OR</div>
+
+            <a href="{{ url_for('login_google') }}" class="google-btn">
+                <img src="https://developers.google.com/identity/images/g-logo.png">
+                Continue with Google
+            </a>
+
+        </form>
+
+    </div>
+</div>
+
+{% endblock %}

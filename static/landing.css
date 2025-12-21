@@ -1,0 +1,112 @@
+.hero-section {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 40px;
+    padding: 60px 20px;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.hero-text {
+    flex: 1;
+    max-width: 550px;
+}
+
+.hero-image {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.ai-tag {
+    background-color: #fde68a;
+    color: #a16207;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.9em;
+    font-weight: 600;
+    display: inline-block;
+    margin-bottom: 20px;
+}
+
+.hero-headline {
+    font-size: 3.8em;
+    font-weight: 700;
+    color: var(--text-color-primary);
+    line-height: 1.2;
+    margin: 0;
+}
+
+.hero-headline span {
+    color: var(--button-bg-color);
+}
+
+.hero-subheadline {
+    font-size: 1.2em;
+    color: var(--text-color-secondary);
+    margin: 25px 0 35px 0;
+    line-height: 1.6;
+}
+
+.hero-buttons {
+    display: flex;
+    gap: 15px;
+}
+
+.hero-btn {
+    text-decoration: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border: 2px solid transparent;
+}
+
+.hero-btn.primary {
+    background-color: var(--button-bg-color);
+    color: var(--button-text-color);
+}
+
+.hero-btn.primary:hover {
+    background-color: var(--button-hover-bg-color);
+}
+
+.hero-btn.secondary {
+    background-color: transparent;
+    color: var(--text-color-secondary);
+    border-color: var(--input-border-color);
+}
+
+.hero-btn.secondary:hover {
+    background-color: var(--form-bg-color);
+    color: var(--text-color-primary);
+    border-color: var(--form-border-color);
+}
+
+.hero-image img {
+    width: 100%;
+    max-width: 600px;
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+@media (max-width: 768px) {
+    .hero-section {
+        flex-direction: column;
+        text-align: center;
+        padding: 30px 20px;
+    }
+    .hero-headline {
+        font-size: 2.8em;
+    }
+    .hero-buttons {
+        justify-content: center;
+    }
+}

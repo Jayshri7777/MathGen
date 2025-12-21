@@ -1,0 +1,366 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+/* ---------- PAGE BASE ---------- */
+.take-test-container {
+    max-width: 1100px;
+    margin: auto;
+    padding: 80px 20px;
+    color: #4b1e1e;
+}
+
+/* ---------- TITLE ---------- */
+.take-test-container h1 {
+    font-size: 34px;
+    font-weight: 700;
+    margin-bottom: 30px;
+}
+
+/* ---------- INFO CARD ---------- */
+.info-card {
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 16px;
+    padding: 24px 28px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+    margin-bottom: 40px;
+}
+
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+/* ---------- FORM CARD ---------- */
+.test-section {
+    background: rgba(255, 255, 255, 0.55);
+    border-radius: 20px;
+    padding: 36px;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.1);
+}
+
+/* ---------- FORM GROUP ---------- */
+.form-group {
+    margin-bottom: 26px;
+}
+
+.form-group label {
+    display: block;
+    font-weight: 700;
+    margin-bottom: 8px;
+    font-size: 16px;
+}
+
+/* ---------- TEST PERIOD (IMPORTANT PART) ---------- */
+.test-period-label {
+    font-size: 18px;
+    font-weight: 800;
+}
+
+.test-period-value {
+    font-size: 22px;
+    font-weight: 800;
+    color: #7a1f1f;
+    letter-spacing: 0.4px;
+}
+
+/* ---------- INPUTS ---------- */
+.pretty-select {
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 10px;
+    border: 1px solid #d8a79b;
+    background: #fff;
+    font-size: 15px;
+}
+
+/* ---------- RADIO ---------- */
+.radio-group label {
+    display: block;
+    margin-bottom: 10px;
+    font-weight: 600;
+    font-size: 15px;
+}
+
+/* ---------- BUTTON ---------- */
+.start-btn {
+    text-align: center;
+    margin-top: 40px;
+}
+
+.start-btn button {
+    background: linear-gradient(135deg, #e56b6f, #ff8fa3);
+    border: none;
+    color: white;
+    padding: 14px 36px;
+    font-size: 17px;
+    font-weight: 700;
+    border-radius: 999px;
+    cursor: pointer;
+    box-shadow: 0 12px 28px rgba(229,107,111,0.4);
+}
+</style>
+
+<div class="take-test-container">
+
+    <h1>Take a Test ✨</h1>
+
+    <!-- INFO -->
+    <div class="info-card">
+        <div class="info-row">
+            <div>
+                <p><strong>Student:</strong> {{ current_user.name }}</p>
+                <p><strong>Board:</strong> {{ current_user.board }}</p>
+                <p><strong>Grade:</strong> {{ current_user.grade }}</p>
+            </div>
+            <div style="text-align:right;">
+                <p><strong>Date:</strong> <span id="live-date"></span></p>
+                <p><strong>Time:</strong> <span id="live-time"></span></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- FORM -->
+    <div class="test-section">
+        <form method="POST" action="{{ url_for('start_test') }}">
+
+            <!-- TEST PERIOD -->
+            <div class="form-group">
+                <label class="test-period-label">Test Period</label>
+                <div id="test-period" class="test-period-value"></div>
+            </div>
+
+            <!-- TEST TYPE -->
+            <div class="form-group">
+                <label>Test Type</label>
+                <div class="radio-group">
+                    <label>
+                        <input type="radio" name="test_type" value="job_daily" checked>
+Daily Test
+
+<input type="radio" name="test_type" value="job_weekly">
+Weekly Test
+
+<input type="radio" name="test_type" value="job">
+Monthly Test
+
+                    </label>
+                </div>
+            </div>
+
+            <!-- MAJOR TOPIC -->
+            <!-- MAJOR TOPIC -->
+<div class="form-group">
+    <label>Major Topic</label>
+
+    <!-- hidden values from logged-in user -->
+    <input type="hidden" id="board" value="{{ current_user.board }}">
+    <input type="hidden" id="grade" value="{{ current_user.grade }}">
+    <input type="hidden" id="subject" value="Mathematics">
+
+    <select name="topic" id="topic" class="pretty-select" required>
+        <option value="">Select topic</option>
+    </select>
+</div>
+
+<!-- MINOR TOPIC -->
+<div class="form-group">
+    <label>Minor Topic</label>
+
+    <select name="minor_topic" id="minor_topic" class="pretty-select" disabled>
+        <option value="">Select major topic first</option>
+    </select>
+</div>
+
+
+            <!-- QUESTION COUNT -->
+            <div class="form-group">
+                <label>Number of Questions</label>
+                <select name="question_count" class="pretty-select">
+                    <option value="5">5</option>
+                    <option value="10">10</option>
+                    <option value="15">15</option>
+                    <option value="20">20</option>
+                    <option value="25">25</option>
+                </select>
+            </div>
+
+            <!-- SUBMIT -->
+            <div class="start-btn">
+                <button type="submit">🚀 Start Test</button>
+            </div>
+
+        </form>
+    </div>
+
+</div>
+
+<!-- LIVE DATE & TIME -->
+<script>
+function updateLiveDateTime() {
+    const now = new Date();
+
+    document.getElementById("live-date").innerText =
+        now.toLocaleDateString('en-GB', {
+            weekday: 'long',
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric'
+        });
+
+    document.getElementById("live-time").innerText =
+        now.toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+        });
+}
+
+updateLiveDateTime();
+setInterval(updateLiveDateTime, 60000);
+</script>
+
+<!-- TEST PERIOD LOGIC -->
+<script>
+const radios = document.querySelectorAll("input[name='test_type']");
+const testPeriod = document.getElementById("test-period");
+
+function formatDate(date) {
+    return date.toLocaleDateString('en-GB', {
+        weekday: 'long',
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric'
+    });
+}
+
+function getUpcomingSunday(date) {
+    const sunday = new Date(date);
+    const day = sunday.getDay(); // 0 = Sunday
+    const diff = day === 0 ? 0 : 7 - day;
+    sunday.setDate(sunday.getDate() + diff);
+    return sunday;
+}
+
+function getLastDayOfMonth(date) {
+    return new Date(date.getFullYear(), date.getMonth() + 1, 0);
+}
+
+function updateTestPeriod() {
+    const selected = document.querySelector("input[name='test_type']:checked").value;
+    const now = new Date();
+
+    if (selected === "job_daily") {
+        testPeriod.innerText =
+            `${formatDate(now)} | 7:00 PM – 8:00 PM`;
+    }
+
+    else if (selected === "job_weekly") {
+        const sunday = getUpcomingSunday(now);
+        testPeriod.innerText =
+            `${formatDate(sunday)} | 6:00 PM – 8:00 PM`;
+    }
+
+    else if (selected === "job") {
+        const lastDay = getLastDayOfMonth(now);
+        testPeriod.innerText =
+            `${formatDate(lastDay)} | 5:00 PM – 8:00 PM`;
+    }
+}
+
+radios.forEach(radio =>
+    radio.addEventListener("change", updateTestPeriod)
+);
+
+updateTestPeriod(); // initial load
+</script>
+
+<script>
+async function loadMajorTopics() {
+    const board = "{{ current_user.board }}";
+    const grade = "{{ current_user.grade }}";
+    const subject = "Mathematics";
+
+    const topicSelect = document.getElementById("topic");
+    const minorTopicSelect = document.getElementById("minor_topic");
+
+    if (!board || !grade) return;
+
+    // reset both dropdowns
+    topicSelect.innerHTML = "<option value=''>Select topic</option>";
+    minorTopicSelect.innerHTML = "<option value=''>Select major topic first</option>";
+    minorTopicSelect.disabled = true;
+
+    try {
+        const res = await fetch(
+            `/get-topics?board=${encodeURIComponent(board)}&grade=${encodeURIComponent(grade)}&subject=${encodeURIComponent(subject)}`
+        );
+
+        const topics = await res.json();
+
+        if (!topics || topics.length === 0) {
+            topicSelect.innerHTML += "<option>No topics found</option>";
+            return;
+        }
+
+        topics.forEach(t => {
+            const opt = document.createElement("option");
+            opt.value = t;
+            opt.textContent = t;
+            topicSelect.appendChild(opt);
+        });
+
+    } catch (err) {
+        console.error("Failed to load major topics", err);
+    }
+}
+
+document.addEventListener("DOMContentLoaded", loadMajorTopics);
+</script>
+
+<script>
+const majorTopicSelect = document.getElementById("topic");
+const minorTopicSelect = document.getElementById("minor_topic");
+
+majorTopicSelect.addEventListener("change", async function () {
+    const board = "{{ current_user.board }}";
+    const grade = "{{ current_user.grade }}";
+    const subject = "Mathematics";
+    const majorTopic = this.value;
+
+    // reset minor topic
+    minorTopicSelect.innerHTML = "<option value=''>All subtopics (optional)</option>";
+    minorTopicSelect.disabled = true;
+
+    if (!majorTopic) return;
+
+    try {
+        const res = await fetch(
+            `/get-minor-topics?board=${encodeURIComponent(board)}&grade=${encodeURIComponent(grade)}&subject=${encodeURIComponent(subject)}&major_topic=${encodeURIComponent(majorTopic)}`
+        );
+
+        const minors = await res.json();
+
+        if (!minors || minors.length === 0) return;
+
+        minors.forEach(m => {
+            const opt = document.createElement("option");
+            opt.value = m;
+            opt.textContent = m;
+            minorTopicSelect.appendChild(opt);
+        });
+
+        minorTopicSelect.disabled = false;
+
+    } catch (err) {
+        console.error("Failed to load minor topics", err);
+    }
+});
+</script>
+
+
+
+
+{% endblock %}

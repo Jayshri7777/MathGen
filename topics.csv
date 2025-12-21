@@ -1,0 +1,1558 @@
+board,grade,subject,major_topic,minor_topic
+CBSE,12,Mathematics,Relations and Functions,Relations
+CBSE,12,Mathematics,Relations and Functions,Types of Relations
+CBSE,12,Mathematics,Relations and Functions,Domain and Range
+CBSE,12,Mathematics,Relations and Functions,Functions
+CBSE,12,Mathematics,Relations and Functions,Types of Functions
+CBSE,12,Mathematics,Relations and Functions,Composition of Functions
+CBSE,12,Mathematics,Relations and Functions,Invertible Functions
+,,,,
+CBSE,12,Mathematics,Inverse Trigonometric Functions,Meaning of Inverse Trigonometric Functions
+CBSE,12,Mathematics,Inverse Trigonometric Functions,Principal Value Branches
+CBSE,12,Mathematics,Inverse Trigonometric Functions,Properties of Inverse Trigonometric Functions
+CBSE,12,Mathematics,Inverse Trigonometric Functions,Graphs of Inverse Trigonometric Functions
+CBSE,12,Mathematics,Inverse Trigonometric Functions,Standard Inverse Trigonometric Identities
+,,,,
+CBSE,12,Mathematics,Matrices,Definition of Matrix
+CBSE,12,Mathematics,Matrices,Types of Matrices
+CBSE,12,Mathematics,Matrices,Matrix Addition
+CBSE,12,Mathematics,Matrices,Matrix Subtraction
+CBSE,12,Mathematics,Matrices,Scalar Multiplication
+CBSE,12,Mathematics,Matrices,Matrix Multiplication
+CBSE,12,Mathematics,Matrices,Transpose of a Matrix
+,,,,
+CBSE,12,Mathematics,Determinants,Determinant of a Matrix
+CBSE,12,Mathematics,Determinants,Properties of Determinants
+CBSE,12,Mathematics,Determinants,Minors and Cofactors
+CBSE,12,Mathematics,Determinants,Adjoint of a Matrix
+CBSE,12,Mathematics,Determinants,Inverse of a Matrix
+CBSE,12,Mathematics,Determinants,Solution of Linear Equations
+,,,,
+CBSE,12,Mathematics,Continuity and Differentiability,Continuity of Functions
+CBSE,12,Mathematics,Continuity and Differentiability,Discontinuity
+CBSE,12,Mathematics,Continuity and Differentiability,Differentiability
+CBSE,12,Mathematics,Continuity and Differentiability,Derivatives of Composite Functions
+CBSE,12,Mathematics,Continuity and Differentiability,Chain Rule
+CBSE,12,Mathematics,Continuity and Differentiability,Second Order Derivatives
+,,,,
+CBSE,12,Mathematics,Applications of Derivatives,Rate of Change
+CBSE,12,Mathematics,Applications of Derivatives,Tangents
+CBSE,12,Mathematics,Applications of Derivatives,Normals
+CBSE,12,Mathematics,Applications of Derivatives,Increasing Functions
+CBSE,12,Mathematics,Applications of Derivatives,Decreasing Functions
+CBSE,12,Mathematics,Applications of Derivatives,Maximum Value Problems
+CBSE,12,Mathematics,Applications of Derivatives,Minimum Value Problems
+,,,,
+CBSE,12,Mathematics,Integrals,Indefinite Integrals
+CBSE,12,Mathematics,Integrals,Standard Integrals
+CBSE,12,Mathematics,Integrals,Methods of Integration
+CBSE,12,Mathematics,Integrals,Integration by Substitution
+CBSE,12,Mathematics,Integrals,Integration by Parts
+CBSE,12,Mathematics,Integrals,Definite Integrals
+CBSE,12,Mathematics,Integrals,Fundamental Theorem of Calculus
+,,,,
+CBSE,12,Mathematics,Applications of Integrals,Area under a Curve
+CBSE,12,Mathematics,Applications of Integrals,Area between Two Curves
+CBSE,12,Mathematics,Applications of Integrals,Applications in Geometry
+,,,,
+CBSE,12,Mathematics,Differential Equations,Order of Differential Equation
+CBSE,12,Mathematics,Differential Equations,Degree of Differential Equation
+CBSE,12,Mathematics,Differential Equations,Formation of Differential Equations
+CBSE,12,Mathematics,Differential Equations,Variable Separable Method
+CBSE,12,Mathematics,Differential Equations,Homogeneous Differential Equations
+CBSE,12,Mathematics,Differential Equations,Linear Differential Equations
+,,,,
+CBSE,12,Mathematics,Vector Algebra,Vectors
+CBSE,12,Mathematics,Vector Algebra,Magnitude of a Vector
+CBSE,12,Mathematics,Vector Algebra,Direction Cosines
+CBSE,12,Mathematics,Vector Algebra,Vector Addition
+CBSE,12,Mathematics,Vector Algebra,Scalar Product
+CBSE,12,Mathematics,Vector Algebra,Vector Product
+CBSE,12,Mathematics,Vector Algebra,Applications of Vectors
+,,,,
+CBSE,12,Mathematics,Three Dimensional Geometry,Coordinate System
+CBSE,12,Mathematics,Three Dimensional Geometry,Direction Ratios
+CBSE,12,Mathematics,Three Dimensional Geometry,Direction Cosines
+CBSE,12,Mathematics,Three Dimensional Geometry,Equation of a Line
+CBSE,12,Mathematics,Three Dimensional Geometry,Angle between Lines
+CBSE,12,Mathematics,Three Dimensional Geometry,Equation of a Plane
+CBSE,12,Mathematics,Three Dimensional Geometry,Distance between Point and Plane
+,,,,
+CBSE,12,Mathematics,Linear Programming,Linear Programming Problems
+CBSE,12,Mathematics,Linear Programming,Constraints
+CBSE,12,Mathematics,Linear Programming,Objective Function
+CBSE,12,Mathematics,Linear Programming,Graphical Method
+CBSE,12,Mathematics,Linear Programming,Feasible Region
+CBSE,12,Mathematics,Linear Programming,Optimal Solution
+,,,,
+CBSE,12,Mathematics,Probability,Conditional Probability
+CBSE,12,Mathematics,Probability,Multiplication Theorem
+CBSE,12,Mathematics,Probability,Independent Events
+CBSE,12,Mathematics,Probability,Bayes Theorem
+CBSE,12,Mathematics,Probability,Random Variable
+CBSE,12,Mathematics,Probability,Probability Distribution
+CBSE,11,Mathematics,Sets,Definition of Sets
+CBSE,11,Mathematics,Sets,Types of Sets
+CBSE,11,Mathematics,Sets,Representation of Sets
+CBSE,11,Mathematics,Sets,Operations on Sets
+CBSE,11,Mathematics,Sets,Venn Diagrams
+,,,,
+CBSE,11,Mathematics,Relations and Functions,Ordered Pairs
+CBSE,11,Mathematics,Relations and Functions,Relations
+CBSE,11,Mathematics,Relations and Functions,Domain and Range
+CBSE,11,Mathematics,Relations and Functions,Functions
+CBSE,11,Mathematics,Relations and Functions,Types of Functions
+CBSE,11,Mathematics,Relations and Functions,Graphs of Functions
+,,,,
+CBSE,11,Mathematics,Trigonometric Functions,Angle Measurement
+CBSE,11,Mathematics,Trigonometric Functions,Trigonometric Ratios
+CBSE,11,Mathematics,Trigonometric Functions,Trigonometric Identities
+CBSE,11,Mathematics,Trigonometric Functions,Trigonometric Equations
+CBSE,11,Mathematics,Trigonometric Functions,Graphs of Trigonometric Functions
+,,,,
+CBSE,11,Mathematics,Principle of Mathematical Induction,Statements of Induction
+CBSE,11,Mathematics,Principle of Mathematical Induction,Steps of Induction
+CBSE,11,Mathematics,Principle of Mathematical Induction,Simple Applications
+CBSE,11,Mathematics,Principle of Mathematical Induction,Mathematical Proofs
+,,,,
+CBSE,11,Mathematics,Complex Numbers and Quadratic Equations,Complex Number Representation
+CBSE,11,Mathematics,Complex Numbers and Quadratic Equations,Algebra of Complex Numbers
+CBSE,11,Mathematics,Complex Numbers and Quadratic Equations,Argand Plane
+CBSE,11,Mathematics,Complex Numbers and Quadratic Equations,Quadratic Equations
+CBSE,11,Mathematics,Complex Numbers and Quadratic Equations,Nature of Roots
+,,,,
+CBSE,11,Mathematics,Linear Inequalities,Inequalities in One Variable
+CBSE,11,Mathematics,Linear Inequalities,Inequalities in Two Variables
+CBSE,11,Mathematics,Linear Inequalities,Graphical Representation
+CBSE,11,Mathematics,Linear Inequalities,Solution of Inequalities
+,,,,
+CBSE,11,Mathematics,Permutations and Combinations,Fundamental Principle of Counting
+CBSE,11,Mathematics,Permutations and Combinations,Permutations
+CBSE,11,Mathematics,Permutations and Combinations,Combinations
+CBSE,11,Mathematics,Permutations and Combinations,Simple Applications
+,,,,
+CBSE,11,Mathematics,Binomial Theorem,Binomial Expansion
+CBSE,11,Mathematics,Binomial Theorem,General Term
+CBSE,11,Mathematics,Binomial Theorem,Middle Term
+CBSE,11,Mathematics,Binomial Theorem,Simple Applications
+,,,,
+CBSE,11,Mathematics,Sequences and Series,Sequences
+CBSE,11,Mathematics,Sequences and Series,Arithmetic Progressions
+CBSE,11,Mathematics,Sequences and Series,Geometric Progressions
+CBSE,11,Mathematics,Sequences and Series,Sum of Series
+,,,,
+CBSE,11,Mathematics,Straight Lines,Coordinate Geometry Basics
+CBSE,11,Mathematics,Straight Lines,Slope of a Line
+CBSE,11,Mathematics,Straight Lines,Equation of a Line
+CBSE,11,Mathematics,Straight Lines,Distance of a Point from Line
+CBSE,11,Mathematics,Straight Lines,Angle between Two Lines
+,,,,
+CBSE,11,Mathematics,Conic Sections,Circle
+CBSE,11,Mathematics,Conic Sections,Parabola
+CBSE,11,Mathematics,Conic Sections,Ellipse
+CBSE,11,Mathematics,Conic Sections,Hyperbola
+,,,,
+CBSE,11,Mathematics,Introduction to Three Dimensional Geometry,Coordinate System
+CBSE,11,Mathematics,Introduction to Three Dimensional Geometry,Distance between Two Points
+CBSE,11,Mathematics,Introduction to Three Dimensional Geometry,Section Formula
+CBSE,11,Mathematics,Introduction to Three Dimensional Geometry,Coordinates of a Point
+,,,,
+CBSE,11,Mathematics,Limits and Derivatives,Limits of Functions
+CBSE,11,Mathematics,Limits and Derivatives,Continuity
+CBSE,11,Mathematics,Limits and Derivatives,Derivatives
+CBSE,11,Mathematics,Limits and Derivatives,Standard Derivatives
+CBSE,11,Mathematics,Limits and Derivatives,Simple Applications of Derivatives
+,,,,
+CBSE,11,Mathematics,Mathematical Reasoning,Statements
+CBSE,11,Mathematics,Mathematical Reasoning,Logical Connectives
+CBSE,11,Mathematics,Mathematical Reasoning,Truth Tables
+CBSE,11,Mathematics,Mathematical Reasoning,Tautology and Contradiction
+,,,,
+CBSE,11,Mathematics,Statistics,Measures of Central Tendency
+CBSE,11,Mathematics,Statistics,Mean
+CBSE,11,Mathematics,Statistics,Median
+CBSE,11,Mathematics,Statistics,Mode
+CBSE,11,Mathematics,Statistics,Measures of Dispersion
+,,,,
+CBSE,11,Mathematics,Probability,Random Experiments
+CBSE,11,Mathematics,Probability,Sample Space
+CBSE,11,Mathematics,Probability,Events
+CBSE,11,Mathematics,Probability,Classical Probability
+CBSE,11,Mathematics,Probability,Simple Applications
+CBSE,10,Mathematics,Real Numbers,Fundamental Theorem of Arithmetic
+CBSE,10,Mathematics,Real Numbers,Euclid Division Lemma
+CBSE,10,Mathematics,Real Numbers,HCF and LCM
+CBSE,10,Mathematics,Real Numbers,Prime Factorisation
+CBSE,10,Mathematics,Real Numbers,Irrational Numbers
+,,,,
+CBSE,10,Mathematics,Polynomials,Degree of a Polynomial
+CBSE,10,Mathematics,Polynomials,Zeroes of Polynomial
+CBSE,10,Mathematics,Polynomials,Relationship between Zeroes and Coefficients
+CBSE,10,Mathematics,Polynomials,Graphical Representation
+CBSE,10,Mathematics,Polynomials,Factor Theorem
+,,,,
+CBSE,10,Mathematics,Pair of Linear Equations in Two Variables,Linear Equations
+CBSE,10,Mathematics,Pair of Linear Equations in Two Variables,Graphical Method
+CBSE,10,Mathematics,Pair of Linear Equations in Two Variables,Substitution Method
+CBSE,10,Mathematics,Pair of Linear Equations in Two Variables,Elimination Method
+CBSE,10,Mathematics,Pair of Linear Equations in Two Variables,Cross Multiplication Method
+,,,,
+CBSE,10,Mathematics,Quadratic Equations,Standard Form of Quadratic Equation
+CBSE,10,Mathematics,Quadratic Equations,Factorisation Method
+CBSE,10,Mathematics,Quadratic Equations,Quadratic Formula
+CBSE,10,Mathematics,Quadratic Equations,Nature of Roots
+CBSE,10,Mathematics,Quadratic Equations,Word Problems
+,,,,
+CBSE,10,Mathematics,Arithmetic Progressions,Definition of AP
+CBSE,10,Mathematics,Arithmetic Progressions,Nth Term of AP
+CBSE,10,Mathematics,Arithmetic Progressions,Sum of First n Terms
+CBSE,10,Mathematics,Arithmetic Progressions,Word Problems
+CBSE,10,Mathematics,Arithmetic Progressions,Application Based Problems
+,,,,
+CBSE,10,Mathematics,Triangles,Similarity of Triangles
+CBSE,10,Mathematics,Triangles,Basic Proportionality Theorem
+CBSE,10,Mathematics,Triangles,Pythagoras Theorem
+CBSE,10,Mathematics,Triangles,Areas of Similar Triangles
+CBSE,10,Mathematics,Triangles,Proof Based Questions
+,,,,
+CBSE,10,Mathematics,Coordinate Geometry,Distance Formula
+CBSE,10,Mathematics,Coordinate Geometry,Section Formula
+CBSE,10,Mathematics,Coordinate Geometry,Area of Triangle
+CBSE,10,Mathematics,Coordinate Geometry,Collinearity of Points
+,,,,
+CBSE,10,Mathematics,Trigonometry,Trigonometric Ratios
+CBSE,10,Mathematics,Trigonometry,Trigonometric Identities
+CBSE,10,Mathematics,Trigonometry,Values of Trigonometric Ratios
+CBSE,10,Mathematics,Trigonometry,Applications of Trigonometry
+,,,,
+CBSE,10,Mathematics,Heights and Distances,Angle of Elevation
+CBSE,10,Mathematics,Heights and Distances,Angle of Depression
+CBSE,10,Mathematics,Heights and Distances,Line of Sight
+CBSE,10,Mathematics,Heights and Distances,Word Problems
+,,,,
+CBSE,10,Mathematics,Circles,Tangent to a Circle
+CBSE,10,Mathematics,Circles,Number of Tangents
+CBSE,10,Mathematics,Circles,Properties of Tangents
+CBSE,10,Mathematics,Circles,Theorems on Tangents
+,,,,
+CBSE,10,Mathematics,Constructions,Division of a Line Segment
+CBSE,10,Mathematics,Constructions,Construction of Tangents
+CBSE,10,Mathematics,Constructions,Geometric Constructions
+,,,,
+CBSE,10,Mathematics,Areas Related to Circles,Area of Sector
+CBSE,10,Mathematics,Areas Related to Circles,Area of Segment
+CBSE,10,Mathematics,Areas Related to Circles,Combination of Figures
+CBSE,10,Mathematics,Areas Related to Circles,Word Problems
+,,,,
+CBSE,10,Mathematics,Surface Areas and Volumes,Surface Area of Solids
+CBSE,10,Mathematics,Surface Areas and Volumes,Volume of Solids
+CBSE,10,Mathematics,Surface Areas and Volumes,Combination of Solids
+CBSE,10,Mathematics,Surface Areas and Volumes,Frustum of a Cone
+,,,,
+CBSE,10,Mathematics,Statistics,Mean using Direct Method
+CBSE,10,Mathematics,Statistics,Mean using Assumed Mean Method
+CBSE,10,Mathematics,Statistics,Mean using Step Deviation Method
+CBSE,10,Mathematics,Statistics,Ogive Graphs
+,,,,
+CBSE,10,Mathematics,Probability,Classical Probability
+CBSE,10,Mathematics,Probability,Experimental Probability
+CBSE,10,Mathematics,Probability,Simple Probability Problems
+CBSE,9,Mathematics,Number Systems,Rational Numbers
+CBSE,9,Mathematics,Number Systems,Irrational Numbers
+CBSE,9,Mathematics,Number Systems,Real Numbers
+CBSE,9,Mathematics,Number Systems,Decimal Expansion
+,,,,
+CBSE,9,Mathematics,Polynomials,Degree of Polynomial
+CBSE,9,Mathematics,Polynomials,Zeroes of Polynomial
+CBSE,9,Mathematics,Polynomials,Factorisation
+CBSE,9,Mathematics,Polynomials,Identity Based Problems
+,,,,
+CBSE,9,Mathematics,Coordinate Geometry,Cartesian Plane
+CBSE,9,Mathematics,Coordinate Geometry,Coordinates of a Point
+CBSE,9,Mathematics,Coordinate Geometry,Plotting of Points
+,,,,
+CBSE,9,Mathematics,Linear Equations in Two Variables,Linear Equations
+CBSE,9,Mathematics,Linear Equations in Two Variables,Solution of Linear Equations
+CBSE,9,Mathematics,Linear Equations in Two Variables,Graphical Representation
+,,,,
+CBSE,9,Mathematics,Introduction to Euclid Geometry,Euclid Axioms
+CBSE,9,Mathematics,Introduction to Euclid Geometry,Euclid Postulates
+CBSE,9,Mathematics,Introduction to Euclid Geometry,Mathematical Reasoning
+,,,,
+CBSE,9,Mathematics,Lines and Angles,Angle Relationships
+CBSE,9,Mathematics,Lines and Angles,Parallel Lines
+CBSE,9,Mathematics,Lines and Angles,Transversal Lines
+CBSE,9,Mathematics,Lines and Angles,Proof Based Problems
+,,,,
+CBSE,9,Mathematics,Triangles,Congruence of Triangles
+CBSE,9,Mathematics,Triangles,Criteria of Congruence
+CBSE,9,Mathematics,Triangles,Inequalities in Triangles
+CBSE,9,Mathematics,Triangles,Proof Based Questions
+,,,,
+CBSE,9,Mathematics,Quadrilaterals,Angle Sum Property
+CBSE,9,Mathematics,Quadrilaterals,Parallelogram Properties
+CBSE,9,Mathematics,Quadrilaterals,Proof Based Problems
+,,,,
+CBSE,9,Mathematics,Circles,Chord of a Circle
+CBSE,9,Mathematics,Circles,Arc of a Circle
+CBSE,9,Mathematics,Circles,Angle Subtended by Chord
+,,,,
+CBSE,9,Mathematics,Constructions,Construction of Bisectors
+CBSE,9,Mathematics,Constructions,Construction of Angles
+CBSE,9,Mathematics,Constructions,Geometric Drawing
+,,,,
+CBSE,9,Mathematics,Herons Formula,Area of Triangle
+CBSE,9,Mathematics,Herons Formula,Application Based Problems
+,,,,
+CBSE,9,Mathematics,Surface Areas and Volumes,Surface Area of Cube
+CBSE,9,Mathematics,Surface Areas and Volumes,Surface Area of Cuboid
+CBSE,9,Mathematics,Surface Areas and Volumes,Volume of Solids
+,,,,
+CBSE,9,Mathematics,Statistics,Collection of Data
+CBSE,9,Mathematics,Statistics,Graphical Representation
+CBSE,9,Mathematics,Statistics,Mean of Data
+,,,,
+CBSE,9,Mathematics,Probability,Experimental Probability
+CBSE,9,Mathematics,Probability,Simple Probability Problems
+CBSE,8,Mathematics,Rational Numbers,Definition of Rational Numbers
+CBSE,8,Mathematics,Rational Numbers,Properties of Rational Numbers
+CBSE,8,Mathematics,Rational Numbers,Representation on Number Line
+CBSE,8,Mathematics,Rational Numbers,Operations on Rational Numbers
+,,,,
+CBSE,8,Mathematics,Linear Equations in One Variable,Linear Equation Concept
+CBSE,8,Mathematics,Linear Equations in One Variable,Solving Linear Equations
+CBSE,8,Mathematics,Linear Equations in One Variable,Word Problems
+,,,,
+CBSE,8,Mathematics,Understanding Quadrilaterals,Types of Quadrilaterals
+CBSE,8,Mathematics,Understanding Quadrilaterals,Properties of Quadrilaterals
+CBSE,8,Mathematics,Understanding Quadrilaterals,Angle Sum Property
+,,,,
+CBSE,8,Mathematics,Practical Geometry,Construction of Quadrilaterals
+CBSE,8,Mathematics,Practical Geometry,Steps of Construction
+CBSE,8,Mathematics,Practical Geometry,Geometric Accuracy
+,,,,
+CBSE,8,Mathematics,Data Handling,Organisation of Data
+CBSE,8,Mathematics,Data Handling,Pie Charts
+CBSE,8,Mathematics,Data Handling,Probability Basics
+,,,,
+CBSE,8,Mathematics,Squares and Square Roots,Square Numbers
+CBSE,8,Mathematics,Squares and Square Roots,Properties of Square Numbers
+CBSE,8,Mathematics,Squares and Square Roots,Square Roots by Prime Factorisation
+,,,,
+CBSE,8,Mathematics,Cubes and Cube Roots,Cube Numbers
+CBSE,8,Mathematics,Cubes and Cube Roots,Properties of Cube Numbers
+CBSE,8,Mathematics,Cubes and Cube Roots,Cube Roots by Prime Factorisation
+,,,,
+CBSE,8,Mathematics,Comparing Quantities,Ratios
+CBSE,8,Mathematics,Comparing Quantities,Percentages
+CBSE,8,Mathematics,Comparing Quantities,Simple Interest
+CBSE,8,Mathematics,Comparing Quantities,Profit and Loss
+,,,,
+CBSE,8,Mathematics,Algebraic Expressions and Identities,Terms and Coefficients
+CBSE,8,Mathematics,Algebraic Expressions and Identities,Addition of Expressions
+CBSE,8,Mathematics,Algebraic Expressions and Identities,Multiplication of Expressions
+CBSE,8,Mathematics,Algebraic Expressions and Identities,Standard Identities
+,,,,
+CBSE,8,Mathematics,Visualising Solid Shapes,Two Dimensional Shapes
+CBSE,8,Mathematics,Visualising Solid Shapes,Three Dimensional Shapes
+CBSE,8,Mathematics,Visualising Solid Shapes,Views of Solids
+,,,,
+CBSE,8,Mathematics,Mensuration,Area of Plane Figures
+CBSE,8,Mathematics,Mensuration,Surface Area of Solids
+CBSE,8,Mathematics,Mensuration,Volume of Solids
+,,,,
+CBSE,8,Mathematics,Exponents and Powers,Laws of Exponents
+CBSE,8,Mathematics,Exponents and Powers,Standard Form
+CBSE,8,Mathematics,Exponents and Powers,Application of Powers
+,,,,
+CBSE,8,Mathematics,Direct and Inverse Proportions,Direct Proportion
+CBSE,8,Mathematics,Direct and Inverse Proportions,Inverse Proportion
+CBSE,8,Mathematics,Direct and Inverse Proportions,Word Problems
+,,,,
+CBSE,8,Mathematics,Factorisation,Factorisation by Common Factors
+CBSE,8,Mathematics,Factorisation,Factorisation using Identities
+CBSE,8,Mathematics,Factorisation,Solving Simple Equations
+,,,,
+CBSE,8,Mathematics,Introduction to Graphs,Cartesian Plane
+CBSE,8,Mathematics,Introduction to Graphs,Plotting Points
+CBSE,8,Mathematics,Introduction to Graphs,Reading Graphs
+,,,,
+CBSE,8,Mathematics,Playing with Numbers,Digits and Numbers
+CBSE,8,Mathematics,Playing with Numbers,Divisibility Rules
+CBSE,8,Mathematics,Playing with Numbers,Number Patterns
+CBSE,7,Mathematics,Integers,Positive and Negative Integers
+CBSE,7,Mathematics,Integers,Addition of Integers
+CBSE,7,Mathematics,Integers,Subtraction of Integers
+CBSE,7,Mathematics,Integers,Properties of Integers
+,,,,
+CBSE,7,Mathematics,Fractions and Decimals,Types of Fractions
+CBSE,7,Mathematics,Fractions and Decimals,Operations on Fractions
+CBSE,7,Mathematics,Fractions and Decimals,Decimal Numbers
+CBSE,7,Mathematics,Fractions and Decimals,Operations on Decimals
+,,,,
+CBSE,7,Mathematics,Data Handling,Collection of Data
+CBSE,7,Mathematics,Data Handling,Mean
+CBSE,7,Mathematics,Data Handling,Bar Graphs
+,,,,
+CBSE,7,Mathematics,Simple Equations,Formation of Equations
+CBSE,7,Mathematics,Simple Equations,Solving Simple Equations
+CBSE,7,Mathematics,Simple Equations,Word Problems
+,,,,
+CBSE,7,Mathematics,Lines and Angles,Types of Angles
+CBSE,7,Mathematics,Lines and Angles,Parallel Lines
+CBSE,7,Mathematics,Lines and Angles,Angle Properties
+,,,,
+CBSE,7,Mathematics,The Triangle and its Properties,Angle Sum Property
+CBSE,7,Mathematics,The Triangle and its Properties,Types of Triangles
+CBSE,7,Mathematics,The Triangle and its Properties,Inequality Property
+,,,,
+CBSE,7,Mathematics,Congruence of Triangles,Criteria of Congruence
+CBSE,7,Mathematics,Congruence of Triangles,Corresponding Parts
+CBSE,7,Mathematics,Congruence of Triangles,Practical Applications
+,,,,
+CBSE,7,Mathematics,Comparing Quantities,Ratios
+CBSE,7,Mathematics,Comparing Quantities,Percentages
+CBSE,7,Mathematics,Comparing Quantities,Simple Interest
+,,,,
+CBSE,7,Mathematics,Rational Numbers,Definition of Rational Numbers
+CBSE,7,Mathematics,Rational Numbers,Operations on Rational Numbers
+CBSE,7,Mathematics,Rational Numbers,Number Line Representation
+,,,,
+CBSE,7,Mathematics,Practical Geometry,Construction of Angles
+CBSE,7,Mathematics,Practical Geometry,Construction of Triangles
+CBSE,7,Mathematics,Practical Geometry,Geometric Drawing
+,,,,
+CBSE,7,Mathematics,Perimeter and Area,Perimeter of Plane Figures
+CBSE,7,Mathematics,Perimeter and Area,Area of Rectangles and Squares
+CBSE,7,Mathematics,Perimeter and Area,Word Problems
+,,,,
+CBSE,7,Mathematics,Algebraic Expressions,Variables and Constants
+CBSE,7,Mathematics,Algebraic Expressions,Formation of Expressions
+CBSE,7,Mathematics,Algebraic Expressions,Simple Evaluation
+,,,,
+CBSE,7,Mathematics,Exponents and Powers,Laws of Exponents
+CBSE,7,Mathematics,Exponents and Powers,Simplification
+CBSE,7,Mathematics,Exponents and Powers,Applications
+,,,,
+CBSE,7,Mathematics,Symmetry,Line Symmetry
+CBSE,7,Mathematics,Symmetry,Rotational Symmetry
+CBSE,7,Mathematics,Symmetry,Examples of Symmetry
+,,,,
+CBSE,7,Mathematics,Visualising Solid Shapes,Three Dimensional Objects
+CBSE,7,Mathematics,Visualising Solid Shapes,Faces Edges and Vertices
+CBSE,7,Mathematics,Visualising Solid Shapes,Views of Solids
+CBSE,6,Mathematics,Knowing Our Numbers,Place Value
+CBSE,6,Mathematics,Knowing Our Numbers,Comparison of Numbers
+CBSE,6,Mathematics,Knowing Our Numbers,Estimation
+CBSE,6,Mathematics,Knowing Our Numbers,Rounding Off
+,,,,
+CBSE,6,Mathematics,Whole Numbers,Natural Numbers
+CBSE,6,Mathematics,Whole Numbers,Properties of Whole Numbers
+CBSE,6,Mathematics,Whole Numbers,Number Line
+CBSE,6,Mathematics,Whole Numbers,Operations on Whole Numbers
+,,,,
+CBSE,6,Mathematics,Playing with Numbers,Factors
+CBSE,6,Mathematics,Playing with Numbers,Multiples
+CBSE,6,Mathematics,Playing with Numbers,Prime Numbers
+CBSE,6,Mathematics,Playing with Numbers,Divisibility Rules
+,,,,
+CBSE,6,Mathematics,Basic Geometrical Ideas,Point Line and Plane
+CBSE,6,Mathematics,Basic Geometrical Ideas,Line Segment and Ray
+CBSE,6,Mathematics,Basic Geometrical Ideas,Angles
+CBSE,6,Mathematics,Basic Geometrical Ideas,Curves and Polygons
+,,,,
+CBSE,6,Mathematics,Understanding Elementary Shapes,Types of Angles
+CBSE,6,Mathematics,Understanding Elementary Shapes,Measurement of Angles
+CBSE,6,Mathematics,Understanding Elementary Shapes,Perpendicular and Parallel Lines
+,,,,
+CBSE,6,Mathematics,Integers,Positive Integers
+CBSE,6,Mathematics,Integers,Negative Integers
+CBSE,6,Mathematics,Integers,Addition of Integers
+CBSE,6,Mathematics,Integers,Subtraction of Integers
+,,,,
+CBSE,6,Mathematics,Fractions,Types of Fractions
+CBSE,6,Mathematics,Fractions,Equivalent Fractions
+CBSE,6,Mathematics,Fractions,Simplest Form
+CBSE,6,Mathematics,Fractions,Operations on Fractions
+,,,,
+CBSE,6,Mathematics,Decimals,Place Value of Decimals
+CBSE,6,Mathematics,Decimals,Comparison of Decimals
+CBSE,6,Mathematics,Decimals,Addition of Decimals
+CBSE,6,Mathematics,Decimals,Subtraction of Decimals
+,,,,
+CBSE,6,Mathematics,Data Handling,Collection of Data
+CBSE,6,Mathematics,Data Handling,Pictographs
+CBSE,6,Mathematics,Data Handling,Bar Graphs
+CBSE,6,Mathematics,Data Handling,Interpretation of Data
+,,,,
+CBSE,6,Mathematics,Mensuration,Perimeter
+CBSE,6,Mathematics,Mensuration,Area of Rectangle
+CBSE,6,Mathematics,Mensuration,Area of Square
+CBSE,6,Mathematics,Mensuration,Simple Word Problems
+,,,,
+CBSE,6,Mathematics,Algebra,Variables
+CBSE,6,Mathematics,Algebra,Simple Expressions
+CBSE,6,Mathematics,Algebra,Forming Expressions
+CBSE,6,Mathematics,Algebra,Simple Equations
+,,,,
+CBSE,6,Mathematics,Ratio and Proportion,Ratio
+CBSE,6,Mathematics,Ratio and Proportion,Equivalent Ratios
+CBSE,6,Mathematics,Ratio and Proportion,Proportion
+CBSE,6,Mathematics,Ratio and Proportion,Word Problems
+,,,,
+CBSE,6,Mathematics,Symmetry,Line Symmetry
+CBSE,6,Mathematics,Symmetry,Symmetrical Figures
+CBSE,6,Mathematics,Symmetry,Practical Examples
+,,,,
+CBSE,6,Mathematics,Practical Geometry,Construction of Line Segment
+CBSE,6,Mathematics,Practical Geometry,Construction of Angles
+CBSE,6,Mathematics,Practical Geometry,Use of Geometry Tools
+CBSE,5,Mathematics,Numbers and Operations,Place Value
+CBSE,5,Mathematics,Numbers and Operations,Operations on Numbers
+CBSE,5,Mathematics,Numbers and Operations,Estimation
+CBSE,5,Mathematics,Numbers and Operations,Word Problems
+,,,,
+CBSE,5,Mathematics,Large Numbers,Reading and Writing Numbers
+CBSE,5,Mathematics,Large Numbers,Comparison of Numbers
+CBSE,5,Mathematics,Large Numbers,Rounding Off
+,,,,
+CBSE,5,Mathematics,Factors and Multiples,Factors
+CBSE,5,Mathematics,Factors and Multiples,Multiples
+CBSE,5,Mathematics,Factors and Multiples,HCF
+CBSE,5,Mathematics,Factors and Multiples,LCM
+,,,,
+CBSE,5,Mathematics,Fractions,Proper Fractions
+CBSE,5,Mathematics,Fractions,Improper Fractions
+CBSE,5,Mathematics,Fractions,Mixed Numbers
+CBSE,5,Mathematics,Fractions,Operations on Fractions
+,,,,
+CBSE,5,Mathematics,Decimals,Place Value of Decimals
+CBSE,5,Mathematics,Decimals,Addition of Decimals
+CBSE,5,Mathematics,Decimals,Subtraction of Decimals
+,,,,
+CBSE,5,Mathematics,Measurement,Length
+CBSE,5,Mathematics,Measurement,Weight
+CBSE,5,Mathematics,Measurement,Capacity
+CBSE,5,Mathematics,Measurement,Unit Conversion
+,,,,
+CBSE,5,Mathematics,Geometry,Points Lines and Angles
+CBSE,5,Mathematics,Geometry,Types of Angles
+CBSE,5,Mathematics,Geometry,Basic Shapes
+,,,,
+CBSE,5,Mathematics,Perimeter and Area,Perimeter of Shapes
+CBSE,5,Mathematics,Perimeter and Area,Area of Rectangles
+CBSE,5,Mathematics,Perimeter and Area,Area of Squares
+CBSE,5,Mathematics,Perimeter and Area,Word Problems
+,,,,
+CBSE,5,Mathematics,Data Handling,Collection of Data
+CBSE,5,Mathematics,Data Handling,Bar Graphs
+CBSE,5,Mathematics,Data Handling,Interpretation of Graphs
+,,,,
+CBSE,5,Mathematics,Time and Money,Reading Time
+CBSE,5,Mathematics,Time and Money,Operations on Time
+CBSE,5,Mathematics,Time and Money,Money Transactions
+CBSE,5,Mathematics,Time and Money,Word Problems
+,,,,
+CBSE,5,Mathematics,Patterns,Number Patterns
+CBSE,5,Mathematics,Patterns,Shape Patterns
+CBSE,5,Mathematics,Patterns,Rule Identification
+CBSE,4,Mathematics,Numbers,Place Value
+CBSE,4,Mathematics,Numbers,Comparison of Numbers
+CBSE,4,Mathematics,Numbers,Rounding Off
+CBSE,4,Mathematics,Numbers,Number Patterns
+,,,,
+CBSE,4,Mathematics,Addition and Subtraction,Addition without Carry
+CBSE,4,Mathematics,Addition and Subtraction,Addition with Carry
+CBSE,4,Mathematics,Addition and Subtraction,Subtraction without Borrow
+CBSE,4,Mathematics,Addition and Subtraction,Subtraction with Borrow
+CBSE,4,Mathematics,Addition and Subtraction,Word Problems
+,,,,
+CBSE,4,Mathematics,Multiplication,Multiplication Tables
+CBSE,4,Mathematics,Multiplication,Multiplication of Large Numbers
+CBSE,4,Mathematics,Multiplication,Properties of Multiplication
+CBSE,4,Mathematics,Multiplication,Word Problems
+,,,,
+CBSE,4,Mathematics,Division,Division as Equal Sharing
+CBSE,4,Mathematics,Division,Division by Single Digit
+CBSE,4,Mathematics,Division,Division with Remainder
+CBSE,4,Mathematics,Division,Word Problems
+,,,,
+CBSE,4,Mathematics,Fractions,Parts of a Whole
+CBSE,4,Mathematics,Fractions,Types of Fractions
+CBSE,4,Mathematics,Fractions,Equivalent Fractions
+CBSE,4,Mathematics,Fractions,Simple Fraction Problems
+,,,,
+CBSE,4,Mathematics,Decimals,Place Value of Decimals
+CBSE,4,Mathematics,Decimals,Decimal Fractions
+CBSE,4,Mathematics,Decimals,Comparison of Decimals
+,,,,
+CBSE,4,Mathematics,Measurement,Units of Length
+CBSE,4,Mathematics,Measurement,Units of Weight
+CBSE,4,Mathematics,Measurement,Units of Capacity
+CBSE,4,Mathematics,Measurement,Conversion of Units
+,,,,
+CBSE,4,Mathematics,Time,Reading Clock
+CBSE,4,Mathematics,Time,AM and PM
+CBSE,4,Mathematics,Time,Conversion of Time
+CBSE,4,Mathematics,Time,Word Problems
+,,,,
+CBSE,4,Mathematics,Money,Indian Currency
+CBSE,4,Mathematics,Money,Addition of Money
+CBSE,4,Mathematics,Money,Subtraction of Money
+CBSE,4,Mathematics,Money,Word Problems
+,,,,
+CBSE,4,Mathematics,Geometry,Basic Shapes
+CBSE,4,Mathematics,Geometry,Lines and Angles
+CBSE,4,Mathematics,Geometry,Polygons
+CBSE,4,Mathematics,Geometry,Symmetry Basics
+,,,,
+CBSE,4,Mathematics,Data Handling,Collection of Data
+CBSE,4,Mathematics,Data Handling,Pictographs
+CBSE,4,Mathematics,Data Handling,Bar Graphs
+CBSE,4,Mathematics,Data Handling,Reading Graphs
+CBSE,3,Mathematics,Numbers,Counting Numbers
+CBSE,3,Mathematics,Numbers,Place Value
+CBSE,3,Mathematics,Numbers,Comparison of Numbers
+,,,,
+CBSE,3,Mathematics,Addition,Addition of Numbers
+CBSE,3,Mathematics,Addition,Addition with Carry
+CBSE,3,Mathematics,Addition,Word Problems
+,,,,
+CBSE,3,Mathematics,Subtraction,Subtraction of Numbers
+CBSE,3,Mathematics,Subtraction,Subtraction with Borrow
+CBSE,3,Mathematics,Subtraction,Word Problems
+,,,,
+CBSE,3,Mathematics,Multiplication,Repeated Addition
+CBSE,3,Mathematics,Multiplication,Multiplication Tables
+CBSE,3,Mathematics,Multiplication,Word Problems
+,,,,
+CBSE,3,Mathematics,Division,Equal Grouping
+CBSE,3,Mathematics,Division,Simple Division
+CBSE,3,Mathematics,Division,Word Problems
+,,,,
+CBSE,3,Mathematics,Fractions,Halves and Quarters
+CBSE,3,Mathematics,Fractions,Simple Fraction Concepts
+,,,,
+CBSE,3,Mathematics,Measurement,Length
+CBSE,3,Mathematics,Measurement,Weight
+CBSE,3,Mathematics,Measurement,Capacity
+,,,,
+CBSE,3,Mathematics,Time,Reading Time
+CBSE,3,Mathematics,Time,Days and Months
+CBSE,3,Mathematics,Time,Simple Time Problems
+,,,,
+CBSE,3,Mathematics,Money,Coins and Notes
+CBSE,3,Mathematics,Money,Simple Transactions
+CBSE,3,Mathematics,Money,Word Problems
+,,,,
+CBSE,3,Mathematics,Geometry,Basic Shapes
+CBSE,3,Mathematics,Geometry,Lines
+CBSE,3,Mathematics,Geometry,Simple Patterns
+,,,,
+CBSE,3,Mathematics,Data Handling,Pictographs
+CBSE,3,Mathematics,Data Handling,Reading Graphs
+,,,,
+CBSE,3,Mathematics,Patterns,Number Patterns
+CBSE,3,Mathematics,Patterns,Shape Patterns
+CBSE,2,Mathematics,Numbers,Counting Numbers
+CBSE,2,Mathematics,Numbers,Place Value
+CBSE,2,Mathematics,Numbers,Comparison of Numbers
+,,,,
+CBSE,2,Mathematics,Addition,Addition without Carry
+CBSE,2,Mathematics,Addition,Addition with Carry
+CBSE,2,Mathematics,Addition,Simple Word Problems
+,,,,
+CBSE,2,Mathematics,Subtraction,Subtraction without Borrow
+CBSE,2,Mathematics,Subtraction,Subtraction with Borrow
+CBSE,2,Mathematics,Subtraction,Simple Word Problems
+,,,,
+CBSE,2,Mathematics,Multiplication,Repeated Addition
+CBSE,2,Mathematics,Multiplication,Multiplication Tables
+CBSE,2,Mathematics,Multiplication,Simple Multiplication Problems
+,,,,
+CBSE,2,Mathematics,Measurement,Length Measurement
+CBSE,2,Mathematics,Measurement,Weight Measurement
+CBSE,2,Mathematics,Measurement,Capacity Measurement
+,,,,
+CBSE,2,Mathematics,Time,Reading Clock
+CBSE,2,Mathematics,Time,Days of Week
+CBSE,2,Mathematics,Time,Months of Year
+,,,,
+CBSE,2,Mathematics,Money,Coins
+CBSE,2,Mathematics,Money,Notes
+CBSE,2,Mathematics,Money,Simple Money Problems
+,,,,
+CBSE,2,Mathematics,Geometry,Basic Shapes
+CBSE,2,Mathematics,Geometry,Straight and Curved Lines
+CBSE,2,Mathematics,Geometry,Simple Patterns
+,,,,
+CBSE,2,Mathematics,Data Handling,Collection of Data
+CBSE,2,Mathematics,Data Handling,Pictographs
+CBSE,2,Mathematics,Data Handling,Reading Pictographs
+,,,,
+CBSE,2,Mathematics,Patterns,Number Patterns
+CBSE,2,Mathematics,Patterns,Shape Patterns
+CBSE,1,Mathematics,Numbers,Counting Numbers
+CBSE,1,Mathematics,Numbers,Number Names
+CBSE,1,Mathematics,Numbers,Comparison of Numbers
+,,,,
+CBSE,1,Mathematics,Counting,Forward Counting
+CBSE,1,Mathematics,Counting,Backward Counting
+CBSE,1,Mathematics,Counting,Skip Counting
+,,,,
+CBSE,1,Mathematics,Addition,Single Digit Addition
+CBSE,1,Mathematics,Addition,Addition using Objects
+CBSE,1,Mathematics,Addition,Simple Word Problems
+,,,,
+CBSE,1,Mathematics,Subtraction,Single Digit Subtraction
+CBSE,1,Mathematics,Subtraction,Subtraction using Objects
+CBSE,1,Mathematics,Subtraction,Simple Word Problems
+,,,,
+CBSE,1,Mathematics,Shapes,Basic Shapes
+CBSE,1,Mathematics,Shapes,Flat Shapes
+CBSE,1,Mathematics,Shapes,Solid Shapes
+,,,,
+CBSE,1,Mathematics,Measurement,Comparison of Length
+CBSE,1,Mathematics,Measurement,Comparison of Weight
+CBSE,1,Mathematics,Measurement,Comparison of Capacity
+,,,,
+CBSE,1,Mathematics,Time,Days of Week
+CBSE,1,Mathematics,Time,Reading Clock Basics
+CBSE,1,Mathematics,Time,Daily Activities
+,,,,
+CBSE,1,Mathematics,Money,Coins Identification
+CBSE,1,Mathematics,Money,Simple Buying and Selling
+,,,,
+CBSE,1,Mathematics,Patterns,Number Patterns
+CBSE,1,Mathematics,Patterns,Shape Patterns
+ICSE,12,Mathematics,Relations and Functions,Relations
+ICSE,12,Mathematics,Relations and Functions,Types of Relations
+ICSE,12,Mathematics,Relations and Functions,Functions
+ICSE,12,Mathematics,Relations and Functions,Domain and Range
+ICSE,12,Mathematics,Relations and Functions,Composition of Functions
+,,,,
+ICSE,12,Mathematics,Inverse Trigonometric Functions,Inverse Trigonometric Functions
+ICSE,12,Mathematics,Inverse Trigonometric Functions,Principal Value Branches
+ICSE,12,Mathematics,Inverse Trigonometric Functions,Properties of Inverse Trigonometric Functions
+ICSE,12,Mathematics,Inverse Trigonometric Functions,Graphs of Inverse Trigonometric Functions
+,,,,
+ICSE,12,Mathematics,Matrices,Types of Matrices
+ICSE,12,Mathematics,Matrices,Matrix Operations
+ICSE,12,Mathematics,Matrices,Matrix Multiplication
+ICSE,12,Mathematics,Matrices,Transpose of a Matrix
+ICSE,12,Mathematics,Matrices,Inverse of a Matrix
+,,,,
+ICSE,12,Mathematics,Determinants,Determinant of a Matrix
+ICSE,12,Mathematics,Determinants,Properties of Determinants
+ICSE,12,Mathematics,Determinants,Minors and Cofactors
+ICSE,12,Mathematics,Determinants,Solution of Linear Equations
+,,,,
+ICSE,12,Mathematics,Continuity and Differentiability,Continuity of Functions
+ICSE,12,Mathematics,Continuity and Differentiability,Differentiability
+ICSE,12,Mathematics,Continuity and Differentiability,Chain Rule
+ICSE,12,Mathematics,Continuity and Differentiability,Second Order Derivatives
+,,,,
+ICSE,12,Mathematics,Applications of Derivatives,Rate of Change
+ICSE,12,Mathematics,Applications of Derivatives,Tangents
+ICSE,12,Mathematics,Applications of Derivatives,Normals
+ICSE,12,Mathematics,Applications of Derivatives,Maximum and Minimum Problems
+,,,,
+ICSE,12,Mathematics,Integrals,Indefinite Integrals
+ICSE,12,Mathematics,Integrals,Methods of Integration
+ICSE,12,Mathematics,Integrals,Definite Integrals
+ICSE,12,Mathematics,Integrals,Fundamental Theorem of Calculus
+,,,,
+ICSE,12,Mathematics,Applications of Integrals,Area under a Curve
+ICSE,12,Mathematics,Applications of Integrals,Area between Two Curves
+,,,,
+ICSE,12,Mathematics,Differential Equations,Order and Degree
+ICSE,12,Mathematics,Differential Equations,Formation of Differential Equations
+ICSE,12,Mathematics,Differential Equations,Variable Separable Method
+ICSE,12,Mathematics,Differential Equations,Linear Differential Equations
+,,,,
+ICSE,12,Mathematics,Vector Algebra,Vector Operations
+ICSE,12,Mathematics,Vector Algebra,Scalar Product
+ICSE,12,Mathematics,Vector Algebra,Vector Product
+ICSE,12,Mathematics,Vector Algebra,Applications of Vectors
+,,,,
+ICSE,12,Mathematics,Three Dimensional Geometry,Coordinate System
+ICSE,12,Mathematics,Three Dimensional Geometry,Equation of a Line
+ICSE,12,Mathematics,Three Dimensional Geometry,Equation of a Plane
+ICSE,12,Mathematics,Three Dimensional Geometry,Distance between Point and Plane
+,,,,
+ICSE,12,Mathematics,Probability,Conditional Probability
+ICSE,12,Mathematics,Probability,Probability Distribution
+ICSE,12,Mathematics,Probability,Random Variable
+ICSE,12,Mathematics,Probability,Bayes Theorem
+ICSE,11,Mathematics,Sets,Definition of Sets
+ICSE,11,Mathematics,Sets,Types of Sets
+ICSE,11,Mathematics,Sets,Operations on Sets
+ICSE,11,Mathematics,Sets,Venn Diagrams
+,,,,
+ICSE,11,Mathematics,Relations and Functions,Ordered Pairs
+ICSE,11,Mathematics,Relations and Functions,Relations
+ICSE,11,Mathematics,Relations and Functions,Functions
+ICSE,11,Mathematics,Relations and Functions,Graphs of Functions
+,,,,
+ICSE,11,Mathematics,Trigonometric Functions,Trigonometric Ratios
+ICSE,11,Mathematics,Trigonometric Functions,Trigonometric Identities
+ICSE,11,Mathematics,Trigonometric Functions,Trigonometric Equations
+ICSE,11,Mathematics,Trigonometric Functions,Graphs of Trigonometric Functions
+,,,,
+ICSE,11,Mathematics,Principle of Mathematical Induction,Statements of Induction
+ICSE,11,Mathematics,Principle of Mathematical Induction,Steps of Induction
+ICSE,11,Mathematics,Principle of Mathematical Induction,Simple Applications
+,,,,
+ICSE,11,Mathematics,Complex Numbers,Complex Number Representation
+ICSE,11,Mathematics,Complex Numbers,Algebra of Complex Numbers
+ICSE,11,Mathematics,Complex Numbers,Argand Plane
+,,,,
+ICSE,11,Mathematics,Linear Inequalities,Inequalities in One Variable
+ICSE,11,Mathematics,Linear Inequalities,Inequalities in Two Variables
+ICSE,11,Mathematics,Linear Inequalities,Graphical Representation
+,,,,
+ICSE,11,Mathematics,Permutations and Combinations,Fundamental Principle of Counting
+ICSE,11,Mathematics,Permutations and Combinations,Permutations
+ICSE,11,Mathematics,Permutations and Combinations,Combinations
+,,,,
+ICSE,11,Mathematics,Binomial Theorem,Binomial Expansion
+ICSE,11,Mathematics,Binomial Theorem,General Term
+ICSE,11,Mathematics,Binomial Theorem,Middle Term
+,,,,
+ICSE,11,Mathematics,Sequences and Series,Arithmetic Progressions
+ICSE,11,Mathematics,Sequences and Series,Geometric Progressions
+ICSE,11,Mathematics,Sequences and Series,Sum of Series
+,,,,
+ICSE,11,Mathematics,Straight Lines,Slope of a Line
+ICSE,11,Mathematics,Straight Lines,Equation of a Line
+ICSE,11,Mathematics,Straight Lines,Distance of a Point from Line
+,,,,
+ICSE,11,Mathematics,Conic Sections,Circle
+ICSE,11,Mathematics,Conic Sections,Parabola
+ICSE,11,Mathematics,Conic Sections,Ellipse
+ICSE,11,Mathematics,Conic Sections,Hyperbola
+,,,,
+ICSE,11,Mathematics,Introduction to Three Dimensional Geometry,Coordinate System
+ICSE,11,Mathematics,Introduction to Three Dimensional Geometry,Distance Formula
+ICSE,11,Mathematics,Introduction to Three Dimensional Geometry,Section Formula
+,,,,
+ICSE,11,Mathematics,Limits and Derivatives,Limits
+ICSE,11,Mathematics,Limits and Derivatives,Derivatives
+ICSE,11,Mathematics,Limits and Derivatives,Standard Derivatives
+,,,,
+ICSE,11,Mathematics,Statistics,Mean
+ICSE,11,Mathematics,Statistics,Median
+ICSE,11,Mathematics,Statistics,Standard Deviation
+,,,,
+ICSE,11,Mathematics,Probability,Random Experiments
+ICSE,11,Mathematics,Probability,Sample Space
+ICSE,11,Mathematics,Probability,Events
+ICSE,10,Mathematics,Commercial Mathematics,Percentage
+ICSE,10,Mathematics,Commercial Mathematics,Profit and Loss
+ICSE,10,Mathematics,Commercial Mathematics,Simple Interest
+ICSE,10,Mathematics,Commercial Mathematics,Compound Interest
+ICSE,10,Mathematics,Commercial Mathematics,Discount
+,,,,
+ICSE,10,Mathematics,Algebra,Polynomials
+ICSE,10,Mathematics,Algebra,Factorisation
+ICSE,10,Mathematics,Algebra,Algebraic Identities
+ICSE,10,Mathematics,Algebra,Simultaneous Equations
+,,,,
+ICSE,10,Mathematics,Linear Inequations,Solving Linear Inequations
+ICSE,10,Mathematics,Linear Inequations,Graphical Representation
+ICSE,10,Mathematics,Linear Inequations,Solution Sets
+,,,,
+ICSE,10,Mathematics,Quadratic Equations,Standard Form
+ICSE,10,Mathematics,Quadratic Equations,Factorisation Method
+ICSE,10,Mathematics,Quadratic Equations,Quadratic Formula
+ICSE,10,Mathematics,Quadratic Equations,Nature of Roots
+ICSE,10,Mathematics,Quadratic Equations,Word Problems
+,,,,
+ICSE,10,Mathematics,Arithmetic Progressions,Definition of AP
+ICSE,10,Mathematics,Arithmetic Progressions,Nth Term
+ICSE,10,Mathematics,Arithmetic Progressions,Sum of Terms
+ICSE,10,Mathematics,Arithmetic Progressions,Application Problems
+,,,,
+ICSE,10,Mathematics,Coordinate Geometry,Cartesian Plane
+ICSE,10,Mathematics,Coordinate Geometry,Distance Formula
+ICSE,10,Mathematics,Coordinate Geometry,Section Formula
+ICSE,10,Mathematics,Coordinate Geometry,Area of Triangle
+,,,,
+ICSE,10,Mathematics,Geometry,Angle Properties
+ICSE,10,Mathematics,Geometry,Triangle Properties
+ICSE,10,Mathematics,Geometry,Circle Theorems
+ICSE,10,Mathematics,Geometry,Constructions
+,,,,
+ICSE,10,Mathematics,Trigonometry,Trigonometric Ratios
+ICSE,10,Mathematics,Trigonometry,Trigonometric Identities
+ICSE,10,Mathematics,Trigonometry,Heights and Distances
+,,,,
+ICSE,10,Mathematics,Mensuration,Surface Area of Solids
+ICSE,10,Mathematics,Mensuration,Volume of Solids
+ICSE,10,Mathematics,Mensuration,Combination of Solids
+,,,,
+ICSE,10,Mathematics,Statistics,Mean
+ICSE,10,Mathematics,Statistics,Median
+ICSE,10,Mathematics,Statistics,Mode
+ICSE,10,Mathematics,Statistics,Histograms
+,,,,
+ICSE,10,Mathematics,Probability,Basic Probability
+ICSE,10,Mathematics,Probability,Simple Probability Problems
+ICSE,9,Mathematics,Rational and Irrational Numbers,Rational Numbers
+ICSE,9,Mathematics,Rational and Irrational Numbers,Irrational Numbers
+ICSE,9,Mathematics,Rational and Irrational Numbers,Number Line Representation
+,,,,
+ICSE,9,Mathematics,Algebraic Expressions,Terms and Coefficients
+ICSE,9,Mathematics,Algebraic Expressions,Addition of Expressions
+ICSE,9,Mathematics,Algebraic Expressions,Subtraction of Expressions
+ICSE,9,Mathematics,Algebraic Expressions,Multiplication of Expressions
+,,,,
+ICSE,9,Mathematics,Factorisation,Factorisation by Common Factors
+ICSE,9,Mathematics,Factorisation,Factorisation using Identities
+ICSE,9,Mathematics,Factorisation,Solving Simple Equations
+,,,,
+ICSE,9,Mathematics,Linear Equations,Formation of Linear Equations
+ICSE,9,Mathematics,Linear Equations,Solving Linear Equations
+ICSE,9,Mathematics,Linear Equations,Word Problems
+,,,,
+ICSE,9,Mathematics,Indices,Laws of Indices
+ICSE,9,Mathematics,Indices,Standard Form
+ICSE,9,Mathematics,Indices,Application Problems
+,,,,
+ICSE,9,Mathematics,Expansions,Expansion using Identities
+ICSE,9,Mathematics,Expansions,Binomial Expansion
+ICSE,9,Mathematics,Expansions,Simplification
+,,,,
+ICSE,9,Mathematics,Coordinate Geometry,Cartesian Plane
+ICSE,9,Mathematics,Coordinate Geometry,Plotting of Points
+ICSE,9,Mathematics,Coordinate Geometry,Distance between Points
+,,,,
+ICSE,9,Mathematics,Geometry,Lines and Angles
+ICSE,9,Mathematics,Geometry,Triangles
+ICSE,9,Mathematics,Geometry,Quadrilaterals
+ICSE,9,Mathematics,Geometry,Circle Properties
+,,,,
+ICSE,9,Mathematics,Trigonometry,Trigonometric Ratios
+ICSE,9,Mathematics,Trigonometry,Trigonometric Identities
+ICSE,9,Mathematics,Trigonometry,Simple Applications
+,,,,
+ICSE,9,Mathematics,Mensuration,Area of Plane Figures
+ICSE,9,Mathematics,Mensuration,Surface Area of Solids
+ICSE,9,Mathematics,Mensuration,Volume of Solids
+,,,,
+ICSE,9,Mathematics,Statistics,Collection of Data
+ICSE,9,Mathematics,Statistics,Graphical Representation
+ICSE,9,Mathematics,Statistics,Mean of Data
+ICSE,8,Mathematics,Rational Numbers,Definition of Rational Numbers
+ICSE,8,Mathematics,Rational Numbers,Properties of Rational Numbers
+ICSE,8,Mathematics,Rational Numbers,Operations on Rational Numbers
+ICSE,8,Mathematics,Rational Numbers,Representation on Number Line
+,,,,
+ICSE,8,Mathematics,Exponents,Laws of Exponents
+ICSE,8,Mathematics,Exponents,Positive and Negative Exponents
+ICSE,8,Mathematics,Exponents,Standard Form
+,,,,
+ICSE,8,Mathematics,Algebraic Expressions,Terms and Coefficients
+ICSE,8,Mathematics,Algebraic Expressions,Addition of Expressions
+ICSE,8,Mathematics,Algebraic Expressions,Subtraction of Expressions
+ICSE,8,Mathematics,Algebraic Expressions,Multiplication of Expressions
+,,,,
+ICSE,8,Mathematics,Factorisation,Factorisation by Common Factors
+ICSE,8,Mathematics,Factorisation,Factorisation using Identities
+ICSE,8,Mathematics,Factorisation,Simple Algebraic Factorisation
+,,,,
+ICSE,8,Mathematics,Linear Equations,Formation of Linear Equations
+ICSE,8,Mathematics,Linear Equations,Solving Linear Equations
+ICSE,8,Mathematics,Linear Equations,Word Problems
+,,,,
+ICSE,8,Mathematics,Geometry,Types of Angles
+ICSE,8,Mathematics,Geometry,Properties of Triangles
+ICSE,8,Mathematics,Geometry,Quadrilaterals
+ICSE,8,Mathematics,Geometry,Circle Basics
+,,,,
+ICSE,8,Mathematics,Mensuration,Area of Plane Figures
+ICSE,8,Mathematics,Mensuration,Surface Area of Solids
+ICSE,8,Mathematics,Mensuration,Volume of Solids
+,,,,
+ICSE,8,Mathematics,Data Handling,Collection of Data
+ICSE,8,Mathematics,Data Handling,Bar Graphs
+ICSE,8,Mathematics,Data Handling,Pie Charts
+,,,,
+ICSE,8,Mathematics,Probability,Simple Probability
+ICSE,8,Mathematics,Probability,Experimental Probability
+ICSE,7,Mathematics,Integers,Positive and Negative Integers
+ICSE,7,Mathematics,Integers,Addition of Integers
+ICSE,7,Mathematics,Integers,Subtraction of Integers
+ICSE,7,Mathematics,Integers,Properties of Integers
+,,,,
+ICSE,7,Mathematics,Fractions and Decimals,Types of Fractions
+ICSE,7,Mathematics,Fractions and Decimals,Operations on Fractions
+ICSE,7,Mathematics,Fractions and Decimals,Decimal Numbers
+ICSE,7,Mathematics,Fractions and Decimals,Operations on Decimals
+,,,,
+ICSE,7,Mathematics,Algebraic Expressions,Variables and Constants
+ICSE,7,Mathematics,Algebraic Expressions,Simple Expressions
+ICSE,7,Mathematics,Algebraic Expressions,Evaluation of Expressions
+,,,,
+ICSE,7,Mathematics,Simple Linear Equations,Formation of Equations
+ICSE,7,Mathematics,Simple Linear Equations,Solving Linear Equations
+ICSE,7,Mathematics,Simple Linear Equations,Word Problems
+,,,,
+ICSE,7,Mathematics,Geometry,Lines and Angles
+ICSE,7,Mathematics,Geometry,Triangles
+ICSE,7,Mathematics,Geometry,Polygons
+,,,,
+ICSE,7,Mathematics,Mensuration,Perimeter of Shapes
+ICSE,7,Mathematics,Mensuration,Area of Rectangles
+ICSE,7,Mathematics,Mensuration,Area of Squares
+,,,,
+ICSE,7,Mathematics,Data Handling,Collection of Data
+ICSE,7,Mathematics,Data Handling,Mean
+ICSE,7,Mathematics,Data Handling,Bar Graphs
+,,,,
+ICSE,7,Mathematics,Ratio and Proportion,Ratio
+ICSE,7,Mathematics,Ratio and Proportion,Proportion
+ICSE,7,Mathematics,Ratio and Proportion,Unitary Method
+ICSE,6,Mathematics,Number System,Counting Numbers
+ICSE,6,Mathematics,Number System,Place Value
+ICSE,6,Mathematics,Number System,Comparison of Numbers
+ICSE,6,Mathematics,Number System,Operations on Numbers
+,,,,
+ICSE,6,Mathematics,Integers,Positive Integers
+ICSE,6,Mathematics,Integers,Negative Integers
+ICSE,6,Mathematics,Integers,Addition of Integers
+ICSE,6,Mathematics,Integers,Subtraction of Integers
+,,,,
+ICSE,6,Mathematics,Fractions,Proper Fractions
+ICSE,6,Mathematics,Fractions,Improper Fractions
+ICSE,6,Mathematics,Fractions,Equivalent Fractions
+ICSE,6,Mathematics,Fractions,Operations on Fractions
+,,,,
+ICSE,6,Mathematics,Decimals,Place Value of Decimals
+ICSE,6,Mathematics,Decimals,Addition of Decimals
+ICSE,6,Mathematics,Decimals,Subtraction of Decimals
+ICSE,6,Mathematics,Decimals,Decimal Word Problems
+,,,,
+ICSE,6,Mathematics,Ratio and Proportion,Ratio
+ICSE,6,Mathematics,Ratio and Proportion,Equivalent Ratios
+ICSE,6,Mathematics,Ratio and Proportion,Proportion
+ICSE,6,Mathematics,Ratio and Proportion,Simple Word Problems
+,,,,
+ICSE,6,Mathematics,Algebra,Variables
+ICSE,6,Mathematics,Algebra,Simple Algebraic Expressions
+ICSE,6,Mathematics,Algebra,Forming Expressions
+ICSE,6,Mathematics,Algebra,Simple Equations
+,,,,
+ICSE,6,Mathematics,Geometry,Points Lines and Angles
+ICSE,6,Mathematics,Geometry,Types of Angles
+ICSE,6,Mathematics,Geometry,Basic Shapes
+ICSE,6,Mathematics,Geometry,Polygons
+,,,,
+ICSE,6,Mathematics,Mensuration,Perimeter
+ICSE,6,Mathematics,Mensuration,Area of Rectangle
+ICSE,6,Mathematics,Mensuration,Area of Square
+ICSE,6,Mathematics,Mensuration,Simple Word Problems
+,,,,
+ICSE,6,Mathematics,Data Handling,Collection of Data
+ICSE,6,Mathematics,Data Handling,Pictographs
+ICSE,6,Mathematics,Data Handling,Bar Graphs
+ICSE,6,Mathematics,Data Handling,Interpretation of Data
+ICSE,5,Mathematics,Numbers,Counting Numbers
+ICSE,5,Mathematics,Numbers,Place Value
+ICSE,5,Mathematics,Numbers,Comparison of Numbers
+,,,,
+ICSE,5,Mathematics,Addition and Subtraction,Addition of Numbers
+ICSE,5,Mathematics,Addition and Subtraction,Subtraction of Numbers
+ICSE,5,Mathematics,Addition and Subtraction,Word Problems
+,,,,
+ICSE,5,Mathematics,Multiplication and Division,Multiplication Tables
+ICSE,5,Mathematics,Multiplication and Division,Multiplication of Numbers
+ICSE,5,Mathematics,Multiplication and Division,Division of Numbers
+ICSE,5,Mathematics,Multiplication and Division,Word Problems
+,,,,
+ICSE,5,Mathematics,Fractions,Parts of a Whole
+ICSE,5,Mathematics,Fractions,Types of Fractions
+ICSE,5,Mathematics,Fractions,Simple Fraction Problems
+,,,,
+ICSE,5,Mathematics,Decimals,Decimal Fractions
+ICSE,5,Mathematics,Decimals,Place Value of Decimals
+ICSE,5,Mathematics,Decimals,Simple Decimal Operations
+,,,,
+ICSE,5,Mathematics,Measurement,Length
+ICSE,5,Mathematics,Measurement,Weight
+ICSE,5,Mathematics,Measurement,Capacity
+ICSE,5,Mathematics,Measurement,Unit Conversion
+,,,,
+ICSE,5,Mathematics,Time,Reading Time
+ICSE,5,Mathematics,Time,Days and Months
+ICSE,5,Mathematics,Time,Simple Time Problems
+,,,,
+ICSE,5,Mathematics,Money,Indian Currency
+ICSE,5,Mathematics,Money,Addition of Money
+ICSE,5,Mathematics,Money,Subtraction of Money
+,,,,
+ICSE,5,Mathematics,Geometry,Basic Shapes
+ICSE,5,Mathematics,Geometry,Lines and Angles
+ICSE,5,Mathematics,Geometry,Simple Symmetry
+,,,,
+ICSE,5,Mathematics,Data Handling,Collection of Data
+ICSE,5,Mathematics,Data Handling,Pictographs
+ICSE,5,Mathematics,Data Handling,Reading Graphs
+ICSE,4,Mathematics,Numbers,Counting Numbers
+ICSE,4,Mathematics,Numbers,Place Value
+ICSE,4,Mathematics,Numbers,Comparison of Numbers
+ICSE,4,Mathematics,Numbers,Rounding Off
+,,,,
+ICSE,4,Mathematics,Addition,Addition without Carry
+ICSE,4,Mathematics,Addition,Addition with Carry
+ICSE,4,Mathematics,Addition,Word Problems
+,,,,
+ICSE,4,Mathematics,Subtraction,Subtraction without Borrow
+ICSE,4,Mathematics,Subtraction,Subtraction with Borrow
+ICSE,4,Mathematics,Subtraction,Word Problems
+,,,,
+ICSE,4,Mathematics,Multiplication,Multiplication Tables
+ICSE,4,Mathematics,Multiplication,Multiplication of Numbers
+ICSE,4,Mathematics,Multiplication,Word Problems
+,,,,
+ICSE,4,Mathematics,Division,Division as Equal Sharing
+ICSE,4,Mathematics,Division,Division by One Digit
+ICSE,4,Mathematics,Division,Division with Remainder
+ICSE,4,Mathematics,Division,Word Problems
+,,,,
+ICSE,4,Mathematics,Fractions,Parts of a Whole
+ICSE,4,Mathematics,Fractions,Proper Fractions
+ICSE,4,Mathematics,Fractions,Equivalent Fractions
+,,,,
+ICSE,4,Mathematics,Measurement,Length Measurement
+ICSE,4,Mathematics,Measurement,Weight Measurement
+ICSE,4,Mathematics,Measurement,Capacity Measurement
+ICSE,4,Mathematics,Measurement,Unit Conversion
+,,,,
+ICSE,4,Mathematics,Time,Reading Clock
+ICSE,4,Mathematics,Time,AM and PM
+ICSE,4,Mathematics,Time,Word Problems
+,,,,
+ICSE,4,Mathematics,Money,Indian Currency
+ICSE,4,Mathematics,Money,Addition of Money
+ICSE,4,Mathematics,Money,Subtraction of Money
+,,,,
+ICSE,4,Mathematics,Geometry,Basic Shapes
+ICSE,4,Mathematics,Geometry,Lines and Angles
+ICSE,4,Mathematics,Geometry,Polygons
+ICSE,4,Mathematics,Geometry,Symmetry Basics
+,,,,
+ICSE,4,Mathematics,Data Handling,Collection of Data
+ICSE,4,Mathematics,Data Handling,Pictographs
+ICSE,4,Mathematics,Data Handling,Bar Graphs
+ICSE,4,Mathematics,Data Handling,Reading Graphs
+ICSE,3,Mathematics,Numbers,Counting Numbers
+ICSE,3,Mathematics,Numbers,Number Names
+ICSE,3,Mathematics,Numbers,Place Value
+,,,,
+ICSE,3,Mathematics,Addition,Addition of Numbers
+ICSE,3,Mathematics,Addition,Addition with Carry
+ICSE,3,Mathematics,Addition,Word Problems
+,,,,
+ICSE,3,Mathematics,Subtraction,Subtraction of Numbers
+ICSE,3,Mathematics,Subtraction,Subtraction with Borrow
+ICSE,3,Mathematics,Subtraction,Word Problems
+,,,,
+ICSE,3,Mathematics,Multiplication,Repeated Addition
+ICSE,3,Mathematics,Multiplication,Multiplication Tables
+ICSE,3,Mathematics,Multiplication,Word Problems
+,,,,
+ICSE,3,Mathematics,Division,Equal Grouping
+ICSE,3,Mathematics,Division,Simple Division
+ICSE,3,Mathematics,Division,Word Problems
+,,,,
+ICSE,3,Mathematics,Fractions,Halves
+ICSE,3,Mathematics,Fractions,Quarters
+ICSE,3,Mathematics,Fractions,Simple Fraction Problems
+,,,,
+ICSE,3,Mathematics,Measurement,Length
+ICSE,3,Mathematics,Measurement,Weight
+ICSE,3,Mathematics,Measurement,Capacity
+,,,,
+ICSE,3,Mathematics,Time,Days of Week
+ICSE,3,Mathematics,Time,Months of Year
+ICSE,3,Mathematics,Time,Reading Time
+,,,,
+ICSE,3,Mathematics,Money,Coins
+ICSE,3,Mathematics,Money,Notes
+ICSE,3,Mathematics,Money,Simple Transactions
+,,,,
+ICSE,3,Mathematics,Geometry,Basic Shapes
+ICSE,3,Mathematics,Geometry,Lines
+ICSE,3,Mathematics,Geometry,Simple Patterns
+ICSE,2,Mathematics,Numbers,Counting Numbers
+ICSE,2,Mathematics,Numbers,Number Names
+ICSE,2,Mathematics,Numbers,Place Value
+,,,,
+ICSE,2,Mathematics,Addition,Addition without Carry
+ICSE,2,Mathematics,Addition,Addition with Carry
+ICSE,2,Mathematics,Addition,Simple Word Problems
+,,,,
+ICSE,2,Mathematics,Subtraction,Subtraction without Borrow
+ICSE,2,Mathematics,Subtraction,Subtraction with Borrow
+ICSE,2,Mathematics,Subtraction,Simple Word Problems
+,,,,
+ICSE,2,Mathematics,Multiplication,Repeated Addition
+ICSE,2,Mathematics,Multiplication,Multiplication Tables
+ICSE,2,Mathematics,Multiplication,Simple Multiplication Problems
+,,,,
+ICSE,2,Mathematics,Measurement,Length Measurement
+ICSE,2,Mathematics,Measurement,Weight Measurement
+ICSE,2,Mathematics,Measurement,Capacity Measurement
+,,,,
+ICSE,2,Mathematics,Time,Days of Week
+ICSE,2,Mathematics,Time,Months of Year
+ICSE,2,Mathematics,Time,Reading Clock
+,,,,
+ICSE,2,Mathematics,Money,Coins
+ICSE,2,Mathematics,Money,Notes
+ICSE,2,Mathematics,Money,Simple Money Problems
+,,,,
+ICSE,2,Mathematics,Shapes,Basic Shapes
+ICSE,2,Mathematics,Shapes,Flat Shapes
+ICSE,2,Mathematics,Shapes,Solid Shapes
+ICSE,1,Mathematics,Numbers,Counting Numbers
+ICSE,1,Mathematics,Numbers,Number Names
+ICSE,1,Mathematics,Numbers,Comparison of Numbers
+,,,,
+ICSE,1,Mathematics,Counting,Forward Counting
+ICSE,1,Mathematics,Counting,Backward Counting
+ICSE,1,Mathematics,Counting,Skip Counting
+,,,,
+ICSE,1,Mathematics,Addition,Single Digit Addition
+ICSE,1,Mathematics,Addition,Addition using Objects
+ICSE,1,Mathematics,Addition,Simple Word Problems
+,,,,
+ICSE,1,Mathematics,Subtraction,Single Digit Subtraction
+ICSE,1,Mathematics,Subtraction,Subtraction using Objects
+ICSE,1,Mathematics,Subtraction,Simple Word Problems
+,,,,
+ICSE,1,Mathematics,Shapes,Basic Shapes
+ICSE,1,Mathematics,Shapes,Flat Shapes
+ICSE,1,Mathematics,Shapes,Solid Shapes
+,,,,
+ICSE,1,Mathematics,Measurement,Comparison of Length
+ICSE,1,Mathematics,Measurement,Comparison of Weight
+ICSE,1,Mathematics,Measurement,Comparison of Capacity
+,,,,
+ICSE,1,Mathematics,Time,Days of Week
+ICSE,1,Mathematics,Time,Daily Activities
+,,,,
+ICSE,1,Mathematics,Money,Coins Identification
+ICSE,1,Mathematics,Money,Simple Buying and Selling
+State Board,1,Mathematics,Numbers,Counting Numbers
+State Board,1,Mathematics,Numbers,Number Recognition
+State Board,1,Mathematics,Numbers,Number Comparison
+State Board,1,Mathematics,Addition,Single Digit Addition
+State Board,1,Mathematics,Addition,Addition Using Objects
+State Board,1,Mathematics,Addition,Simple Word Problems
+State Board,1,Mathematics,Subtraction,Single Digit Subtraction
+State Board,1,Mathematics,Subtraction,Subtraction Using Objects
+State Board,1,Mathematics,Subtraction,Simple Word Problems
+State Board,1,Mathematics,Shapes,Basic Shapes
+State Board,1,Mathematics,Shapes,Flat Shapes
+State Board,1,Mathematics,Shapes,Solid Shapes
+State Board,1,Mathematics,Time,Days of Week
+State Board,1,Mathematics,Time,Daily Activities
+State Board,1,Mathematics,Money,Coin Identification
+State Board,1,Mathematics,Money,Simple Buying
+,,,,
+State Board,2,Mathematics,Numbers,Counting Numbers
+State Board,2,Mathematics,Numbers,Number Names
+State Board,2,Mathematics,Numbers,Place Value
+State Board,2,Mathematics,Addition,Addition Without Carry
+State Board,2,Mathematics,Addition,Addition With Carry
+State Board,2,Mathematics,Addition,Word Problems
+State Board,2,Mathematics,Subtraction,Subtraction Without Borrow
+State Board,2,Mathematics,Subtraction,Subtraction With Borrow
+State Board,2,Mathematics,Subtraction,Word Problems
+State Board,2,Mathematics,Multiplication,Repeated Addition
+State Board,2,Mathematics,Multiplication,Multiplication Tables
+State Board,2,Mathematics,Time,Reading Clock
+State Board,2,Mathematics,Money,Coins and Notes
+,,,,
+State Board,3,Mathematics,Numbers,Place Value
+State Board,3,Mathematics,Numbers,Comparison
+State Board,3,Mathematics,Addition,Addition of Numbers
+State Board,3,Mathematics,Addition,Word Problems
+State Board,3,Mathematics,Subtraction,Subtraction of Numbers
+State Board,3,Mathematics,Subtraction,Word Problems
+State Board,3,Mathematics,Multiplication,Multiplication Tables
+State Board,3,Mathematics,Multiplication,Word Problems
+State Board,3,Mathematics,Division,Simple Division
+State Board,3,Mathematics,Division,Equal Sharing
+State Board,3,Mathematics,Fractions,Halves and Quarters
+,,,,
+State Board,4,Mathematics,Numbers,Place Value
+State Board,4,Mathematics,Numbers,Rounding Off
+State Board,4,Mathematics,Factors and Multiples,Factors
+State Board,4,Mathematics,Factors and Multiples,Multiples
+State Board,4,Mathematics,Fractions,Proper Fractions
+State Board,4,Mathematics,Fractions,Equivalent Fractions
+State Board,4,Mathematics,Decimals,Decimal Place Value
+State Board,4,Mathematics,Decimals,Decimal Comparison
+State Board,4,Mathematics,Geometry,Basic Shapes
+State Board,4,Mathematics,Geometry,Lines and Angles
+,,,,
+State Board,5,Mathematics,Numbers,Place Value
+State Board,5,Mathematics,Numbers,Comparison
+State Board,5,Mathematics,Fractions,Operations on Fractions
+State Board,5,Mathematics,Fractions,Word Problems
+State Board,5,Mathematics,Decimals,Decimal Operations
+State Board,5,Mathematics,Decimals,Decimal Word Problems
+State Board,5,Mathematics,Percentage,Basic Percentage
+State Board,5,Mathematics,Percentage,Applications
+State Board,5,Mathematics,Geometry,Basic Geometry
+,,,,
+State Board,6,Mathematics,Integers,Positive and Negative Integers
+State Board,6,Mathematics,Integers,Operations on Integers
+State Board,6,Mathematics,Fractions,Equivalent Fractions
+State Board,6,Mathematics,Fractions,Operations on Fractions
+State Board,6,Mathematics,Decimals,Decimal Operations
+State Board,6,Mathematics,Ratio and Proportion,Ratio
+State Board,6,Mathematics,Ratio and Proportion,Proportion
+State Board,6,Mathematics,Algebra,Variables and Expressions
+,,,,
+State Board,7,Mathematics,Rational Numbers,Definition
+State Board,7,Mathematics,Rational Numbers,Operations
+State Board,7,Mathematics,Linear Equations,Simple Equations
+State Board,7,Mathematics,Linear Equations,Word Problems
+State Board,7,Mathematics,Geometry,Lines and Angles
+State Board,7,Mathematics,Geometry,Triangles
+State Board,7,Mathematics,Mensuration,Perimeter and Area
+State Board,7,Mathematics,Data Handling,Mean
+,,,,
+State Board,8,Mathematics,Rational Numbers,Properties
+State Board,8,Mathematics,Rational Numbers,Operations
+State Board,8,Mathematics,Linear Equations,Solving Equations
+State Board,8,Mathematics,Linear Equations,Applications
+State Board,8,Mathematics,Algebraic Expressions,Addition and Subtraction
+State Board,8,Mathematics,Algebraic Expressions,Multiplication
+State Board,8,Mathematics,Geometry,Quadrilaterals
+State Board,8,Mathematics,Geometry,Polygons
+,,,,
+State Board,9,Mathematics,Number Systems,Rational Numbers
+State Board,9,Mathematics,Number Systems,Irrational Numbers
+State Board,9,Mathematics,Polynomials,Factorisation
+State Board,9,Mathematics,Polynomials,Identities
+State Board,9,Mathematics,Linear Equations,Solving Equations
+State Board,9,Mathematics,Geometry,Triangles
+State Board,9,Mathematics,Statistics,Data Representation
+,,,,
+State Board,10,Mathematics,Real Numbers,HCF and LCM
+State Board,10,Mathematics,Real Numbers,Euclid Division Lemma
+State Board,10,Mathematics,Polynomials,Zeroes of Polynomial
+State Board,10,Mathematics,Quadratic Equations,Factorisation
+State Board,10,Mathematics,Quadratic Equations,Quadratic Formula
+State Board,10,Mathematics,Trigonometry,Trigonometric Ratios
+State Board,10,Mathematics,Statistics,Mean and Median
+,,,,
+State Board,11,Mathematics,Sets,Operations on Sets
+State Board,11,Mathematics,Relations and Functions,Functions
+State Board,11,Mathematics,Trigonometry,Trigonometric Identities
+State Board,11,Mathematics,Permutations and Combinations,Counting Techniques
+State Board,11,Mathematics,Probability,Sample Space
+,,,,
+State Board,12,Mathematics,Relations and Functions,Domain and Range
+State Board,12,Mathematics,Calculus,Differentiation
+State Board,12,Mathematics,Calculus,Integration
+State Board,12,Mathematics,Vectors,Vector Operations
+State Board,12,Mathematics,3D Geometry,Equation of Plane
+State Board,12,Mathematics,Probability,Probability Distribution
+IB,1,Mathematics,Numbers,Counting Numbers
+IB,1,Mathematics,Numbers,Number Recognition
+IB,1,Mathematics,Numbers,Number Comparison
+IB,1,Mathematics,Patterns,Repeating Patterns
+IB,1,Mathematics,Patterns,Growing Patterns
+IB,1,Mathematics,Shapes,Basic Shapes
+IB,1,Mathematics,Shapes,Flat Shapes
+,,,,
+IB,2,Mathematics,Numbers,Counting Numbers
+IB,2,Mathematics,Numbers,Place Value
+IB,2,Mathematics,Addition and Subtraction,Addition Concepts
+IB,2,Mathematics,Addition and Subtraction,Subtraction Concepts
+IB,2,Mathematics,Shapes,Two Dimensional Shapes
+IB,2,Mathematics,Shapes,Three Dimensional Shapes
+,,,,
+IB,3,Mathematics,Multiplication,Repeated Addition
+IB,3,Mathematics,Multiplication,Multiplication Tables
+IB,3,Mathematics,Division,Equal Sharing
+IB,3,Mathematics,Division,Simple Division
+IB,3,Mathematics,Fractions,Parts of a Whole
+IB,3,Mathematics,Fractions,Simple Fractions
+,,,,
+IB,4,Mathematics,Number Sense,Place Value
+IB,4,Mathematics,Number Sense,Estimation
+IB,4,Mathematics,Fractions,Equivalent Fractions
+IB,4,Mathematics,Fractions,Fraction Comparison
+IB,4,Mathematics,Measurement,Length Measurement
+IB,4,Mathematics,Measurement,Weight Measurement
+,,,,
+IB,5,Mathematics,Decimals,Decimal Place Value
+IB,5,Mathematics,Decimals,Decimal Operations
+IB,5,Mathematics,Percentages,Basic Percentages
+IB,5,Mathematics,Percentages,Percentage Applications
+IB,5,Mathematics,Geometry,Angles
+IB,5,Mathematics,Geometry,Polygons
+,,,,
+IB,6,Mathematics,Ratios,Ratio Concepts
+IB,6,Mathematics,Ratios,Ratio Applications
+IB,6,Mathematics,Integers,Positive and Negative Integers
+IB,6,Mathematics,Integers,Integer Operations
+IB,6,Mathematics,Algebra Basics,Variables
+IB,6,Mathematics,Algebra Basics,Simple Expressions
+,,,,
+IB,7,Mathematics,Algebra,Expressions
+IB,7,Mathematics,Algebra,Simple Equations
+IB,7,Mathematics,Geometry,Angles and Lines
+IB,7,Mathematics,Geometry,Triangles
+IB,7,Mathematics,Data Handling,Data Collection
+IB,7,Mathematics,Data Handling,Mean and Mode
+,,,,
+IB,8,Mathematics,Linear Equations,Solving Linear Equations
+IB,8,Mathematics,Linear Equations,Word Problems
+IB,8,Mathematics,Graphs,Cartesian Plane
+IB,8,Mathematics,Graphs,Plotting Points
+IB,8,Mathematics,Probability,Simple Probability
+IB,8,Mathematics,Probability,Experimental Probability
+,,,,
+IB,9,Mathematics,Functions,Definition of Functions
+IB,9,Mathematics,Functions,Graphs of Functions
+IB,9,Mathematics,Algebra,Factorisation
+IB,9,Mathematics,Algebra,Identities
+IB,9,Mathematics,Statistics,Data Representation
+IB,9,Mathematics,Statistics,Mean Median Mode
+,,,,
+IB,10,Mathematics,Trigonometry,Trigonometric Ratios
+IB,10,Mathematics,Trigonometry,Trigonometric Applications
+IB,10,Mathematics,Quadratic Functions,Standard Form
+IB,10,Mathematics,Quadratic Functions,Graph of Quadratic
+IB,10,Mathematics,Statistics,Probability Distributions
+IB,10,Mathematics,Statistics,Data Analysis
+,,,,
+IB,11,Mathematics,Functions,Composite Functions
+IB,11,Mathematics,Functions,Inverse Functions
+IB,11,Mathematics,Calculus,Limits
+IB,11,Mathematics,Calculus,Differentiation
+IB,11,Mathematics,Probability,Random Variables
+IB,11,Mathematics,Probability,Probability Rules
+,,,,
+IB,12,Mathematics,Calculus,Integration
+IB,12,Mathematics,Calculus,Differential Equations
+IB,12,Mathematics,Statistics,Normal Distribution
+IB,12,Mathematics,Statistics,Statistical Analysis
+IB,12,Mathematics,Vectors,Vector Operations
+IB,12,Mathematics,Vectors,Vector Applications
+IGCSE,1,Mathematics,Numbers,Counting Numbers
+IGCSE,1,Mathematics,Numbers,Number Recognition
+IGCSE,1,Mathematics,Numbers,Number Comparison
+IGCSE,1,Mathematics,Counting,Forward Counting
+IGCSE,1,Mathematics,Counting,Backward Counting
+,,,,
+IGCSE,2,Mathematics,Addition,Single Digit Addition
+IGCSE,2,Mathematics,Addition,Addition Using Objects
+IGCSE,2,Mathematics,Subtraction,Single Digit Subtraction
+IGCSE,2,Mathematics,Subtraction,Subtraction Using Objects
+,,,,
+IGCSE,3,Mathematics,Multiplication,Repeated Addition
+IGCSE,3,Mathematics,Multiplication,Multiplication Tables
+IGCSE,3,Mathematics,Division,Equal Sharing
+IGCSE,3,Mathematics,Division,Simple Division
+IGCSE,3,Mathematics,Fractions,Parts of a Whole
+,,,,
+IGCSE,4,Mathematics,Fractions,Equivalent Fractions
+IGCSE,4,Mathematics,Fractions,Comparison of Fractions
+IGCSE,4,Mathematics,Measurement,Length Measurement
+IGCSE,4,Mathematics,Measurement,Weight Measurement
+,,,,
+IGCSE,5,Mathematics,Decimals,Decimal Place Value
+IGCSE,5,Mathematics,Decimals,Decimal Operations
+IGCSE,5,Mathematics,Percentages,Basic Percentages
+IGCSE,5,Mathematics,Percentages,Percentage Applications
+,,,,
+IGCSE,6,Mathematics,Ratios,Ratio Concepts
+IGCSE,6,Mathematics,Ratios,Ratio Applications
+IGCSE,6,Mathematics,Integers,Positive and Negative Integers
+IGCSE,6,Mathematics,Integers,Integer Operations
+,,,,
+IGCSE,7,Mathematics,Algebra,Algebraic Expressions
+IGCSE,7,Mathematics,Algebra,Simple Equations
+IGCSE,7,Mathematics,Geometry,Lines and Angles
+IGCSE,7,Mathematics,Geometry,Triangles
+,,,,
+IGCSE,8,Mathematics,Linear Equations,Solving Linear Equations
+IGCSE,8,Mathematics,Linear Equations,Word Problems
+IGCSE,8,Mathematics,Graphs,Cartesian Plane
+IGCSE,8,Mathematics,Graphs,Plotting Points
+,,,,
+IGCSE,9,Mathematics,Number Systems,Rational Numbers
+IGCSE,9,Mathematics,Number Systems,Irrational Numbers
+IGCSE,9,Mathematics,Algebra,Factorisation
+IGCSE,9,Mathematics,Algebra,Identities
+IGCSE,9,Mathematics,Statistics,Data Representation
+IGCSE,9,Mathematics,Statistics,Mean Median Mode
+,,,,
+IGCSE,10,Mathematics,Quadratic Equations,Standard Form
+IGCSE,10,Mathematics,Quadratic Equations,Factorisation
+IGCSE,10,Mathematics,Trigonometry,Trigonometric Ratios
+IGCSE,10,Mathematics,Trigonometry,Trigonometric Applications
+IGCSE,10,Mathematics,Probability,Basic Probability
+IGCSE,10,Mathematics,Probability,Simple Problems
+,,,,
+IGCSE,11,Mathematics,Functions,Definition of Functions
+IGCSE,11,Mathematics,Functions,Graphs of Functions
+IGCSE,11,Mathematics,Calculus,Limits
+IGCSE,11,Mathematics,Calculus,Differentiation
+,,,,
+IGCSE,12,Mathematics,Advanced Calculus,Integration
+IGCSE,12,Mathematics,Advanced Calculus,Differential Equations
+IGCSE,12,Mathematics,Vectors,Vector Operations
+IGCSE,12,Mathematics,Vectors,Vector Applications
+College,1,Mathematics,Algebra,Sets and Relations
+College,1,Mathematics,Algebra,Functions
+College,1,Mathematics,Algebra,Matrices
+College,1,Mathematics,Algebra,Determinants
+College,1,Mathematics,Algebra,System of Linear Equations
+,,,,
+College,1,Mathematics,Trigonometry,Trigonometric Functions
+College,1,Mathematics,Trigonometry,Trigonometric Identities
+College,1,Mathematics,Trigonometry,Inverse Trigonometric Functions
+College,1,Mathematics,Trigonometry,Trigonometric Equations
+,,,,
+College,2,Mathematics,Calculus I,Limits
+College,2,Mathematics,Calculus I,Continuity
+College,2,Mathematics,Calculus I,Differentiation
+College,2,Mathematics,Calculus I,Applications of Derivatives
+,,,,
+College,2,Mathematics,Linear Algebra,Vector Spaces
+College,2,Mathematics,Linear Algebra,Basis and Dimension
+College,2,Mathematics,Linear Algebra,Eigen Values
+College,2,Mathematics,Linear Algebra,Eigen Vectors
+College,2,Mathematics,Linear Algebra,Linear Transformations
+,,,,
+College,3,Mathematics,Probability,Random Variables
+College,3,Mathematics,Probability,Probability Distributions
+College,3,Mathematics,Probability,Mathematical Expectation
+College,3,Mathematics,Probability,Moment Generating Functions
+,,,,
+College,3,Mathematics,Statistics,Descriptive Statistics
+College,3,Mathematics,Statistics,Correlation
+College,3,Mathematics,Statistics,Regression
+College,3,Mathematics,Statistics,Hypothesis Testing
+College,3,Mathematics,Statistics,Confidence Intervals
+,,,,
+College,4,Mathematics,Differential Equations,First Order Differential Equations
+College,4,Mathematics,Differential Equations,Higher Order Differential Equations
+College,4,Mathematics,Differential Equations,Applications in Engineering
+College,4,Mathematics,Differential Equations,Laplace Transform
+,,,,
+College,4,Mathematics,Numerical Methods,Error Analysis
+College,4,Mathematics,Numerical Methods,Solution of Linear Equations
+College,4,Mathematics,Numerical Methods,Interpolation
+College,4,Mathematics,Numerical Methods,Numerical Differentiation
+College,4,Mathematics,Numerical Methods,Numerical Integration
