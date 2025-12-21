@@ -1359,6 +1359,8 @@ def create_database(app_instance):
 
 # --- Main Execution Block ---
 if __name__ == '__main__':
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
     # Check for required OAuth environment variables
     missing_vars = [var for var in ['GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET'] if not app.config.get(var)]
     if missing_vars:
@@ -1389,3 +1391,4 @@ if __name__ == '__main__':
     print("----------------------------------------------------")
 
     app.run(debug=True, port=5000)
+
