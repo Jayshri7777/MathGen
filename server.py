@@ -52,7 +52,7 @@ CORS(app)
 app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY', 'default-super-secret-key-change-me-immediately')
 app.config['GOOGLE_CLIENT_ID'] = os.environ.get('GOOGLE_CLIENT_ID')
 app.config['GOOGLE_CLIENT_SECRET'] = os.environ.get('GOOGLE_CLIENT_SECRET')
-app.config['GENAI_API_KEY'] = os.environ.get('GENAI_API_KEY','AIzaSyD_EWDV-I33YQP3oozlSd7QJtO0bpKVeyI')
+app.config['GENAI_API_KEY'] = os.environ.get('GENAI_API_KEY')
 db_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'users.db')
 app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -1387,4 +1387,5 @@ if __name__ == '__main__':
     print("  - /my-scores             (List your attempts)")
     print("  - /review/<attempt_id>   (Review an attempt)")
     print("----------------------------------------------------")
+
     app.run(debug=True, port=5000)
