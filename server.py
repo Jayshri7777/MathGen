@@ -641,6 +641,8 @@ def register():
         board = form.get('board', '').strip()
         password = form.get('password', '')
         confirm_password = form.get('confirm_password', '')
+        country_code = form.get('country_code', '+91').strip()
+        is_whatsapp = True if form.get('is_whatsapp') else False
 
         # ---------- REQUIRED FIELDS ----------
         if not name:
@@ -665,9 +667,13 @@ def register():
             errors['confirm_password'] = 'Please confirm your password.'
 
         # ---------- PHONE ----------
-        phone_digits = re.sub(r'\D', '', phone_number_main)
-        if phone_number_main and len(phone_digits) != 10:
-            errors['phone'] = 'Phone number must be exactly 10 digits.'
+        phone_digits = phone_number_main.strip()
+        if phone_number_main:
+            if not phone_digits.isdigit():
+                errors['phone'] = 'Mobile number must contain only digits.'
+            elif len(phone_digits) != 10:
+                errors['phone'] = 'Mobile number must be exactly 10 digits.'
+
 
         # ---------- EMAIL ----------
         email_regex = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
@@ -707,12 +713,15 @@ def register():
 
         # ---------- CREATE USER ----------
         new_user = User(
-            name=name,
-            email=email,
-            phone_number=phone_digits,
-            grade=grade,
-            board=board
-        )
+    name=name,
+    email=email,
+    phone_number=phone_digits,
+    grade=grade,
+    board=board,
+    is_whatsapp=is_whatsapp,
+    whatsapp_verified=False
+)
+
 
         new_user.set_password(password)
         db.session.add(new_user)
