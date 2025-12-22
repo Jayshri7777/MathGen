@@ -56,9 +56,10 @@ class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
-    phone_number = db.Column(db.String(30), unique=True, nullable=True) 
+    country_code = db.Column(db.String(5), nullable=False, default="+91")  # ✅ ADD
+    phone_number = db.Column(db.String(30), unique=True, nullable=True)
     grade = db.Column(db.String(50), nullable=True)
-    password_hash = db.Column(db.String(256), nullable=True) 
+    password_hash = db.Column(db.String(256), nullable=True)
     age = db.Column(db.Integer, nullable=True)
     city = db.Column(db.String(100), nullable=True)
     postal_code = db.Column(db.String(20), nullable=True)
@@ -67,6 +68,7 @@ class User(UserMixin, db.Model):
     newsletter_consent = db.Column(db.Boolean, default=False)
     board = db.Column(db.String(50), nullable=True)
     profile_completed = db.Column(db.Boolean, default=False)
+
 
 
 
@@ -717,9 +719,8 @@ def register():
     email=email,
     phone_number=phone_digits,
     grade=grade,
+    country_code=country_code,  
     board=board,
-    is_whatsapp=is_whatsapp,
-    whatsapp_verified=False
 )
 
 
