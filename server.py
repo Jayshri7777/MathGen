@@ -799,11 +799,11 @@ def logout():
 def login_google():
     if not app.config.get('GOOGLE_CLIENT_ID') or not app.config.get('GOOGLE_CLIENT_SECRET'):
         flash('Google login is not configured on the server.', 'danger')
-        print("ERROR: GOOGLE OAuth env vars missing.")
         return redirect(url_for('login'))
 
-    redirect_uri = "https://mathgen.onrender.com/auth/google/callback"
-    return oauth.google.authorize_redirect(redirect_uri)
+    return oauth.google.authorize_redirect(
+        "https://mathgen.onrender.com/auth/google/callback"
+    )
 
 
 @app.route('/auth/google/callback')
@@ -837,42 +837,6 @@ def google_callback():
 
     except Exception as e:
         print("GOOGLE AUTH ERROR:", e)
-        flash("Google login failed", "danger")
-        return redirect(url_for('login'))
-
-
-@app.route('/auth/google/callback')
-def google_callback():
-    try:
-        token = oauth.google.authorize_access_token()
-        resp = oauth.google.get('https://openidconnect.googleapis.com/v1/userinfo')
-        resp.raise_for_status()
-        user_info = resp.json()
-
-        email = user_info.get('email')
-        name = user_info.get('name')
-
-        user = User.query.filter_by(email=email).first()
-
-        if not user:
-            user = User(
-                email=email,
-                name=name,
-                profile_completed=False
-            )
-            db.session.add(user)
-            db.session.commit()
-
-        login_user(user)
-
-        # 🔑 KEY LOGIC
-        if not user.profile_completed:
-            return redirect(url_for('complete_profile'))
-
-        return redirect(url_for('serve_index'))
-
-    except Exception as e:
-        print(e)
         flash("Google login failed", "danger")
         return redirect(url_for('login'))
 
