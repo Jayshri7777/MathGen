@@ -214,25 +214,25 @@
             <!-- --- END MODIFIED FIELD --- -->
             
             <div class="form-group">
-                <label for="grade">Grade (Optional):</label>
+                <label for="grade">Grade:</label>
                 <!-- Pre-fill with current user's data -->
                 <input type="text" id="grade" name="grade" placeholder="e.g., 10th, College" value="{{ current_user.grade or '' }}">
             </div>
 
             <!-- --- NEW FIELDS --- -->
             <div class="form-group">
-                <label for="age">Age (Optional):</label>
+                <label for="age">Age:</label>
                 <input type="number" id="age" name="age" placeholder="e.g., 25" value="{{ current_user.age or '' }}" min="1">
             </div>
 
             <div class="form-group">
-                <label for="city">City (Optional):</label>
-                <input type="text" id="city" name="city" placeholder="e.g., New York" value="{{ current_user.city or '' }}">
+                <label for="city">City:</label>
+                <input type="text" id="city" name="city" placeholder="e.g., Bengaluru" value="{{ current_user.city or '' }}">
             </div>
             
             <div class="form-group">
                 <label for="postal_code">Postal/ZIP Code (Optional):</label>
-                <input type="text" id="postal_code" name="postal_code" placeholder="e.g., 302017" value="{{ current_user.postal_code or '' }}">
+                <input type="text" id="postal_code" name="postal_code" placeholder="e.g., 560089" value="{{ current_user.postal_code or '' }}">
             </div>
             
             <div class="form-group">
