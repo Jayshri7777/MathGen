@@ -1064,9 +1064,9 @@ def review_attempt(attempt_id):
             "options": q.options(),
             "correct": q.correct_option,
             "selected": selected,
-            # ✅ FIX IS HERE
-            "is_correct": selected == q.correct_option_index
-        })
+            "is_correct": selected == q.correct_option_index,
+            "explanation": q.explanation 
+            })
 
     return render_template("review.html", rows=rows, attempt=attempt, test=test)
 
