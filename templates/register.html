@@ -66,13 +66,21 @@
 }
 
 /* ---------- PHONE GROUP ---------- */
+
 .phone-group {
     display: flex;
     gap: 10px;
 }
 
-.phone-group select { width: 35%; }
-.phone-group input { width: 65%; }
+.phone-group select {
+    width: 90px;        /* fixed country code size */
+    flex-shrink: 0;
+}
+
+.phone-group input {
+    flex: 1;            /* phone number fills remaining space */
+}
+
 
 /* ---------- ERROR TEXT ---------- */
 .error-text {
@@ -133,6 +141,31 @@
     width: 18px;
     height: 18px;
 }
+/* ---------- CHECKBOX STYLE ---------- */
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+    font-size: 14px;
+    color: #5a2a2a;
+    cursor: pointer;
+}
+
+.checkbox-label input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: #c44536;
+    cursor: pointer;
+}
+
+.checkbox-label span {
+    line-height: 1;
+}
+.checkbox-label {
+    opacity: 0.9;
+}
+
 </style>
 
 <div class="register-wrapper">
@@ -154,14 +187,19 @@
 
             <div class="form-group">
                 <label>Full Name</label>
-                <input type="text" name="name" value="{{ form.name or '' }}" required>
+                <input type="text" name="name"
+       placeholder="Enter your full name"
+       value="{{ form.name or '' }}" required>
+
             </div>
 
             <div class="form-group">
                 <label>Email</label>
                 <input type="email" name="email"
-                       value="{% if not errors.email %}{{ form.email }}{% endif %}"
-                       class="{% if errors.email %}input-error{% endif %}" required>
+       placeholder="Enter your Email Address (Example: joe123@gmail.com)"
+       value="{% if not errors.email %}{{ form.email }}{% endif %}"
+       class="{% if errors.email %}input-error{% endif %}" required>
+
                 {% if errors.email %}
                 <div class="error-text">{{ errors.email }}</div>
                 {% endif %}
@@ -171,19 +209,53 @@
                 <label>Phone Number</label>
                 <div class="phone-group">
                     <select name="country_code">
-                        <option value="+91">+91</option>
-                        <option value="+1">+1</option>
-                        <option value="+44">+44</option>
-                    </select>
-                    <input type="text" name="phone_number_main"
-                           value="{% if not errors.phone %}{{ form.phone_number_main }}{% endif %}"
-                           class="{% if errors.phone %}input-error{% endif %}" required>
+    <option value="+91">+91</option>
+    <option value="+1">+1</option>
+    <option value="+44">+44</option>
+</select>
+
+<input type="text"
+       name="phone_number_main"
+       inputmode="numeric"
+       pattern="[0-9]*"
+       maxlength="10"
+       oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+       placeholder="Enter 10-digit mobile number"
+       value="{% if not errors.phone %}{{ form.phone_number_main }}{% endif %}"
+       class="{% if errors.phone %}input-error{% endif %}"
+       required>
+
                 </div>
                 {% if errors.phone %}
                 <div class="error-text">{{ errors.phone }}</div>
                 {% endif %}
             </div>
 
+<!-- WhatsApp same checkbox -->
+<div class="form-group">
+    <label class="checkbox-label">
+        <input type="checkbox" id="sameWhatsapp" checked>
+        <span>This is my WhatsApp number</span>
+    </label>
+</div>
+
+<!-- WhatsApp Number (hidden by default) -->
+<div class="form-group" id="whatsappField" style="display:none;">
+    <label>WhatsApp Number</label>
+    <input
+    type="text"
+    id="whatsapp_number"
+    name="whatsapp_number"
+    inputmode="numeric"
+    pattern="[0-9]*"
+    maxlength="10"
+    oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+    placeholder="Enter WhatsApp number"
+>
+    <div class="error-text" id="whatsappError" style="display:none;">
+        WhatsApp number must be different from mobile number
+    </div>
+</div>
             <div class="form-group">
                 <label>Board</label>
                 <select name="board" required class="{% if errors.board %}input-error{% endif %}">
@@ -200,8 +272,9 @@
             <div class="form-group">
                 <label>Grade</label>
                 <input type="number" name="grade"
-                       value="{% if not errors.grade %}{{ form.grade }}{% endif %}"
-                       class="{% if errors.grade %}input-error{% endif %}" required>
+       placeholder="Enter your Grade"
+       value="{% if not errors.grade %}{{ form.grade }}{% endif %}"
+       class="{% if errors.grade %}input-error{% endif %}" required>
                 {% if errors.grade %}
                 <div class="error-text">{{ errors.grade }}</div>
                 {% endif %}
@@ -210,7 +283,8 @@
             <div class="form-group">
                 <label>Password</label>
                 <input type="password" name="password"
-                       class="{% if errors.password %}input-error{% endif %}" required>
+       placeholder="Create a strong password"
+       class="{% if errors.password %}input-error{% endif %}" required>
                 {% if errors.password %}
                 <div class="error-text">{{ errors.password }}</div>
                 {% endif %}
@@ -229,7 +303,8 @@
             <div class="form-group">
                 <label>Confirm Password</label>
                 <input type="password" name="confirm_password"
-                       class="{% if errors.confirm_password %}input-error{% endif %}" required>
+       placeholder="Re-enter your password"
+       class="{% if errors.confirm_password %}input-error{% endif %}" required>
                 {% if errors.confirm_password %}
                 <div class="error-text">{{ errors.confirm_password }}</div>
                 {% endif %}
@@ -248,5 +323,35 @@
 
     </div>
 </div>
+<script>
+const sameWhatsappCheckbox = document.getElementById("sameWhatsapp");
+const whatsappGroup = document.getElementById("whatsappField");
+const whatsappInput = document.getElementById("whatsapp_number");
+const phoneInput = document.querySelector("input[name='phone_number_main']");
+const whatsappError = document.getElementById("whatsappError");
+
+// Toggle WhatsApp field
+sameWhatsappCheckbox.addEventListener("change", () => {
+    if (sameWhatsappCheckbox.checked) {
+        whatsappGroup.style.display = "none";
+        whatsappInput.value = "";
+        whatsappError.style.display = "none";
+    } else {
+        whatsappGroup.style.display = "block";
+    }
+});
+
+// Prevent same number
+whatsappInput.addEventListener("input", () => {
+    if (
+        whatsappInput.value &&
+        whatsappInput.value === phoneInput.value
+    ) {
+        whatsappError.style.display = "block";
+    } else {
+        whatsappError.style.display = "none";
+    }
+});
+</script>
 
 {% endblock %}
