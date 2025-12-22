@@ -16,7 +16,6 @@ from docx.enum.text import WD_ALIGN_PARAGRAPH
 from flask_cors import CORS
 from flask import Flask, request, render_template
 from twilio.twiml.messaging_response import MessagingResponse
-from PIL import Image
 from flask import request, jsonify, send_file
 from flask_login import login_required, current_user
 from datetime import datetime
@@ -32,17 +31,6 @@ import csv
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 TOPICS_CSV = os.path.join(BASE_DIR, "topics.csv")
 
-try:
-    from pdf2image import convert_from_path
-    from PIL import Image 
-except ImportError:
-    print("--- WARNING ---")
-    print("pdf2image or PIL library not found. PNG/JPG/GIF export/upload will fail.")
-    print("Run 'pip install pdf2image Authlib PyPDF2 Pillow' to fix this.") 
-    print("You also MUST install 'poppler' on your computer.")
-    print("-----------------")
-    convert_from_path = None
-    Image = None
 
 app = Flask(__name__,
             static_folder='static',
@@ -562,13 +550,13 @@ def create_image(content, title, sub_title_info, fmt="png"):
     width, height = 1240, 1754
     img = Image.new("RGB", (width, height), "white")
     draw = ImageDraw.Draw(img)
-
     try:
-        font_title = ImageFont.truetype("arial.ttf", 36)
-        font_body = ImageFont.truetype("arial.ttf", 20)
+        font_title = ImageFont.truetype("DejaVuSans.ttf", 36)
+        font_body = ImageFont.truetype("DejaVuSans.ttf", 20)
     except:
         font_title = ImageFont.load_default()
         font_body = ImageFont.load_default()
+
 
     y = 40
     draw.text((40, y), title, fill="black", font=font_title)
@@ -590,6 +578,8 @@ def create_image(content, title, sub_title_info, fmt="png"):
     os.getcwd(),
     f"worksheet_{uuid.uuid4()}.{fmt}"
 )
+    if fmt.lower() == "gif":
+        img = img.convert("P")
 
     img.save(filename)
     return filename
@@ -1385,7 +1375,7 @@ if __name__ == '__main__':
     print("  - /register              (Registration Page)")
     print("  - /logout                (Logout Action - Requires Login)")
     print("  - /login/google          (Initiate Google Login)")
-    print("  - /authorize/google      (Google Callback)")
+    print("  - /auth/google/callback  (Google Callback)")
     print("  - /generate-worksheet    (API Endpoint - Requires Login)")
     print("  - /profile               (Profile Page - Requires Login)")
     print("  - /settings              (Settings Page - Requires Login)")
