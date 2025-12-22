@@ -191,8 +191,21 @@
                 
                 <!-- If user already has a phone number, show it as disabled -->
                 {% if current_user.phone_number %}
-                    <input type="tel" id="phone_number_main_display" name="phone_number_main_display" value="{{ current_user.phone_number }}" disabled>
-                    <small>Phone number cannot be changed. Contact support if needed.</small>
+    <div class="phone-input-group">
+        <input type="text"
+               value="{{ current_user.country_code }}"
+               disabled
+               style="width:110px; font-weight:600; text-align:center;">
+        
+        <input type="tel"
+               id="phone_number_main_display"
+               name="phone_number_main_display"
+               value="{{ current_user.phone_number }}"
+               disabled>
+    </div>
+
+    <small>Phone number cannot be changed. Contact support if needed.</small>
+
                 
                 <!-- Otherwise (e.g., Google login), show the input to ADD one -->
                 {% else %}
