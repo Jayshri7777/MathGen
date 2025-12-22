@@ -1049,17 +1049,17 @@ def review_attempt(attempt_id):
     for q in questions:
         selected = answers.get(q.id)
         rows.append({
-    "qno": q.qno,
-    "question": q.question_text,
-    "options": q.options(),
-    "correct": q.correct_option,
-    "selected": selected,
-    "is_correct": selected == q.correct_option,
-    "explanation": q.explanation  # ✅ ADD THIS LINE
-})
-
+            "qno": q.qno,
+            "question": q.question_text,
+            "options": q.options(),
+            "correct": q.correct_option,
+            "selected": selected,
+            # ✅ FIX IS HERE
+            "is_correct": selected == q.correct_option_index
+        })
 
     return render_template("review.html", rows=rows, attempt=attempt, test=test)
+
 
 
 @app.route('/generate-worksheet', methods=['GET', 'POST'])
