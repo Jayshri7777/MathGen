@@ -143,6 +143,9 @@ class MockAttempt(db.Model):
     total = db.Column(db.Integer, default=0)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
+    test = db.relationship("MockTest")  # ✅ ADD THIS LINE
+
+
 
 def load_topics():
     topics = []
@@ -1054,15 +1057,18 @@ def review_attempt(attempt_id):
     for q in questions:
         selected = answers.get(q.id)
         rows.append({
-            "qno": q.qno,
-            "question": q.question_text,
-            "options": q.options(),
-            "correct": q.correct_option,
-            "selected": selected,
-            "is_correct": selected == q.correct_option
-        })
+    "qno": q.qno,
+    "question": q.question_text,
+    "options": q.options(),
+    "correct": q.correct_option,
+    "selected": selected,
+    "is_correct": selected == q.correct_option,
+    "explanation": q.explanation  # ✅ ADD THIS LINE
+})
+
 
     return render_template("review.html", rows=rows, attempt=attempt, test=test)
+
 
 @app.route('/generate-worksheet', methods=['GET', 'POST'])
 @login_required
@@ -1359,8 +1365,6 @@ def create_database(app_instance):
 
 # --- Main Execution Block ---
 if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
     # Check for required OAuth environment variables
     missing_vars = [var for var in ['GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET'] if not app.config.get(var)]
     if missing_vars:
@@ -1389,6 +1393,4 @@ if __name__ == '__main__':
     print("  - /my-scores             (List your attempts)")
     print("  - /review/<attempt_id>   (Review an attempt)")
     print("----------------------------------------------------")
-
     app.run(debug=True, port=5000)
-
