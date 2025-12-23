@@ -1094,23 +1094,32 @@ def clean_ai_text(text):
     lines = [line.strip() for line in text.splitlines() if line.strip()]
     return "\n".join(lines)
 
-def format_questions_for_exam(text):
-    formatted = []
-    q_no = 1
+def format_questions_for_exam(questions):
+    """
+    questions: list of dicts
+    [
+      {
+        "question": "...",
+        "answer_space_lines": 3
+      }
+    ]
+    """
+    output = []
+    qno = 1
 
-    for block in text.split("Problem"):
-        if not block.strip():
-            continue
+    for q in questions:
+        question_text = q.get("question", "").strip()
+        lines = int(q.get("answer_space_lines", 3))
 
-        formatted.append(
-            f"Q{q_no}. {block.strip()}\n\n"
-            "Answer:\n"
-            "________________________________________\n"
-            "________________________________________\n"
-        )
-        q_no += 1
+        output.append(f"Q{qno}. {question_text}\n\n")
 
-    return "\n\n".join(formatted)
+        for _ in range(lines):
+            output.append("_____________________\n")
+
+        output.append("\n")
+        qno += 1
+
+    return "".join(output)
 
 
 @app.route('/generate-worksheet', methods=['GET', 'POST'])
@@ -1202,16 +1211,31 @@ Start with '--- ANSWER KEY ---'.
                 return jsonify({"error": "Grade, Board & Topic required"}), 400
 
             prompt = f"""
-Generate 10 math problems.
+You are a school mathematics teacher.
 
+Generate EXACTLY 10 questions.
+
+Return STRICT JSON ONLY in this format:
+
+[
+  {{
+    "question": "Plain English math question. No LaTeX. No symbols.",
+    "answer_space_lines": 3
+  }}
+]
+
+Rules:
+- No markdown
+- No explanations
+- No answers
+- Student-ready questions only
+
+Context:
 Grade: {grade}
 Board: {board}
 Topic: {topic}
 Subtopic: {subtopic}
 Difficulty: {difficulty}
-
-Do NOT include answers inline.
-Use ___ for blanks.
 """
 
             if include_answers:
@@ -1231,8 +1255,12 @@ Use ___ for blanks.
                 model="models/gemini-flash-latest",
                 contents=prompt
                 )
-        raw_text = response.text or ""
-        clean_text = clean_ai_text(raw_text)
+            try:
+                questions_json = json.loads(response.text)
+            except Exception as e:
+                return jsonify({"error": "AI returned invalid format"}), 500
+            content = format_questions_for_exam(questions_json)
+
         title = f"Grade {grade} Math Worksheet"
         info["sub-title"] = subtopic
 
@@ -1241,12 +1269,17 @@ Use ___ for blanks.
         # ===============================
         # OUTPUT FORMAT HANDLING
         # ===============================
-        if "--- ANSWER KEY ---" in clean_text:
-            questions_text, answer_key_text = clean_text.split("--- ANSWER KEY ---", 1)
-        else:
-            questions_text = clean_text
-            answer_key_text = ""
-        content = format_questions_for_exam(questions_text)
+        response = client.models.generate_content(
+    model="models/gemini-flash-latest",
+    contents=prompt
+)
+        try:
+            questions_json = json.loads(response.text)
+        except Exception:
+            return jsonify({"error": "AI returned invalid format"}), 500
+
+        content = format_questions_for_exam(questions_json)
+
 
 
         if output_format == 'pdf':
