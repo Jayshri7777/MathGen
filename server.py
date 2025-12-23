@@ -1094,32 +1094,27 @@ def clean_ai_text(text):
     lines = [line.strip() for line in text.splitlines() if line.strip()]
     return "\n".join(lines)
 
-def format_questions_for_exam(questions):
-    """
-    questions: list of dicts
-    [
-      {
-        "question": "...",
-        "answer_space_lines": 3
-      }
-    ]
-    """
-    output = []
-    qno = 1
+def format_questions_for_exam(text):
+    lines = []
+    q_no = 1
 
-    for q in questions:
-        question_text = q.get("question", "").strip()
-        lines = int(q.get("answer_space_lines", 3))
+    for block in text.split("\n"):
+        block = block.strip()
+        if not block:
+            continue
 
-        output.append(f"Q{qno}. {question_text}\n\n")
+        # Detect question lines
+        if block[0].isdigit() or block.lower().startswith("q"):
+            lines.append(f"\nQ{q_no}. {block}\n")
+            lines.append("________________________________________\n")
+            lines.append("________________________________________\n")
+            lines.append("________________________________________\n")
+            q_no += 1
+        else:
+            lines.append(block + "\n")
 
-        for _ in range(lines):
-            output.append("_____________________\n")
+    return "".join(lines)
 
-        output.append("\n")
-        qno += 1
-
-    return "".join(output)
 
 
 @app.route('/generate-worksheet', methods=['GET', 'POST'])
@@ -1255,11 +1250,9 @@ Difficulty: {difficulty}
                 model="models/gemini-flash-latest",
                 contents=prompt
                 )
-            try:
-                questions_json = json.loads(response.text)
-            except Exception as e:
-                return jsonify({"error": "AI returned invalid format"}), 500
-            content = format_questions_for_exam(questions_json)
+            raw_text = response.text or ""
+            clean_text = clean_ai_text(raw_text)
+            content = format_questions_for_exam(clean_text)
 
         title = f"Grade {grade} Math Worksheet"
         info["sub-title"] = subtopic
