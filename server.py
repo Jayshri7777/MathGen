@@ -1297,9 +1297,16 @@ Difficulty: {difficulty}
     except Exception as e:
         import traceback
         traceback.print_exc()
-        raise e   # 👈 THIS IS THE KEY
+        error_message = str(e)
+        
+        if "RESOURCE_EXHAUSTED" in error_message or "429" in error_message:
+            return jsonify({
+                "error": "AI quota exceeded. Please wait a minute and try again."
+                }), 429
 
-
+        return jsonify({
+            "error": "Something went wrong while generating the worksheet."
+        }), 500
         
 
 
