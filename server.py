@@ -1121,12 +1121,21 @@ def generate_worksheet():
         return render_template('index.html')
     
     clean_text = ""
+    title = "Math Worksheet"
+    info = {
+        "date": datetime.now().strftime("%d %b %Y"),
+        "time": datetime.now().strftime("%I:%M %p"),
+        "marks": "___ / 50",
+        "sub-title": "General"
+}
+    content = ""
+
 
 
     try:
         prompt = None
         grade = None
-        subtopic = "General"   # ✅ FIX 1: always defined
+        subtopic = "General"   
 
         # ===============================
         # FILE UPLOAD FLOW
@@ -1175,14 +1184,6 @@ Start with '--- ANSWER KEY ---'.
 
             grade = current_user.grade or "General"
             output_format = request.form.get('format', 'txt')
-            
-            title = f"Grade {grade} Worksheet"
-            info = {
-                "date": datetime.now().strftime("%d %b %Y"),
-                "time": datetime.now().strftime("%I:%M %p"),
-                "marks": "___ / 50",
-                "sub-title": "Uploaded Worksheet"
-}
 
 
         # ===============================
@@ -1219,25 +1220,22 @@ Use ___ for blanks.
         # ===============================
         # GEMINI CALL
         # ===============================
-        client = genai.Client(
-    api_key=os.environ.get("GENAI_API_KEY"))
+        client = genai.Client(api_key=os.environ.get("GENAI_API_KEY"))
         if 'img' in locals():
             response = client.models.generate_content(
                 model="models/gemini-flash-latest",
                 contents=[prompt, img]
     )
-            raw_text = response.text or ""
-            clean_text = clean_ai_text(raw_text)
+        else:
+            response = client.models.generate_content(
+                model="models/gemini-flash-latest",
+                contents=prompt
+                )
+        raw_text = response.text or ""
+        clean_text = clean_ai_text(raw_text)
+        title = f"Grade {grade} Math Worksheet"
+        info["sub-title"] = subtopic
 
-            raw_text = (response.text or "")
-            clean_text = clean_ai_text(raw_text)
-            title = f"Grade {grade} Math Worksheet"
-            info = {
-                "date": datetime.now().strftime("%d %b %Y"),
-                "time": datetime.now().strftime("%I:%M %p"),
-                "marks": "___ / 50",
-                "sub-title": subtopic
-                }
 
 
         # ===============================
@@ -1248,7 +1246,7 @@ Use ___ for blanks.
         else:
             questions_text = clean_text
             answer_key_text = ""
-            content = format_questions_for_exam(questions_text)
+        content = format_questions_for_exam(questions_text)
 
 
         if output_format == 'pdf':
