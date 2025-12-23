@@ -1070,6 +1070,47 @@ def review_attempt(attempt_id):
 
     return render_template("review.html", rows=rows, attempt=attempt, test=test)
 
+def clean_ai_text(text):
+    if not text:
+        return ""
+
+    replacements = {
+        "**": "",
+        "---": "",
+        "\\left(": "(",
+        "\\right)": ")",
+        "\\frac{": "",
+        "}{": "/",
+        "}": "",
+    }
+
+    for k, v in replacements.items():
+        text = text.replace(k, v)
+
+    # Normalize blanks
+    text = text.replace("(___)", "______________________")
+
+    # Remove extra blank lines
+    lines = [line.strip() for line in text.splitlines() if line.strip()]
+    return "\n".join(lines)
+
+def format_questions_for_exam(text):
+    formatted = []
+    q_no = 1
+
+    for block in text.split("Problem"):
+        if not block.strip():
+            continue
+
+        formatted.append(
+            f"Q{q_no}. {block.strip()}\n\n"
+            "Answer:\n"
+            "________________________________________\n"
+            "________________________________________\n"
+        )
+        q_no += 1
+
+    return "\n\n".join(formatted)
 
 
 @app.route('/generate-worksheet', methods=['GET', 'POST'])
@@ -1078,6 +1119,9 @@ def generate_worksheet():
 
     if request.method == 'GET':
         return render_template('index.html')
+    
+    clean_text = ""
+
 
     try:
         prompt = None
@@ -1131,6 +1175,15 @@ Start with '--- ANSWER KEY ---'.
 
             grade = current_user.grade or "General"
             output_format = request.form.get('format', 'txt')
+            
+            title = f"Grade {grade} Worksheet"
+            info = {
+                "date": datetime.now().strftime("%d %b %Y"),
+                "time": datetime.now().strftime("%I:%M %p"),
+                "marks": "___ / 50",
+                "sub-title": "Uploaded Worksheet"
+}
+
 
         # ===============================
         # NEW WORKSHEET FLOW
@@ -1170,21 +1223,14 @@ Use ___ for blanks.
     api_key=os.environ.get("GENAI_API_KEY"))
         if 'img' in locals():
             response = client.models.generate_content(
-                model="models/gemini-flash-latest"
-
-
-,
+                model="models/gemini-flash-latest",
                 contents=[prompt, img]
-                )
-        else:
-            response = client.models.generate_content(
-                model="models/gemini-flash-latest"
+    )
+            raw_text = response.text or ""
+            clean_text = clean_ai_text(raw_text)
 
-
-,
-                contents=prompt
-                )
-            content = (response.text or "").replace("$", "").replace("\\square", "___")
+            raw_text = (response.text or "")
+            clean_text = clean_ai_text(raw_text)
             title = f"Grade {grade} Math Worksheet"
             info = {
                 "date": datetime.now().strftime("%d %b %Y"),
@@ -1197,8 +1243,21 @@ Use ___ for blanks.
         # ===============================
         # OUTPUT FORMAT HANDLING
         # ===============================
+        if "--- ANSWER KEY ---" in clean_text:
+            questions_text, answer_key_text = clean_text.split("--- ANSWER KEY ---", 1)
+        else:
+            questions_text = clean_text
+            answer_key_text = ""
+            content = format_questions_for_exam(questions_text)
+
+
         if output_format == 'pdf':
-            return send_file(create_pdf(content, title, info), as_attachment=True)
+            return send_file(
+                create_pdf(content, title, info),
+                as_attachment=True
+)
+
+
 
         elif output_format == 'docx':
             return send_file(create_docx(content, title, info), as_attachment=True)
