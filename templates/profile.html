@@ -12,9 +12,10 @@
     <!-- Styles specific to auth page layout -->
     <style>
         .auth-container {
-            max-width: 500px;
-            margin: 40px auto;
-        }
+    max-width: 500px;
+    margin: 15px auto 40px;
+}
+
         .auth-form h1 {
             font-size: 2.2em;
             color: var(--text-color-primary);
@@ -149,7 +150,61 @@
             cursor: pointer;
             accent-color: var(--button-bg-color);
         }
+        /* 🔥 MOBILE FIX FOR COUNTRY CODE WIDTH ISSUE */
+.phone-input-group select {
+    width: 110px !important;
+    min-width: 110px;
+    max-width: 110px;
+    flex-shrink: 0;
+}
 
+@media (max-width: 600px) {
+    .phone-input-group select {
+        width: 80px !important;
+        min-width: 80px;
+        max-width: 80px;
+    }
+
+    .phone-input-group input[type="tel"] {
+        width: calc(100% - 90px);
+    }
+}
+/* Required field star */
+.required::after {
+    content: " *";
+    color: #b11226;        /* soft red / maroon */
+    font-weight: 700;
+    font-size: 0.9em;
+}
+/* ---------- DOB INPUT ---------- */
+.dob-input {
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 10px;
+    border: 1.5px solid #f2c4b8;
+    font-size: 15px;
+    background-color: #fffaf8;
+    color: #4a1f1f;
+    cursor: pointer;
+}
+
+/* Remove ugly native styles */
+.dob-input::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    filter: invert(32%) sepia(18%) saturate(900%) hue-rotate(330deg);
+}
+
+/* Focus effect */
+.dob-input:focus {
+    outline: none;
+    border-color: #c44536;
+    box-shadow: 0 0 0 2px rgba(196, 69, 54, 0.15);
+}
+
+/* Placeholder-like lighter text when empty */
+.dob-input:invalid {
+    color: #9b6b6b;
+}
     </style>
 </head>
 <body>
@@ -173,13 +228,13 @@
             <h1>Your Profile</h1>
 
             <div class="form-group">
-                <label for="name">Full Name:</label>
+                <label for="name" class="required">Full Name</label>
                 <!-- Pre-fill with current user's data -->
                 <input type="text" id="name" name="name" required value="{{ current_user.name }}">
             </div>
 
             <div class="form-group">
-                <label for="email">Email:</label>
+                <label for="email" class="required">Email</label>
                 <!-- Pre-fill and disable, as this is the login ID -->
                 <input type="email" id="email" name="email" required value="{{ current_user.email }}" disabled>
                 <small>Email cannot be changed.</small>
@@ -187,7 +242,7 @@
 
             <!-- --- MODIFIED PHONE NUMBER FIELD --- -->
             <div class="form-group">
-                <label for="phone_number_main">Phone Number:</label>
+               <label for="phone_number_main" class="required">Mobile Number</label>
                 
                 <!-- If user already has a phone number, show it as disabled -->
                 {% if current_user.phone_number %}
@@ -204,7 +259,7 @@
                disabled>
     </div>
 
-    <small>Phone number cannot be changed. Contact support if needed.</small>
+    <small>Mobile number cannot be changed. Contact support if needed.</small>
 
                 
                 <!-- Otherwise (e.g., Google login), show the input to ADD one -->
@@ -218,33 +273,59 @@
                              <option value="+61">+61 (Australia)</option>
                              <!-- Add more country codes as needed -->
                              <option value="">Other</option>
-                         </select>
+                         </select> 
                          <input type="tel" id="phone_number_main" name="phone_number_main" placeholder="Add phone number">
                     </div>
-                     <small>You can add your phone number here (optional).</small>
+                     <small>You can add your mobile number here (optional).</small>
                 {% endif %}
             </div>
-            <!-- --- END MODIFIED FIELD --- -->
             
             <div class="form-group">
-                <label for="grade">Grade:</label>
-                <!-- Pre-fill with current user's data -->
-                <input type="text" id="grade" name="grade" placeholder="e.g., 10th, College" value="{{ current_user.grade or '' }}">
-            </div>
+    <label for="grade" class="required">Grade</label>
+
+    <select id="grade" name="grade" required>
+        <option value="">Select Grade</option>
+
+        {% for g in range(1, 13) %}
+            <option value="{{ g }}"
+                {% if current_user.grade and current_user.grade|int == g %}selected{% endif %}>
+                {{ g }}
+            </option>
+        {% endfor %}
+    </select>
+</div>
+
+
 
             <!-- --- NEW FIELDS --- -->
             <div class="form-group">
-                <label for="age">Age:</label>
+                <label for="age" class="required">Age</label>
                 <input type="number" id="age" name="age" placeholder="e.g., 25" value="{{ current_user.age or '' }}" min="1">
             </div>
 
             <div class="form-group">
-                <label for="city">City:</label>
+    <label for="dob" class="required">Date of Birth</label>
+
+    <input
+        type="date"
+        id="dob"
+        name="dob"
+        value="{{ current_user.dob.strftime('%Y-%m-%d') if current_user.dob else '' }}"
+        required
+        class="dob-input"
+    >
+</div>
+
+
+
+
+            <div class="form-group">
+                <label for="city" class="required">City/Town (Nearest)</label>
                 <input type="text" id="city" name="city" placeholder="e.g., Bengaluru" value="{{ current_user.city or '' }}">
             </div>
             
             <div class="form-group">
-                <label for="postal_code">Postal/ZIP Code (Optional):</label>
+               <label for="postal_code" class="required">Postal/ZIP Code</label>
                 <input type="text" id="postal_code" name="postal_code" placeholder="e.g., 560089" value="{{ current_user.postal_code or '' }}">
             </div>
             
