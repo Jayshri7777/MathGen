@@ -14,6 +14,12 @@ from docx import Document
 from docx.shared import Pt
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from flask_cors import CORS
+import fitz  # PyMuPDF
+from docx import Document
+from PIL import Image
+import io
+from PIL import Image
+import io
 from flask import Flask, request, render_template
 from twilio.twiml.messaging_response import MessagingResponse
 from flask import request, jsonify, send_file
@@ -68,8 +74,7 @@ class User(UserMixin, db.Model):
     newsletter_consent = db.Column(db.Boolean, default=False)
     board = db.Column(db.String(50), nullable=True)
     profile_completed = db.Column(db.Boolean, default=False)
-
-
+    dob = db.Column(db.Date, nullable=False)
 
 
     def set_password(self, password):
@@ -547,44 +552,36 @@ def get_text_from_docx(file_storage):
         return None
     
 def create_image(content, title, sub_title_info, fmt="png"):
-    print(f"Generating {fmt.upper()} image...")
-
     width, height = 1240, 1754
+    margin_x, margin_y = 60, 60
+    line_height = 30
+
     img = Image.new("RGB", (width, height), "white")
     draw = ImageDraw.Draw(img)
-    try:
-        font_title = ImageFont.truetype("DejaVuSans.ttf", 36)
-        font_body = ImageFont.truetype("DejaVuSans.ttf", 20)
-    except:
-        font_title = ImageFont.load_default()
-        font_body = ImageFont.load_default()
 
+    font_title = ImageFont.truetype("DejaVuSans.ttf", 36)
+    font_body = ImageFont.truetype("DejaVuSans.ttf", 22)
 
-    y = 40
-    draw.text((40, y), title, fill="black", font=font_title)
-    y += 50
+    y = margin_y
+    draw.text((margin_x, y), title, font=font_title, fill="black")
+    y += 60
 
     subtitle = f"Date: {sub_title_info['date']} | Marks: {sub_title_info['marks']} | Topic: {sub_title_info['sub-title']}"
-    draw.text((40, y), subtitle, fill="black", font=font_body)
+    draw.text((margin_x, y), subtitle, font=font_body, fill="black")
     y += 40
 
-    wrapped_lines = textwrap.wrap(content, 90)
+    for line in content.split("\n"):
+        wrapped = textwrap.wrap(line, 80) or [""]
+        for w in wrapped:
+            if y > height - margin_y:
+                break
+            draw.text((margin_x, y), w, font=font_body, fill="black")
+            y += line_height
 
-    for line in wrapped_lines:
-        draw.text((40, y), line, fill="black", font=font_body)
-        y += 26
-        if y > height - 40:
-            break
-
-    filename = os.path.join(
-    os.getcwd(),
-    f"worksheet_{uuid.uuid4()}.{fmt}"
-)
-    if fmt.lower() == "gif":
-        img = img.convert("P")
-
+    filename = f"worksheet_{uuid.uuid4()}.{fmt}"
     img.save(filename)
     return filename
+
 # ----------------------------------------------------
 
 # --- Static File and Main Page Routes ---
@@ -599,13 +596,13 @@ def landing_page():
     return render_template('landing.html')
 
 @app.route('/generator')
-@login_required  # Keep the generator page protected!
+@login_required
 def serve_index():
-    """
-    Serves the main worksheet generator app.
-    This is the old 'index.html' page.
-    """
-    return render_template('index.html')
+    return render_template(
+        'index.html',
+        user_grade=current_user.grade,
+        user_board=current_user.board
+    )
 
 @app.route('/static/<path:filename>')
 def serve_static(filename):
@@ -625,6 +622,8 @@ def features():
 
 
 # --- AUTHENTICATION ROUTES ---
+from datetime import datetime
+
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if current_user.is_authenticated:
@@ -636,17 +635,18 @@ def register():
     if request.method == 'POST':
         form = request.form
 
+        # ---------- READ INPUT ----------
         name = form.get('name', '').strip()
         email = form.get('email', '').strip()
         phone_number_main = form.get('phone_number_main', '').strip()
         grade = form.get('grade', '').strip()
         board = form.get('board', '').strip()
+        dob_str = form.get('dob', '').strip()
         password = form.get('password', '')
         confirm_password = form.get('confirm_password', '')
         country_code = form.get('country_code', '+91').strip()
-        is_whatsapp = True if form.get('is_whatsapp') else False
 
-        # ---------- REQUIRED FIELDS ----------
+        # ---------- REQUIRED ----------
         if not name:
             errors['name'] = 'Full name is required.'
 
@@ -662,27 +662,44 @@ def register():
         if not board:
             errors['board'] = 'Board is required.'
 
+        if not dob_str:
+            errors['dob'] = 'Date of Birth is required.'
+
         if not password:
             errors['password'] = 'Password is required.'
 
         if not confirm_password:
             errors['confirm_password'] = 'Please confirm your password.'
 
+        # ---------- GRADE ----------
+        if grade:
+            if not grade.isdigit() or not (1 <= int(grade) <= 12):
+                errors['grade'] = 'Grade must be between 1 and 12.'
+
+        # ---------- DOB (CRITICAL FIX) ----------
+        dob = None
+        if dob_str:
+            try:
+                dob = datetime.strptime(dob_str, "%Y-%m-%d").date()
+            except ValueError:
+                errors['dob'] = 'Invalid date format.'
+
         # ---------- PHONE ----------
-        phone_digits = phone_number_main.strip()
-        if phone_number_main:
+        phone_digits = phone_number_main
+        if phone_digits:
             if not phone_digits.isdigit():
                 errors['phone'] = 'Mobile number must contain only digits.'
             elif len(phone_digits) != 10:
                 errors['phone'] = 'Mobile number must be exactly 10 digits.'
 
+        full_phone = f"{country_code}{phone_digits}"
 
         # ---------- EMAIL ----------
         email_regex = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
         if email and not re.match(email_regex, email):
             errors['email'] = 'Invalid email format.'
 
-        # ---------- PASSWORD RULES ----------
+        # ---------- PASSWORD ----------
         if password:
             if len(password) < 8:
                 errors['password'] = 'Must be at least 8 characters.'
@@ -702,47 +719,40 @@ def register():
         if email and User.query.filter_by(email=email).first():
             errors['email'] = 'Email already registered.'
 
-        if phone_digits and User.query.filter_by(phone_number=phone_digits).first():
+        if phone_digits and User.query.filter_by(phone_number=full_phone).first():
             errors['phone'] = 'Phone number already registered.'
 
-        # ---------- IF ANY ERRORS ----------
+        # ---------- FIELD ERRORS ----------
         if errors:
-            return render_template(
-                'register.html',
-                errors=errors,
-                form=form
-            )
+            return render_template('register.html', errors=errors, form=form)
 
         # ---------- CREATE USER ----------
-        new_user = User(
-    name=name,
-    email=email,
-    phone_number=phone_digits,
-    grade=grade,
-    country_code=country_code,  
-    board=board,
-)
-
-
-        new_user.set_password(password)
-        db.session.add(new_user)
-
         try:
+            new_user = User(
+                name=name,
+                email=email,
+                phone_number=full_phone,
+                country_code=country_code,
+                grade=int(grade),
+                board=board,
+                dob=dob,                 # ✅ PYTHON DATE OBJECT
+                profile_completed=True
+            )
+
+            new_user.set_password(password)
+            db.session.add(new_user)
             db.session.commit()
+
             flash('Account created successfully. Please login.', 'success')
             return redirect(url_for('login'))
 
         except Exception as e:
             db.session.rollback()
-            errors['general'] = 'Registration failed. Try again.'
-            return render_template(
-                'register.html',
-                errors=errors,
-                form=form
-            )
+            print("❌ REGISTRATION ERROR:", e)
+            errors['general'] = 'Unexpected server error. Please try again.'
+            return render_template('register.html', errors=errors, form=form)
 
     return render_template('register.html', errors={}, form={})
-
 
 
 
@@ -828,30 +838,47 @@ def google_callback():
             db.session.add(user)
             db.session.commit()
 
+
         login_user(user)
 
         if not user.profile_completed:
-            return redirect(url_for('complete_profile'))
+            return redirect(url_for('profile'))
 
-        return redirect(url_for('serve_index'))
+        return redirect(url_for('server_index'))
 
     except Exception as e:
         print("GOOGLE AUTH ERROR:", e)
         flash("Google login failed", "danger")
         return redirect(url_for('login'))
 
+from datetime import datetime
 @app.route('/complete-profile', methods=['GET', 'POST'])
 @login_required
 def complete_profile():
     if current_user.profile_completed:
-        return redirect(url_for('serve_index'))
+        return redirect(url_for('server_index'))
 
     if request.method == 'POST':
         current_user.name = request.form.get('name')
-        current_user.phone_number = request.form.get('phone')
-        current_user.grade = request.form.get('grade')
+
+        # phone (optional but safe)
+        phone = request.form.get('phone')
+        if phone:
+            current_user.phone_number = phone
+
+        # grade
+        grade = request.form.get('grade')
+        if grade:
+            current_user.grade = int(grade)
+
         current_user.board = request.form.get('board')
 
+        # 🔴 DOB FIX (THIS WAS MISSING)
+        dob_str = request.form.get('dob')
+        if dob_str:
+            current_user.dob = datetime.strptime(dob_str, "%Y-%m-%d").date()
+
+        # ✅ mark profile complete ONLY after saving all
         current_user.profile_completed = True
         db.session.commit()
 
@@ -860,87 +887,116 @@ def complete_profile():
     return render_template('complete_profile.html')
 
 
+
 # --- PROFILE AND SETTINGS ROUTES ---
 
 @app.route('/profile', methods=['GET', 'POST'])
 @login_required
 def profile():
-    if request.method == 'POST':
-        # Get data from form
-        new_name = request.form.get('name')
-        new_grade = request.form.get('grade')
-        new_age_str = request.form.get('age') # Get as string
-        new_city = request.form.get('city')
-        new_postal_code = request.form.get('postal_code')
-        new_timezone = request.form.get('timezone')
-        new_whatsapp_consent = (request.form.get('whatsapp_consent') == 'on') 
-        new_newsletter_consent = (request.form.get('newsletter_consent') == 'on')
-
-        # Validate name
-        if not new_name or len(new_name) < 2:
-            flash('Name must be at least 2 characters long.', 'warning')
-            return redirect(url_for('profile'))
-        
-        # --- Update basic info ---
-        current_user.name = new_name
-        current_user.grade = new_grade if new_grade else None
-        
-        # --- Update personal info (age, city) ---
-        if new_age_str and new_age_str.isdigit():
-            current_user.age = int(new_age_str)
-        elif not new_age_str:
-             current_user.age = None # Clear it if empty
-        else:
-             flash('Age must be a valid number.', 'warning')
-             return redirect(url_for('profile'))
-            
-        current_user.city = new_city if new_city else None
-        
-        # --- Update new fields ---
-        current_user.postal_code = new_postal_code if new_postal_code else None
-        current_user.timezone = new_timezone if new_timezone else None
-        current_user.whatsapp_consent = new_whatsapp_consent
-        current_user.newsletter_consent = new_newsletter_consent
+    from datetime import datetime
+    dob_str = request.form.get("dob", "").strip()
+    if request.method == "POST":
         # -------------------------
+        # Fetch & sanitize inputs
+        # -------------------------
+        name = request.form.get("name", "").strip()
+        grade = request.form.get("grade", "").strip()
+        age = request.form.get("age", "").strip()
+        city = request.form.get("city", "").strip()
+        postal_code = request.form.get("postal_code", "").strip()
+        timezone = request.form.get("timezone", "").strip()
 
-        # --- Logic to ADD a phone number if it doesn't exist ---
-        if current_user.phone_number is None:
-            country_code = request.form.get('country_code')
-            phone_number_main = request.form.get('phone_number_main')
-            
-            if phone_number_main: # Only proceed if they typed something
-                if not country_code:
-                    flash('Please select a country code to add a phone number.', 'warning')
-                    return redirect(url_for('profile'))
-                
-                full_phone_number = country_code + phone_number_main.strip()
-                
-                phone_regex = r'^\+?\d{7,}$'
-                if not re.match(phone_regex, full_phone_number):
-                     flash('Invalid phone number format (must be at least 7 digits, starting with country code).', 'warning')
-                     return redirect(url_for('profile'))
-                     
-                existing_phone = User.query.filter_by(phone_number=full_phone_number).first()
-                if existing_phone:
-                     flash('That phone number is already registered to another account.', 'danger')
-                     return redirect(url_for('profile'))
-                     
-                current_user.phone_number = full_phone_number
-                flash('Phone number added successfully!', 'success')
-        # --- End phone logic ---
+        whatsapp_consent = bool(request.form.get("whatsapp_consent"))
+        newsletter_consent = bool(request.form.get("newsletter_consent"))
 
+        # -------------------------
+        # REQUIRED FIELD CHECK
+        # -------------------------
+        if not name or not grade or not age or not dob_str:
+            flash("Please fill all required fields marked with *", "danger")
+            return redirect(url_for("profile"))
+
+        # -------------------------
+        # NAME VALIDATION
+        # -------------------------
+        if len(name) < 2:
+            flash("Name must be at least 2 characters long.", "danger")
+            return redirect(url_for("profile"))
+
+        # -------------------------
+        # GRADE VALIDATION (1–12)
+        # -------------------------
+        if not grade.isdigit() or not (1 <= int(grade) <= 12):
+            flash("Grade must be a number between 1 and 12.", "danger")
+            return redirect(url_for("profile"))
+
+        # -------------------------
+        # AGE VALIDATION
+        # -------------------------
+        if not age.isdigit() or int(age) < 1:
+            flash("Please enter a valid age.", "danger")
+            return redirect(url_for("profile"))
+        
         try:
-            db.session.commit() # Save all changes
-            flash('Profile updated successfully!', 'success')
+            dob = datetime.strptime(dob_str, "%Y-%m-%d").date()
+        except ValueError:
+            flash("Invalid Date of Birth format.", "danger")
+            return redirect(url_for("profile"))
+
+
+        # -------------------------
+        # SAVE BASIC INFO
+        # -------------------------
+        current_user.name = name
+        current_user.grade = int(grade)
+        current_user.age = int(age)
+        current_user.dob = dob
+        current_user.city = city or None
+        current_user.postal_code = postal_code or None
+        current_user.timezone = timezone or None
+        current_user.whatsapp_consent = whatsapp_consent
+        current_user.newsletter_consent = newsletter_consent
+
+        # -------------------------
+        # ADD PHONE NUMBER (ONLY IF EMPTY)
+        # -------------------------
+        if current_user.phone_number is None:
+            country_code = request.form.get("country_code")
+            phone_number = request.form.get("phone_number_main", "").strip()
+
+            if phone_number:
+                if not country_code:
+                    flash("Please select a country code.", "danger")
+                    return redirect(url_for("profile"))
+
+                full_phone = country_code + phone_number
+
+                if not re.match(r'^\+\d{7,}$', full_phone):
+                    flash("Invalid phone number format.", "danger")
+                    return redirect(url_for("profile"))
+
+                if User.query.filter_by(phone_number=full_phone).first():
+                    flash("Phone number already registered.", "danger")
+                    return redirect(url_for("profile"))
+
+                current_user.phone_number = full_phone
+
+        # -------------------------
+        # COMMIT
+        # -------------------------
+        try:
+            db.session.commit()
+            flash("Profile updated successfully!", "success")
         except Exception as e:
             db.session.rollback()
-            flash(f'An error occurred while updating: {e}', 'danger')
-            print(f"Error updating profile: {e}")
+            flash("Something went wrong. Please try again.", "danger")
+            print("Profile update error:", e)
 
-        return redirect(url_for('profile'))
+        return redirect(url_for("serve_index"))
 
-    # GET request: Show the profile page
-    return render_template('profile.html')
+    # GET request
+    return render_template("profile.html")
+
 
 @app.route('/settings', methods=['GET', 'POST'])
 @login_required
@@ -1115,6 +1171,17 @@ def format_questions_for_exam(text):
 
     return "".join(lines)
 
+def normalize_questions(questions_json):
+    """
+    Converts AI JSON into clean, student-ready text blocks
+    """
+    lines = []
+    for i, q in enumerate(questions_json, 1):
+        lines.append(f"{i}) {q['question']}")
+        for _ in range(q.get("answer_space_lines", 3)):
+            lines.append("______________________________")
+        lines.append("")  # spacing
+    return "\n".join(lines)
 
 
 @app.route('/generate-worksheet', methods=['GET', 'POST'])
@@ -1123,89 +1190,100 @@ def generate_worksheet():
 
     if request.method == 'GET':
         return render_template('index.html')
-    
-    clean_text = ""
+
     title = "Math Worksheet"
     info = {
         "date": datetime.now().strftime("%d %b %Y"),
         "time": datetime.now().strftime("%I:%M %p"),
         "marks": "___ / 50",
         "sub-title": "General"
-}
-    content = ""
-
-
+    }
 
     try:
-        prompt = None
-        grade = None
-        subtopic = "General"   
+        client = genai.Client(api_key=os.environ.get("GENAI_API_KEY"))
 
-        # ===============================
-        # FILE UPLOAD FLOW
-        # ===============================
+        # =====================================================
+        # FILE UPLOAD FLOW (ANSWER KEY ONLY)
+        # =====================================================
         if 'worksheet_file' in request.files and request.files['worksheet_file'].filename:
-            
+
             file = request.files['worksheet_file']
             filename = file.filename.lower()
 
-            if filename.endswith(('.pdf', '.docx', '.txt')):
-                if filename.endswith('.pdf'):
-                    worksheet_text = get_text_from_pdf(file)
-                elif filename.endswith('.docx'):
-                    worksheet_text = get_text_from_docx(file)
-                else:
-                    worksheet_text = file.read().decode('utf-8', errors='ignore')
+            images = []
+            if filename.endswith('.pdf'):
+                worksheet_text = get_text_from_pdf(file)
+                images = extract_images_from_pdf(file)
 
-                if not worksheet_text:
-                    return jsonify({"error": "Could not read file"}), 400
-
-                prompt = f"""
-You are an expert math teacher.
-Provide a step-by-step answer key.
-
-Worksheet Content:
----
-{worksheet_text}
----
-
-ONLY output the answer key.
-Start with '--- ANSWER KEY ---'.
-"""
-
+            elif filename.endswith('.docx'):
+                worksheet_text = get_text_from_docx(file)
+                images = extract_images_from_docx(file)
+            elif filename.endswith('.txt'):
+                worksheet_text = file.read().decode('utf-8', errors='ignore')
             elif filename.endswith(('.png', '.jpg', '.jpeg', '.gif')):
                 img = Image.open(file.stream)
-
-                prompt = (
-                    "You are an expert math teacher. "
-                    "Extract all math questions from this image and provide a "
-                    "detailed step-by-step answer key. "
-                    "Start with '--- ANSWER KEY ---'."
+                response = client.models.generate_content(
+                    model="models/gemini-flash-latest",
+                    contents=[
+                        "Extract all math questions and generate a clean answer key.",
+                        img
+                    ]
                 )
-
+                answers_text = clean_ai_text(response.text)
+                return send_file(
+                    create_txt(answers_text, "Worksheet Answers", info, "Worksheet_Answers.txt"),
+                    as_attachment=True
+                )
             else:
-                return jsonify({"error": "Unsupported file type למד"}), 400
+                return jsonify({"error": "Unsupported file type"}), 400
 
-            grade = current_user.grade or "General"
-            output_format = request.form.get('format', 'txt')
-
-
-        # ===============================
-        # NEW WORKSHEET FLOW
-        # ===============================
-        else:
-            grade = request.form.get('grade') or current_user.grade
-            board = request.form.get('board')
-            topic = request.form.get('topic')
-            subtopic = request.form.get('subtopic') or "General"
-            difficulty = request.form.get('difficulty', 'Easy')
-            output_format = request.form.get('format', 'txt')
-            include_answers = request.form.get('answer_key') == '1'
-
-            if not grade or not board or not topic:
-                return jsonify({"error": "Grade, Board & Topic required"}), 400
+            if not worksheet_text:
+                return jsonify({"error": "Could not read worksheet"}), 400
 
             prompt = f"""
+You are a math teacher.
+Provide ONLY the answer key.
+Number answers properly.
+
+Worksheet:
+{worksheet_text}
+"""
+
+            response = client.models.generate_content(
+                model="models/gemini-flash-latest",
+                contents=prompt
+            )
+
+            answers_text = clean_ai_text(response.text)
+
+            return send_file(
+                create_txt(answers_text, "Worksheet Answers", info, "Worksheet_Answers.txt"),
+                as_attachment=True
+            )
+
+        # =====================================================
+        # NEW WORKSHEET GENERATION FLOW
+        # =====================================================
+        grade = request.form.get('grade') or current_user.grade
+        board = request.form.get('board')
+        topic = request.form.get('topic')
+        subtopic = request.form.get('subtopic') or "General"
+        difficulty = request.form.get('difficulty', 'Easy')
+        output_format = request.form.get('format', 'txt')
+        include_answers = request.form.get('answer_key') == '1'
+
+        if not grade or not board or not topic:
+            return jsonify({"error": "Grade, Board & Topic required"}), 400
+
+        # 🔒 Subtraction digit control
+        digit_rule = ""
+        if "subtraction" in topic.lower():
+            if "2" in subtopic:
+                digit_rule = "Use ONLY numbers from 10 to 99."
+            elif "3" in subtopic:
+                digit_rule = "Use ONLY numbers from 100 to 999."
+
+        questions_prompt = f"""
 You are a school mathematics teacher.
 
 Generate EXACTLY 10 questions.
@@ -1214,16 +1292,17 @@ Return STRICT JSON ONLY in this format:
 
 [
   {{
-    "question": "Plain English math question. No LaTeX. No symbols.",
+    "question": "Plain English math question.",
     "answer_space_lines": 3
   }}
 ]
 
 Rules:
 - No markdown
-- No explanations
+- No LaTeX
 - No answers
-- Student-ready questions only
+- Student-ready worksheet questions
+{digit_rule}
 
 Context:
 Grade: {grade}
@@ -1233,82 +1312,173 @@ Subtopic: {subtopic}
 Difficulty: {difficulty}
 """
 
-            if include_answers:
-                prompt += "\n\nAdd '--- ANSWER KEY ---' at the end."
+        q_response = client.models.generate_content(
+            model="models/gemini-flash-latest",
+            contents=questions_prompt
+        )
 
-        # ===============================
-        # GEMINI CALL
-        # ===============================
-        client = genai.Client(api_key=os.environ.get("GENAI_API_KEY"))
-        if 'img' in locals():
-            response = client.models.generate_content(
-                model="models/gemini-flash-latest",
-                contents=[prompt, img]
-    )
-        else:
-            response = client.models.generate_content(
-                model="models/gemini-flash-latest",
-                contents=prompt
-                )
-            raw_text = response.text or ""
-            clean_text = clean_ai_text(raw_text)
-            content = format_questions_for_exam(clean_text)
+        try:
+            questions_json = json.loads(q_response.text)
+        except Exception:
+            return jsonify({"error": "AI returned invalid question format"}), 500
+
+        # -------- FORMAT QUESTIONS ----------
+        def normalize_questions(qs):
+            lines = []
+            for i, q in enumerate(qs, 1):
+                lines.append(f"{i}) {q['question']}")
+                for _ in range(q.get("answer_space_lines", 3)):
+                    lines.append("______________________________")
+                lines.append("")
+            return "\n".join(lines)
+
+        worksheet_text = normalize_questions(questions_json)
 
         title = f"Grade {grade} Math Worksheet"
         info["sub-title"] = subtopic
 
+        # -------- ANSWERS (SEPARATE FILE) ----------
+        answers_text = None
+        if include_answers:
+            answers_prompt = f"""
+Provide ONLY the answers.
+Number answers correctly.
 
+Questions:
+{worksheet_text}
+"""
+            a_response = client.models.generate_content(
+                model="models/gemini-flash-latest",
+                contents=answers_prompt
+            )
+            answers_text = clean_ai_text(a_response.text)
 
-        # ===============================
-        # OUTPUT FORMAT HANDLING
-        # ===============================
-        response = client.models.generate_content(
-    model="models/gemini-flash-latest",
-    contents=prompt
-)
-        try:
-            questions_json = json.loads(response.text)
-        except Exception:
-            return jsonify({"error": "AI returned invalid format"}), 500
+        # =====================================================
+        # OUTPUT
+        # =====================================================
+        if output_format == "pdf":
+            worksheet_file = create_pdf(worksheet_text, title, info)
+            if include_answers and answers_text:
+                create_pdf(
+                    answers_text,
+                    f"{title} - Answers",
+                    info,
+                    filename="Worksheet_Answers.pdf"
+                )
+            return send_file(worksheet_file, as_attachment=True)
 
-        content = format_questions_for_exam(questions_json)
-
-
-
-        if output_format == 'pdf':
+        elif output_format == "docx":
             return send_file(
-                create_pdf(content, title, info),
-                as_attachment=True
-)
-
-
-
-        elif output_format == 'docx':
-            return send_file(create_docx(content, title, info), as_attachment=True)
-
-        elif output_format in ['jpg', 'png', 'gif']:
-            return send_file(
-                create_image(content, title, info, output_format),
+                create_docx(worksheet_text, title, info),
                 as_attachment=True
             )
-        else:
-            return send_file(create_txt(content, title, info), as_attachment=True)
+
+        elif output_format in ["png", "jpg", "gif"]:
+            return send_file(
+                create_image(worksheet_text, title, info, output_format),
+                as_attachment=True
+            )
+
+        else:  # txt
+            return send_file(
+                create_txt(worksheet_text, title, info),
+                as_attachment=True
+            )
 
     except Exception as e:
         import traceback
         traceback.print_exc()
-        error_message = str(e)
-        
-        if "RESOURCE_EXHAUSTED" in error_message or "429" in error_message:
-            return jsonify({
-                "error": "AI quota exceeded. Please wait a minute and try again."
-                }), 429
+        if "429" in str(e):
+            return jsonify({"error": "AI quota exceeded. Try again later."}), 429
+        return jsonify({"error": "Worksheet generation failed."}), 500
 
-        return jsonify({
-            "error": "Something went wrong while generating the worksheet."
-        }), 500
-        
+def extract_images_from_pdf(file_storage):
+    images = []
+    pdf = fitz.open(stream=file_storage.read(), filetype="pdf")
 
+    for page_index in range(len(pdf)):
+        page = pdf[page_index]
+        image_list = page.get_images(full=True)
+
+        for img in image_list:
+            xref = img[0]
+            base_image = pdf.extract_image(xref)
+            image_bytes = base_image["image"]
+
+            img_pil = Image.open(io.BytesIO(image_bytes))
+            images.append(img_pil)
+
+    return images
+
+def extract_images_from_docx(file_storage):
+    images = []
+    doc = Document(file_storage)
+
+    for rel in doc.part.rels.values():
+        if "image" in rel.target_ref:
+            image_bytes = rel.target_part.blob
+            images.append(Image.open(io.BytesIO(image_bytes)))
+
+    return images      
+
+def requires_diagram(question_text):
+    keywords = [
+        "diagram", "figure", "graph", "number line",
+        "draw", "construct", "triangle", "circle",
+        "rectangle", "geometry"
+    ]
+    return any(k in question_text.lower() for k in keywords)
+
+def requires_diagram(question_text):
+    keywords = [
+        "diagram", "figure", "graph", "number line",
+        "draw", "construct", "triangle", "circle",
+        "rectangle", "geometry"
+    ]
+    return any(k in question_text.lower() for k in keywords)
+
+from docx.shared import Inches
+
+def add_image_to_docx(doc, image):
+    temp_path = "temp_img.png"
+    image.save(temp_path)
+    doc.add_picture(temp_path, width=Inches(3))
+
+def create_image_with_diagram(content_lines, diagrams):
+    img = Image.new("RGB", (1240, 1754), "white")
+    draw = ImageDraw.Draw(img)
+    
+    from PIL import ImageFont
+
+    try:
+        font_body = ImageFont.truetype("DejaVuSans.ttf", 22)
+    except:
+        font_body = ImageFont.load_default()
+
+    y = 40
+    for i, line in enumerate(content_lines):
+        draw.text((40, y), line, fill="black", font=font_body)
+        y += 30
+
+    y = 40
+    for i, line in enumerate(content_lines):
+        draw.text((40, y), line, fill="black", font=font_body)
+        y += 30
+
+        if i < len(diagrams):
+            img.paste(diagrams[i], (40, y))
+            y += diagrams[i].height + 20
+
+    return img
+
+def generate_triangle_diagram():
+    img = Image.new("RGB", (400, 300), "white")
+    draw = ImageDraw.Draw(img)
+
+    points = [(200, 50), (80, 250), (320, 250)]
+    draw.polygon(points, outline="black", width=3)
+
+    return img
 
 
 # --- Function to Create Database Tables AND SEED SAMPLE TESTS ---
