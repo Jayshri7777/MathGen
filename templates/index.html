@@ -9,10 +9,10 @@
     color: #4b1e1e;
 }
 
-.ws-container h1 {
-    font-size: 36px;
-    font-weight: 700;
-    margin-bottom: 35px;
+.ws-container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 30px 20px 60px;
 }
 
 .ws-card {
@@ -60,7 +60,7 @@
 }
 
 .generate-btn button {
-    background: linear-gradient(135deg, #e56b6f, #ff8fa3);
+    background: linear-gradient(135deg, #7a1f2b, #a83246);
     border: none;
     color: white;
     padding: 14px 40px;
@@ -68,7 +68,63 @@
     font-weight: 600;
     border-radius: 999px;
     cursor: pointer;
+    box-shadow: 0 8px 20px rgba(122, 31, 43, 0.35);
 }
+.ws-card.secondary {
+    margin-top: 30px;
+    background: rgba(255, 255, 255, 0.65);
+    border: 2px dashed #d8a79b;
+}
+
+.ws-card.secondary h3 {
+    font-size: 20px;
+    margin-bottom: 20px;
+    font-weight: 700;
+}
+
+.checkbox-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 12px;
+}
+.or-divider {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    margin: 30px 0;
+    color: #8a4a4a;
+    font-weight: 600;
+}
+
+.or-divider::before,
+.or-divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: #d8a79b;
+}
+.generate-btn button:disabled {
+    background: linear-gradient(135deg, #cfa5a5, #e6bcbc);
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+.answer-key-bar {
+    max-width: 1100px;
+    margin: 25px auto 10px;
+    padding: 14px 22px;
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 14px;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+}
+
+.answer-key-bar .checkbox-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+}
+
 </style>
 
 <div class="ws-container">
@@ -85,41 +141,49 @@
 <div class="ws-grid">
 
 <!-- LEFT -->
+<!-- LEFT -->
 <div>
+
+    <!-- GRADE (LOCKED) -->
     <div class="form-group">
         <label>Grade</label>
-        <select class="pretty-select" name="grade" id="grade" required>
-            <option value="">Select Grade</option>
-            {% for g in range(1,13) %}
-            <option value="{{ g }}">{{ g }}</option>
-            {% endfor %}
-        </select>
+        <input
+            type="text"
+            class="pretty-input"
+            value="{{ current_user.grade }}"
+            disabled
+        >
+        <input type="hidden" name="grade" id="grade" value="{{ current_user.grade }}">
     </div>
 
+    <!-- BOARD (LOCKED) -->
     <div class="form-group">
         <label>Board</label>
-        <select class="pretty-select" name="board" id="board" required>
-            <option value="">Select Board</option>
-            <option value="CBSE">CBSE</option>
-            <option value="ICSE">ICSE</option>
-            <option value="State Board">State Board</option>
-            <option value="IB">IB</option>
-            <option value="IGCSE">IGCSE</option>
-        </select>
+        <input
+            type="text"
+            class="pretty-input"
+            value="{{ current_user.board }}"
+            disabled
+        >
+        <input type="hidden" name="board" id="board" value="{{ current_user.board }}">
     </div>
 
+    <!-- TOPIC -->
     <div class="form-group">
         <label>Topic</label>
         <select class="pretty-select" name="topic" id="topic" required disabled>
-            <option value="">Select Grade & Board first</option>
+            <option value="">Loading topics...</option>
         </select>
     </div>
 
+    <!-- SUB TOPIC -->
     <div class="form-group">
         <label>Sub-Topic (Optional)</label>
         <input class="pretty-input" name="subtopic" placeholder="e.g. Linear Equations">
     </div>
+
 </div>
+
 
 <!-- RIGHT -->
 <div>
@@ -130,11 +194,6 @@
             <option value="Medium">Medium</option>
             <option value="Hard">Hard</option>
         </select>
-    </div>
-
-    <div class="form-group">
-        <label>Upload Existing Worksheet</label>
-        <input type="file" class="file-box" name="worksheet_file">
     </div>
 
     <div class="form-group">
@@ -149,17 +208,43 @@
         </select>
     </div>
 
-    <div class="form-group">
-        <input type="checkbox" name="answer_key" value="1">
-        <label>Include Answer Key</label>
-    </div>
 </div>
 
 </div>
 </div>
+
+<!-- OR DIVIDER -->
+<div class="or-divider">OR</div>
+
+
+<!-- SECOND BOX -->
+<div class="ws-card secondary">
+
+<h3>Existing Worksheet Options</h3>
+
+<div class="form-group">
+    <label>Upload Existing Worksheet</label>
+    <input type="file" class="file-box" name="worksheet_file">
+</div>
+
+</div>
+
+<!-- COMMON ANSWER KEY OPTION -->
+<!-- COMMON ANSWER KEY OPTION (THIN) -->
+<div class="answer-key-bar">
+    <label class="checkbox-group">
+        <input type="checkbox" name="answer_key" value="1">
+        Include Answer Key
+    </label>
+</div>
+
+
+
 
 <div class="generate-btn">
-    <button type="submit">✨ Generate Worksheet</button>
+    <button type="submit" id="generateBtn" disabled>
+    ✨ Generate Worksheet
+</button>
 </div>
 
 </form>
@@ -168,8 +253,9 @@
 <!-- ✅ TOPIC AUTO-LOAD SCRIPT -->
 <script>
 async function loadTopics() {
-    const grade = document.getElementById("grade").value;
-    const board = document.getElementById("board").value;
+    const grade = document.querySelector("input[name='grade']").value;
+    const board = document.querySelector("input[name='board']").value;
+
     const topicSelect = document.getElementById("topic");
 
     topicSelect.innerHTML = "<option>Loading topics...</option>";
@@ -201,6 +287,7 @@ async function loadTopics() {
         });
 
         topicSelect.disabled = false;
+        checkFormValidity();
 
     } catch (err) {
         console.error(err);
@@ -208,8 +295,61 @@ async function loadTopics() {
     }
 }
 
-document.getElementById("grade").addEventListener("change", loadTopics);
-document.getElementById("board").addEventListener("change", loadTopics);
+document.addEventListener("DOMContentLoaded", () => {
+    loadTopics();
+});
 </script>
+<script>
+const grade = document.getElementById("grade");
+const board = document.getElementById("board");
+const topic = document.getElementById("topic");
+const difficulty = document.querySelector("select[name='difficulty']");
+const format = document.querySelector("select[name='format']");
+const worksheetFile = document.querySelector("input[name='worksheet_file']");
+const generateBtn = document.getElementById("generateBtn");
+
+function checkFormValidity() {
+
+    // Flow A: Normal worksheet generation
+    const normalFlowValid =
+        grade.value &&
+        board.value &&
+        topic.value &&
+        difficulty.value &&
+        format.value;
+
+    // Flow B: Upload worksheet
+    const uploadFlowValid =
+        worksheetFile.files.length > 0;
+
+    // Enable if either flow is valid
+    generateBtn.disabled = !(normalFlowValid || uploadFlowValid);
+}
+
+// Listen to changes
+[
+    grade,
+    board,
+    topic,
+    difficulty,
+    format,
+    worksheetFile
+].forEach(el => {
+    el.addEventListener("change", checkFormValidity);
+});
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const grade = document.getElementById("grade").value;
+    const board = document.getElementById("board").value;
+
+    if (grade && board) {
+        loadTopics();
+    }
+});
+</script>
+
+
 
 {% endblock %}
