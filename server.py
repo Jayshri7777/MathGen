@@ -200,7 +200,11 @@ Rules:
 - Clearly specify the correct option index (0–3)
 - Provide a short explanation
 
-Return STRICT JSON only in this format:
+IMPORTANT:
+- Respond with ONLY a valid JSON array
+- Do NOT include explanations
+- Do NOT include markdown
+- Do NOT include extra text
 [
   {{
     "question": "...",
@@ -1211,6 +1215,32 @@ def clean_ai_text(text):
     lines = [line.strip() for line in text.splitlines() if line.strip()]
     return "\n".join(lines)
 
+def extract_json_from_ai(text):
+    """
+    Extracts JSON array from Gemini response safely
+    """
+    if not text:
+        return None
+
+    # Remove markdown blocks
+    text = text.strip()
+    text = text.replace("```json", "").replace("```", "")
+
+    # Find first [ and last ]
+    start = text.find("[")
+    end = text.rfind("]")
+
+    if start == -1 or end == -1:
+        return None
+
+    json_text = text[start:end + 1]
+
+    try:
+        return json.loads(json_text)
+    except Exception:
+        return None
+
+
 def format_questions_for_exam(text):
     lines = []
     q_no = 1
@@ -1405,10 +1435,15 @@ Difficulty: {difficulty}
             contents=questions_prompt
         )
 
-        try:
-            questions_json = json.loads(q_response.text)
-        except Exception:
-            return jsonify({"error": "AI returned invalid question format"}), 500
+        questions_json = extract_json_from_ai(q_response.text)
+
+        if not questions_json or not isinstance(questions_json, list):
+            print("❌ RAW GEMINI RESPONSE ↓↓↓")
+            print(q_response.text)
+            return jsonify({
+                "error": "AI returned invalid question format. Please try again."
+            }), 500
+
 
         # -------- FORMAT QUESTIONS ----------
         def normalize_questions(qs):
