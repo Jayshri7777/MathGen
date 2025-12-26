@@ -64,7 +64,7 @@ class User(UserMixin, db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     country_code = db.Column(db.String(5), nullable=False, default="+91")  # ✅ ADD
     phone_number = db.Column(db.String(30), unique=True, nullable=True)
-    grade = db.Column(db.String(50), nullable=True)
+    grade = db.Column(db.Integer, nullable=True)
     password_hash = db.Column(db.String(256), nullable=True)
     age = db.Column(db.Integer, nullable=True)
     city = db.Column(db.String(100), nullable=True)
@@ -74,7 +74,7 @@ class User(UserMixin, db.Model):
     newsletter_consent = db.Column(db.Boolean, default=False)
     board = db.Column(db.String(50), nullable=True)
     profile_completed = db.Column(db.Boolean, default=False)
-    dob = db.Column(db.Date, nullable=False)
+    dob = db.Column(db.Date, nullable=True)
 
 
     def set_password(self, password):
@@ -517,12 +517,38 @@ def create_docx(content, title, sub_title_info, filename="worksheet.docx"):
 
 def create_txt(content, title, sub_title_info, filename="worksheet.txt"):
     print("Generating TXT...")
+
     with open(filename, "w", encoding="utf-8") as f:
-        f.write(f"Title: {title}\n")
-        f.write(f"Date: {sub_title_info['date']} | Marks: {sub_title_info['marks']}\n")
-        f.write("-------------------------------------\n\n")
-        f.write(content)
+        # ---------- HEADER ----------
+        f.write("=" * 50 + "\n")
+        f.write(f"{title}\n")
+        f.write("=" * 50 + "\n\n")
+
+        f.write(f"Date   : {sub_title_info.get('date', '')}\n")
+        f.write(f"Time   : {sub_title_info.get('time', '')}\n")
+        f.write(f"Marks  : {sub_title_info.get('marks', '')}\n")
+        f.write(f"Topic  : {sub_title_info.get('sub-title', '')}\n")
+        f.write("\n")
+
+        # ---------- INSTRUCTIONS ----------
+        f.write("-" * 50 + "\n")
+        f.write("Instructions:\n")
+        f.write("• Read each question carefully.\n")
+        f.write("• Show your working clearly.\n")
+        f.write("• Write answers in the space provided.\n")
+        f.write("-" * 50 + "\n\n")
+
+        # ---------- QUESTIONS ----------
+        f.write(content.strip())
+        f.write("\n\n")
+
+        # ---------- FOOTER ----------
+        f.write("-" * 50 + "\n")
+        f.write("End of Worksheet\n")
+        f.write("-" * 50 + "\n")
+
     return filename
+
 
 # --- Helper functions to read uploaded files ---
 def get_text_from_pdf(file_storage):
@@ -633,7 +659,7 @@ def register():
     form = {}
 
     if request.method == 'POST':
-        form = request.form
+        form = request.form.to_dict()
 
         # ---------- READ INPUT ----------
         name = form.get('name', '').strip()
@@ -661,9 +687,6 @@ def register():
 
         if not board:
             errors['board'] = 'Board is required.'
-
-        if not dob_str:
-            errors['dob'] = 'Date of Birth is required.'
 
         if not password:
             errors['password'] = 'Password is required.'
@@ -838,18 +861,20 @@ def google_callback():
             db.session.add(user)
             db.session.commit()
 
-
         login_user(user)
 
+        # ✅ SEND NEW USERS TO PROFILE COMPLETION
         if not user.profile_completed:
             return redirect(url_for('profile'))
 
-        return redirect(url_for('server_index'))
+        # ✅ SEND EXISTING USERS TO GENERATOR
+        return redirect(url_for('serve_index'))
 
     except Exception as e:
         print("GOOGLE AUTH ERROR:", e)
         flash("Google login failed", "danger")
         return redirect(url_for('login'))
+
 
 from datetime import datetime
 @app.route('/complete-profile', methods=['GET', 'POST'])
@@ -894,7 +919,11 @@ def complete_profile():
 @login_required
 def profile():
     from datetime import datetime
-    dob_str = request.form.get("dob", "").strip()
+    import re  # ✅ FIX: missing import
+    from flask import get_flashed_messages
+
+    get_flashed_messages() 
+
     if request.method == "POST":
         # -------------------------
         # Fetch & sanitize inputs
@@ -905,6 +934,7 @@ def profile():
         city = request.form.get("city", "").strip()
         postal_code = request.form.get("postal_code", "").strip()
         timezone = request.form.get("timezone", "").strip()
+        dob_str = request.form.get("dob", "").strip()  # ✅ FIX: moved here
 
         whatsapp_consent = bool(request.form.get("whatsapp_consent"))
         newsletter_consent = bool(request.form.get("newsletter_consent"))
@@ -936,13 +966,15 @@ def profile():
         if not age.isdigit() or int(age) < 1:
             flash("Please enter a valid age.", "danger")
             return redirect(url_for("profile"))
-        
+
+        # -------------------------
+        # DOB VALIDATION
+        # -------------------------
         try:
             dob = datetime.strptime(dob_str, "%Y-%m-%d").date()
         except ValueError:
             flash("Invalid Date of Birth format.", "danger")
             return redirect(url_for("profile"))
-
 
         # -------------------------
         # SAVE BASIC INFO
@@ -995,8 +1027,7 @@ def profile():
         return redirect(url_for("serve_index"))
 
     # GET request
-    return render_template("profile.html")
-
+    return render_template("profile.html", errors={}, form={})
 
 @app.route('/settings', methods=['GET', 'POST'])
 @login_required
@@ -1210,34 +1241,34 @@ def generate_worksheet():
             file = request.files['worksheet_file']
             filename = file.filename.lower()
 
-            images = []
             if filename.endswith('.pdf'):
                 worksheet_text = get_text_from_pdf(file)
-                images = extract_images_from_pdf(file)
 
             elif filename.endswith('.docx'):
                 worksheet_text = get_text_from_docx(file)
-                images = extract_images_from_docx(file)
+
             elif filename.endswith('.txt'):
                 worksheet_text = file.read().decode('utf-8', errors='ignore')
+
             elif filename.endswith(('.png', '.jpg', '.jpeg', '.gif')):
                 img = Image.open(file.stream)
                 response = client.models.generate_content(
                     model="models/gemini-flash-latest",
                     contents=[
-                        "Extract all math questions and generate a clean answer key.",
+                        "Extract all math questions and generate ONLY the answer key.",
                         img
                     ]
                 )
                 answers_text = clean_ai_text(response.text)
                 return send_file(
-                    create_txt(answers_text, "Worksheet Answers", info, "Worksheet_Answers.txt"),
+                    create_txt(answers_text, "Worksheet Answers", info),
                     as_attachment=True
                 )
+
             else:
                 return jsonify({"error": "Unsupported file type"}), 400
 
-            if not worksheet_text:
+            if not worksheet_text.strip():
                 return jsonify({"error": "Could not read worksheet"}), 400
 
             prompt = f"""
@@ -1257,7 +1288,7 @@ Worksheet:
             answers_text = clean_ai_text(response.text)
 
             return send_file(
-                create_txt(answers_text, "Worksheet Answers", info, "Worksheet_Answers.txt"),
+                create_txt(answers_text, "Worksheet Answers", info),
                 as_attachment=True
             )
 
@@ -1277,11 +1308,23 @@ Worksheet:
 
         # 🔒 Subtraction digit control
         digit_rule = ""
-        if "subtraction" in topic.lower():
+        if any(op in topic.lower() for op in ["addition", "subtraction", "multiplication", "division"]):
             if "2" in subtopic:
-                digit_rule = "Use ONLY numbers from 10 to 99."
+                digit_rule = (
+                    "STRICT RULE: Use ONLY 2-digit numbers (10 to 99). "
+                    "DO NOT use single-digit numbers."
+                )
             elif "3" in subtopic:
-                digit_rule = "Use ONLY numbers from 100 to 999."
+                digit_rule = (
+                    "STRICT RULE: Use ONLY 3-digit numbers (100 to 999). "
+                    "DO NOT use smaller numbers."
+                )
+            elif "4" in subtopic:
+                digit_rule = (
+                    "STRICT RULE: Use ONLY 4-digit numbers (1000 to 9999). "
+                    "DO NOT use smaller numbers."
+                )
+
 
         questions_prompt = f"""
 You are a school mathematics teacher.
@@ -1337,7 +1380,7 @@ Difficulty: {difficulty}
         title = f"Grade {grade} Math Worksheet"
         info["sub-title"] = subtopic
 
-        # -------- ANSWERS (SEPARATE FILE) ----------
+        # -------- ANSWERS ----------
         answers_text = None
         if include_answers:
             answers_prompt = f"""
@@ -1357,15 +1400,10 @@ Questions:
         # OUTPUT
         # =====================================================
         if output_format == "pdf":
-            worksheet_file = create_pdf(worksheet_text, title, info)
-            if include_answers and answers_text:
-                create_pdf(
-                    answers_text,
-                    f"{title} - Answers",
-                    info,
-                    filename="Worksheet_Answers.pdf"
-                )
-            return send_file(worksheet_file, as_attachment=True)
+            return send_file(
+                create_pdf(worksheet_text, title, info),
+                as_attachment=True
+            )
 
         elif output_format == "docx":
             return send_file(
@@ -1379,7 +1417,7 @@ Questions:
                 as_attachment=True
             )
 
-        else:  # txt
+        else:
             return send_file(
                 create_txt(worksheet_text, title, info),
                 as_attachment=True
@@ -1391,6 +1429,9 @@ Questions:
         if "429" in str(e):
             return jsonify({"error": "AI quota exceeded. Try again later."}), 429
         return jsonify({"error": "Worksheet generation failed."}), 500
+
+
+
 
 def extract_images_from_pdf(file_storage):
     images = []
