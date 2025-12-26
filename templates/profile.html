@@ -279,6 +279,21 @@
                      <small>You can add your mobile number here (optional).</small>
                 {% endif %}
             </div>
+
+            <div class="form-group">
+                <label>Board <span class="required">*</span></label>
+                <select name="board" required class="{% if errors.board %}input-error{% endif %}">
+
+                    <option value="">Select Board</option>
+                    {% for b in ['CBSE','ICSE','State Board','IB','IGCSE','College'] %}
+                    <option value="{{ b }}" {% if form.board == b %}selected{% endif %}>{{ b }}</option>
+                    {% endfor %}
+                </select>
+                {% if errors.board %}
+                <div class="error-text">{{ errors.board }}</div>
+                {% endif %}
+            </div>
+
             
             <div class="form-group">
     <label for="grade" class="required">Grade</label>
@@ -342,16 +357,21 @@
             </div>
             
             <div class="form-group checkbox-group">
-                <!-- Check if the user has already consented -->
-                <input type="checkbox" id="whatsapp_consent" name="whatsapp_consent" value="on" {% if current_user.whatsapp_consent %}checked{% endif %}>
-                <label for="whatsapp_consent">I agree to receive messages on WhatsApp.</label>
-            </div>
+    <label>
+        <input type="checkbox" id="whatsapp_consent" name="whatsapp_consent" value="on"
+               {% if current_user.whatsapp_consent %}checked{% endif %}>
+        I agree to receive messages on WhatsApp.
+    </label>
+</div>
 
-            <!-- --- ADDED NEWSLETTER CHECKBOX --- -->
-            <div class="form-group checkbox-group" style="margin-top: 10px;">
-                <input type="checkbox" id="newsletter_consent" name="newsletter_consent" value="on" {% if current_user.newsletter_consent %}checked{% endif %}>
-                <label for="newsletter_consent">Subscribe to newsletters, courses, and offers.</label>
-            </div>
+<div class="form-group checkbox-group" style="margin-top: 10px;">
+    <label>
+        <input type="checkbox" id="newsletter_consent" name="newsletter_consent" value="on"
+               {% if current_user.newsletter_consent %}checked{% endif %}>
+        Subscribe to newsletters, courses, and offers.
+    </label>
+</div>
+
             <!-- --- END NEW FIELDS --- -->
 
 
