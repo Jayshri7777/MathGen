@@ -172,8 +172,27 @@
     margin-left: 4px;
     font-size: 14px;
 }
+.checkbox-group {
+    margin-top: 12px;
+}
 
+.checkbox-label {
+    display: flex;
+    align-items: center;   /* 🔑 fixes vertical misalignment */
+    gap: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #5a2a2a;
+    cursor: pointer;
+}
 
+.checkbox-label input[type="checkbox"] {
+    margin: 0;            /* 🔑 removes default browser offset */
+    width: 16px;
+    height: 16px;
+    accent-color: #c44536;
+    cursor: pointer;
+}
 
 </style>
 
@@ -182,16 +201,14 @@
 
         <h2>Create Account</h2>
         <p style="font-size:13px;color:#7a3a3a;margin-bottom:15px;">
-    Fields marked with <span class="required">*</span> are mandatory
-</p>
-
+            Fields marked with <span class="required">*</span> are mandatory
+        </p>
 
         {% if errors.get('general') %}
-    <div class="error-text" style="margin-bottom:12px;">
-        {{ errors['general'] }}
-    </div>
-{% endif %}
-
+            <div class="error-text" style="margin-bottom:12px;">
+                {{ errors['general'] }}
+            </div>
+        {% endif %}
 
         {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
@@ -203,173 +220,152 @@
         {% endif %}
         {% endwith %}
 
-        {% if errors.general %}
-<div style="
-    background:#ffe6e6;
-    color:#8a1f1f;
-    padding:12px;
-    border-radius:8px;
-    margin-bottom:15px;
-    font-weight:600;
-">
-    {{ errors.general }}
-</div>
-{% endif %}
-
-
         <form method="POST" action="{{ url_for('register') }}">
 
+            <!-- NAME -->
             <div class="form-group">
                 <label>Full Name <span class="required">*</span></label>
-<input type="text" name="name" value="{{ form.get('name','') }}" required>
-{% if errors.get('name') %}
-    <div class="error-text">{{ errors['name'] }}</div>
-{% endif %}
-
+                <input type="text" name="name" value="{{ form.get('name','') }}" required>
+                {% if errors.name %}<div class="error-text">{{ errors.name }}</div>{% endif %}
             </div>
 
+            <!-- EMAIL -->
             <div class="form-group">
-               <label>Email <span class="required">*</span></label>
-<input type="email" name="email" value="{{ form.get('email','') }}" required>
-
-{% if errors.get('email') %}
-    <div class="error-text">{{ errors['email'] }}</div>
-{% endif %}
-
-
+                <label>Email <span class="required">*</span></label>
+                <input type="email" name="email" value="{{ form.get('email','') }}" required>
+                {% if errors.email %}<div class="error-text">{{ errors.email }}</div>{% endif %}
             </div>
 
+            <!-- PHONE -->
             <div class="form-group">
-               <label>Phone Number <span class="required">*</span></label>
+                <label>Mobile Number <span class="required">*</span></label>
                 <div class="phone-group">
                     <select name="country_code">
-    <option value="+91" {% if form.get('country_code') == '+91' %}selected{% endif %}>+91</option>
-    <option value="+1" {% if form.get('country_code') == '+1' %}selected{% endif %}>+1</option>
-    <option value="+44" {% if form.get('country_code') == '+44' %}selected{% endif %}>+44</option>
+                        {% for code in ['+91','+1','+44'] %}
+                        <option value="{{ code }}" {% if form.get('country_code') == code %}selected{% endif %}>{{ code }}</option>
+                        {% endfor %}
+                    </select>
 
-</select>
-
-<input type="text"
-       name="phone_number_main"
-       inputmode="numeric"
-       pattern="[0-9]*"
-       maxlength="10"
-       oninput="this.value = this.value.replace(/[^0-9]/g, '')"
-       placeholder="Enter 10-digit mobile number"
-       value="{{ form.get('phone_number_main','') }}"
-       class="{% if errors.phone %}input-error{% endif %}"
-       required>
-
+                    <input type="text"
+                        name="phone_number_main"
+                        inputmode="numeric"
+                        maxlength="10"
+                        value="{{ form.get('phone_number_main','') }}"
+                        oninput="this.value=this.value.replace(/[^0-9]/g,'')"
+                        class="{% if errors.phone %}input-error{% endif %}"
+                        required>
                 </div>
-                {% if errors.phone %}
-                <div class="error-text">{{ errors.phone }}</div>
-                {% endif %}
+                {% if errors.phone %}<div class="error-text">{{ errors.phone }}</div>{% endif %}
             </div>
 
-<!-- WhatsApp same checkbox -->
-<div class="form-group">
+            <!-- SAME WHATSAPP -->
+            <div class="form-group">
+                <label class="checkbox-label">
+                    <input type="checkbox" id="sameWhatsapp" name="same_whatsapp" checked>
+                    <span>This is my WhatsApp number</span>
+                </label>
+            </div>
+
+            <!-- WHATSAPP -->
+            <div class="form-group" id="whatsappField" style="display:none;">
+                <label>WhatsApp Number</label>
+                <input type="text" id="whatsapp_number" name="whatsapp_number"
+                    maxlength="10"
+                    value="{{ form.get('whatsapp_number','') }}"
+                    oninput="this.value=this.value.replace(/[^0-9]/g,'')">
+                <div class="error-text" id="whatsappError" style="display:none;">
+                    WhatsApp number must be different from mobile number
+                </div>
+            </div>
+
+            <!-- BOARD -->
+            <div class="form-group">
+                <label>Board <span class="required">*</span></label>
+                <select name="board" required>
+                    <option value="">Select Board</option>
+                    {% for b in ['CBSE','ICSE','State Board','IB','IGCSE','College'] %}
+                    <option value="{{ b }}" {% if form.get('board') == b %}selected{% endif %}>{{ b }}</option>
+                    {% endfor %}
+                </select>
+                {% if errors.board %}<div class="error-text">{{ errors.board }}</div>{% endif %}
+            </div>
+
+            <!-- GRADE -->
+            <div class="form-group">
+                <label>Grade <span class="required">*</span></label>
+                <select name="grade" required>
+                    <option value="">Select Grade</option>
+                    {% for g in range(1,13) %}
+                    <option value="{{ g }}" {% if form.get('grade')|int == g %}selected{% endif %}>{{ g }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- AGE -->
+            <div class="form-group">
+                <label>Age</label>
+                <input type="number" name="age" value="{{ form.get('age','') }}">
+            </div>
+
+            <!-- DOB -->
+            <div class="form-group">
+                <label>Date of Birth</label>
+                <input type="date" name="dob" value="{{ form.get('dob','') }}">
+            </div>
+
+            <!-- CITY -->
+            <div class="form-group">
+                <label>City/Town</label>
+                <input type="text" name="city" value="{{ form.get('city','') }}">
+            </div>
+
+            <!-- POSTAL -->
+            <div class="form-group">
+                <label>Postal Code</label>
+                <input type="text" name="postal_code" value="{{ form.get('postal_code','') }}">
+            </div>
+
+            <!-- TIMEZONE -->
+            <div class="form-group">
+                <label>Timezone</label>
+                <select name="timezone">
+                    <option value="">Select</option>
+                    {% for tz in ['Asia/Kolkata','Europe/London','America/New_York','America/Los_Angeles'] %}
+                    <option value="{{ tz }}" {% if form.get('timezone') == tz %}selected{% endif %}>{{ tz }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- PASSWORD -->
+            <div class="form-group">
+                <label>Password <span class="required">*</span></label>
+                <input type="password" name="password" required>
+                {% if errors.password %}<div class="error-text">{{ errors.password }}</div>{% endif %}
+            </div>
+
+            <!-- CONFIRM -->
+            <div class="form-group">
+                <label>Confirm Password <span class="required">*</span></label>
+                <input type="password" name="confirm_password" required>
+                {% if errors.confirm_password %}<div class="error-text">{{ errors.confirm_password }}</div>{% endif %}
+            </div>
+
+            <div class="form-group checkbox-group">
     <label class="checkbox-label">
-        <input type="checkbox" id="sameWhatsapp" checked>
-        <span>This is my WhatsApp number</span>
+        <input type="checkbox" name="whatsapp_consent">
+        <span>I agree to receive messages on WhatsApp.</span>
     </label>
 </div>
 
-<!-- WhatsApp Number (hidden by default) -->
-<div class="form-group" id="whatsappField" style="display:none;">
-    <label>WhatsApp Number</label>
-    <input
-    type="text"
-    id="whatsapp_number"
-    name="whatsapp_number"
-    inputmode="numeric"
-    pattern="[0-9]*"
-    maxlength="10"
-    oninput="this.value = this.value.replace(/[^0-9]/g, '')"
-    placeholder="Enter WhatsApp number"
->
-    <div class="error-text" id="whatsappError" style="display:none;">
-        WhatsApp number must be different from mobile number
-    </div>
-</div>
-            <div class="form-group">
-                <label>Board <span class="required">*</span></label>
-                <select name="board" required class="{% if errors.board %}input-error{% endif %}">
-
-                    <option value="">Select Board</option>
-                    {% for b in ['CBSE','ICSE','State Board','IB','IGCSE','College'] %}
-                    <option value="{{ b }}" {% if form.board == b %}selected{% endif %}>{{ b }}</option>
-                    {% endfor %}
-                </select>
-                {% if errors.board %}
-                <div class="error-text">{{ errors.board }}</div>
-                {% endif %}
-            </div>
-
-            <div class="form-group">
-                <label>Grade <span class="required">*</span></label>
-<input type="number"
-       name="grade"
-       min="1"
-       max="12"
-       inputmode="numeric"
-       placeholder="1–12"
-       value="{{ form.get('grade','') }}"
-       class="{% if errors.grade %}input-error{% endif %}"
-       required>
-{% if errors.grade %}
-    <div class="error-text">{{ errors.grade }}</div>
-{% endif %}
-
-            </div>
-
-            <div class="form-group">
-    <label>Date of Birth <span class="required">*</span></label>
-    <input
-        type="date"
-        name="dob"
-        value="{{ form.get('dob','') }}"
-        required
-        class="{% if errors.dob %}input-error{% endif %}"
-    >
-    {% if errors.dob %}
-        <div class="error-text">{{ errors.dob }}</div>
-    {% endif %}
+<div class="form-group checkbox-group">
+    <label class="checkbox-label">
+        <input type="checkbox" name="newsletter_consent">
+        <span>Subscribe to newsletters, courses, and offers.</span>
+    </label>
 </div>
 
 
-            <div class="form-group">
-                <label>Password <span class="required">*</span></label>
-<input type="password" name="password"
-       placeholder="Create a strong password"
-       class="{% if errors.password %}input-error{% endif %}"
-       required>
-                {% if errors.password %}
-                <div class="error-text">{{ errors.password }}</div>
-                {% endif %}
-                <div class="password-rules">
-                    Password must contain:
-                    <small>
-                        <li>At least 8 characters</li>
-                        <li>One uppercase letter (A–Z)</li>
-                        <li>One lowercase letter (a–z)</li>
-                        <li>One number (0–9)</li>
-                        <li>One special character (!@#$%^&*)</li>
-                    </small>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label>Confirm Password <span class="required">*</span></label>
-<input type="password" name="confirm_password"
-       placeholder="Re-enter your password"
-       class="{% if errors.confirm_password %}input-error{% endif %}"
-       required>
-                {% if errors.confirm_password %}
-                <div class="error-text">{{ errors.confirm_password }}</div>
-                {% endif %}
-            </div>
-
-            <button type="submit" class="register-btn">Register</button>
+            <button class="register-btn">Register</button>
 
             <div class="or-divider">OR</div>
 
@@ -379,9 +375,10 @@
             </a>
 
         </form>
-
     </div>
 </div>
+
+
 <script>
 const sameWhatsappCheckbox = document.getElementById("sameWhatsapp");
 const whatsappGroup = document.getElementById("whatsappField");
@@ -389,27 +386,15 @@ const whatsappInput = document.getElementById("whatsapp_number");
 const phoneInput = document.querySelector("input[name='phone_number_main']");
 const whatsappError = document.getElementById("whatsappError");
 
-// Toggle WhatsApp field
 sameWhatsappCheckbox.addEventListener("change", () => {
-    if (sameWhatsappCheckbox.checked) {
-        whatsappGroup.style.display = "none";
-        whatsappInput.value = "";
-        whatsappError.style.display = "none";
-    } else {
-        whatsappGroup.style.display = "block";
-    }
+    whatsappGroup.style.display = sameWhatsappCheckbox.checked ? "none" : "block";
+    whatsappInput.value = "";
+    whatsappError.style.display = "none";
 });
 
-// Prevent same number
 whatsappInput.addEventListener("input", () => {
-    if (
-        whatsappInput.value &&
-        whatsappInput.value === phoneInput.value
-    ) {
-        whatsappError.style.display = "block";
-    } else {
-        whatsappError.style.display = "none";
-    }
+    whatsappError.style.display =
+        whatsappInput.value === phoneInput.value ? "block" : "none";
 });
 </script>
 
