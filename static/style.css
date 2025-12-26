@@ -633,3 +633,79 @@ button[type="submit"]:disabled {
 .mock-btn:hover {
     background-color: var(--button-hover-bg-color);
 }
+/* ---------- AUTH SHARED LAYOUT ---------- */
+.auth-wrapper {
+    display: flex;
+    justify-content: center;
+    padding: 60px 20px;
+}
+
+.auth-card {
+    width: 100%;
+    max-width: 600px;
+    background: rgba(255, 255, 255, 0.18);
+    backdrop-filter: blur(8px);
+    border-radius: 16px;
+    padding: 35px 40px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+}
+
+.auth-card h2 {
+    text-align: center;
+    font-weight: 700;
+    margin-bottom: 25px;
+    color: #5a1f1f;
+}
+
+/* ---------- FORM ---------- */
+.form-group {
+    margin-bottom: 18px;
+}
+
+.form-group label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 8px;
+    border: 1.5px solid transparent;
+    font-size: 15px;
+    background: #fff;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    border-color: #c44536;
+    box-shadow: 0 0 0 2px rgba(196,69,54,0.15);
+}
+
+/* ---------- BUTTON ---------- */
+.primary-btn {
+    width: 100%;
+    margin-top: 25px;
+    padding: 14px;
+    font-size: 16px;
+    font-weight: 700;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    background: linear-gradient(135deg, #9e2a2b, #c44536);
+    color: white;
+}
+
+.primary-btn:hover {
+    opacity: 0.95;
+}
+
+/* ---------- REQUIRED ---------- */
+.required {
+    color: #e63946;
+    font-weight: 700;
+}
+
+
