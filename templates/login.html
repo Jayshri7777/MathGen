@@ -78,6 +78,20 @@
             color: #155724;
             border: 1px solid #c3e6cb;
         }
+        .login-methods {
+    display: flex;
+    gap: 28px;
+    align-items: center;
+}
+
+.login-methods label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap; /* 🔥 THIS IS THE REAL FIX */
+    font-weight: 600;
+}
+
     </style>
 </head>
 
@@ -90,18 +104,22 @@
 
         <!-- LOGIN METHOD -->
         <div class="form-group">
-            <label>Login using:</label>
-            <div style="display:flex; gap:20px;">
-                <label>
-                    <input type="radio" name="login_method" value="email" checked>
-                    Email
-                </label>
-                <label>
-                    <input type="radio" name="login_method" value="phone">
-                    Phone Number
-                </label>
-            </div>
-        </div>
+    <label>Login using:</label>
+
+    <div class="login-methods">
+        <label>
+            <input type="radio" name="login_method" value="email" checked>
+            Email
+        </label>
+
+        <label>
+            <input type="radio" name="login_method" value="phone">
+            Phone Number
+        </label>
+    </div>
+</div>
+
+
 
         <!-- EMAIL / PHONE INPUT -->
         <div class="form-group">
@@ -165,21 +183,56 @@ const emailRadio = document.querySelector("input[value='email']");
 const phoneRadio = document.querySelector("input[value='phone']");
 const input = document.getElementById("login_identifier");
 const label = document.getElementById("login-label");
+const phoneError = document.getElementById("phoneError");
 
 emailRadio.addEventListener("change", () => {
     input.type = "email";
+    input.value = "";
     input.placeholder = "Enter your email";
     label.innerText = "Email Address:";
-    input.value = "";
+    phoneError.style.display = "none";
 });
 
 phoneRadio.addEventListener("change", () => {
     input.type = "tel";
-    input.placeholder = "Enter phone number";
-    label.innerText = "Phone Number:";
     input.value = "";
+    input.placeholder = "Enter 10-digit mobile number";
+    label.innerText = "Phone Number:";
+    phoneError.style.display = "none";
 });
+
+// Block alphabets instantly
+input.addEventListener("input", () => {
+    if (phoneRadio.checked) {
+        input.value = input.value.replace(/\D/g, "").slice(0, 10);
+    }
+});
+
+// Final validation on submit
+document.querySelector("form").addEventListener("submit", (e) => {
+    if (!phoneRadio.checked) return;
+
+    const phone = input.value;
+
+    if (!/^\d{10}$/.test(phone)) {
+        showError("Mobile number must be exactly 10 digits.");
+        e.preventDefault();
+        return;
+    }
+
+    if (/^(\d)\1{9}$/.test(phone)) {
+        showError("Invalid mobile number.");
+        e.preventDefault();
+    }
+});
+
+function showError(msg) {
+    phoneError.innerText = msg;
+    phoneError.style.display = "block";
+}
 </script>
+
+
 
 </body>
 </html>
