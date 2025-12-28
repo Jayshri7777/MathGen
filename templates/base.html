@@ -254,13 +254,21 @@
                     <strong>{{ current_user.name }}</strong><br>
                     <small>{{ current_user.email }}</small>
                 </div>
-                <a href="/profile">Profile</a>
+                <a href="javascript:void(0)"
+   onclick="openPopup('/profile', 'Your Profile')">
+   Profile
+</a>
+
                 <a href="/settings">Settings</a>
                 <a href="/logout" style="color:#c0392b;">Logout</a>
             </div>
         </div>
         {% else %}
-        <a href="/login">Login</a>
+        <a href="javascript:void(0)"
+   onclick="openPopup('/login', 'Login')">
+   Login
+</a>
+
         <a href="/register">Sign Up</a>
         {% endif %}
     </div>
@@ -303,6 +311,71 @@
   async>
 </script>
 
+<!-- ===== POPUP BACKDROP ===== -->
+<div id="popupOverlay" style="
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.45);
+    z-index:2000;
+"></div>
+
+<!-- ===== POPUP BOX ===== -->
+<div id="popupBox" style="
+    display:none;
+    position:fixed;
+    top:50%;
+    left:50%;
+    transform:translate(-50%, -50%);
+    width:90%;
+    max-width:520px;
+    max-height:85vh;
+    overflow:auto;
+    background:white;
+    border-radius:18px;
+    box-shadow:0 30px 80px rgba(0,0,0,0.35);
+    z-index:2001;
+">
+    <div style="
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        padding:16px 20px;
+        border-bottom:1px solid #eee;
+        font-weight:600;
+    ">
+        <span id="popupTitle">Popup</span>
+        <button onclick="closePopup()" style="
+            border:none;
+            background:none;
+            font-size:20px;
+            cursor:pointer;
+        ">✕</button>
+    </div>
+
+    <div id="popupContent" style="padding:20px;"></div>
+</div>
+<script>
+function openPopup(url, title) {
+    document.getElementById("popupTitle").innerText = title;
+
+    fetch(url)
+        .then(res => res.text())
+        .then(html => {
+            document.getElementById("popupContent").innerHTML = html;
+            document.getElementById("popupOverlay").style.display = "block";
+            document.getElementById("popupBox").style.display = "block";
+        });
+}
+
+function closePopup() {
+    document.getElementById("popupOverlay").style.display = "none";
+    document.getElementById("popupBox").style.display = "none";
+    document.getElementById("popupContent").innerHTML = "";
+}
+
+document.getElementById("popupOverlay")?.addEventListener("click", closePopup);
+</script>
 
 </body>
 </html>
