@@ -11,10 +11,15 @@
     
     <!-- Styles specific to auth page layout -->
     <style>
-        .auth-container {
-    max-width: 500px;
-    margin: 15px auto 40px;
+       .auth-container {
+    margin: 0 auto 30px;
 }
+.glass-form.auth-form {
+    padding-top: 18px;   /* controlled, clean spacing */
+}
+
+
+
 
         .auth-form h1 {
             font-size: 2.2em;
@@ -178,11 +183,11 @@
 }
 /* ---------- DOB INPUT ---------- */
 .dob-input {
-    width: 100%;
-    padding: 12px 14px;
-    border-radius: 10px;
+    width: 220px;              /* 👈 FIXED SIZE */
+    padding: 10px 12px;
+    border-radius: 8px;
     border: 1.5px solid #f2c4b8;
-    font-size: 15px;
+    font-size: 14px;
     background-color: #fffaf8;
     color: #4a1f1f;
     cursor: pointer;
@@ -205,6 +210,19 @@
 .dob-input:invalid {
     color: #9b6b6b;
 }
+.glass-form.auth-form {
+    background: linear-gradient(180deg, #fff5f2, #ffffff);
+}
+.form-title {
+    margin: 0 0 18px;
+    padding-bottom: 10px;
+    font-size: 22px;
+    font-weight: 700;
+    color: #7a1f2b;
+    border-bottom: 2px solid #f2c4b8;
+}
+
+
     </style>
 </head>
 <body>
@@ -225,7 +243,9 @@
 
         <!-- Form container -->
         <form method="POST" action="{{ url_for('profile') }}" class="glass-form auth-form">
-            <h1>Your Profile</h1>
+
+            <h2 class="form-title">Profile Details</h2>
+
 
             <div class="form-group">
                 <label for="name" class="required">Full Name</label>
@@ -242,51 +262,46 @@
 
             <!-- --- MODIFIED PHONE NUMBER FIELD --- -->
             <div class="form-group">
-               <label for="phone_number_main" class="required">Mobile Number</label>
-                
-                <!-- If user already has a phone number, show it as disabled -->
-                {% if current_user.phone_number %}
-    <div class="phone-input-group">
-        <input type="text"
-               value="{{ current_user.country_code }}"
-               disabled
-               style="width:110px; font-weight:600; text-align:center;">
-        
+    <label class="required">Mobile Number</label>
+
+    {% if current_user.phone_number %}
+        <!-- SHOW SAVED NUMBER (READ-ONLY) -->
         <input type="tel"
-               id="phone_number_main_display"
-               name="phone_number_main_display"
-               value="{{ current_user.phone_number }}"
-               disabled>
-    </div>
+       value="{{ current_user.phone_number[3:] }}"
+       disabled>
 
-    <small>Mobile number cannot be changed. Contact support if needed.</small>
+        <small>Mobile number cannot be changed. Contact support if needed.</small>
 
-                
-                <!-- Otherwise (e.g., Google login), show the input to ADD one -->
-                {% else %}
-                    <div class="phone-input-group">
-                         <select id="country_code" name="country_code">
-                             <option value="">Code</option> <!-- Default blank -->
-                             <option value="+91">+91 (India)</option>
-                             <option value="+1">+1 (USA/Canada)</option>
-                             <option value="+44">+44 (UK)</option>
-                             <option value="+61">+61 (Australia)</option>
-                             <!-- Add more country codes as needed -->
-                             <option value="">Other</option>
-                         </select> 
-                         <input type="tel" id="phone_number_main" name="phone_number_main" placeholder="Add phone number">
-                    </div>
-                     <small>You can add your mobile number here (optional).</small>
-                {% endif %}
-            </div>
+    {% else %}
+        <!-- ALLOW ADDING NUMBER (GOOGLE LOGIN CASE) -->
+        <div class="phone-input-group">
+    <input type="text"
+           value="{{ current_user.country_code }}"
+           disabled
+           style="width:110px; font-weight:600; text-align:center;">
+
+    <input type="tel"
+           value="{{ current_user.phone_number.replace(current_user.country_code, '') }}"
+           disabled>
+</div>
+
+<small>Mobile number cannot be changed. Contact support if needed.</small>
+
+    {% endif %}
+</div>
+
 
             <div class="form-group">
-                <label>Board <span class="required">*</span></label>
+                <label class="required">Board</label>
                 <select name="board" required class="{% if errors.board %}input-error{% endif %}">
 
                     <option value="">Select Board</option>
                     {% for b in ['CBSE','ICSE','State Board','IB','IGCSE','College'] %}
-                    <option value="{{ b }}" {% if form.board == b %}selected{% endif %}>{{ b }}</option>
+                    <option value="{{ b }}"
+    {% if current_user.board == b %}selected{% endif %}>
+    {{ b }}
+</option>
+
                     {% endfor %}
                 </select>
                 {% if errors.board %}
@@ -319,16 +334,18 @@
             </div>
 
             <div class="form-group">
-    <label for="dob" class="required">Date of Birth</label>
+    <label for="dob">Date of Birth (Optional)</label>
 
-    <input
-        type="date"
-        id="dob"
-        name="dob"
-        value="{{ current_user.dob.strftime('%Y-%m-%d') if current_user.dob else '' }}"
-        required
-        class="dob-input"
-    >
+
+    <div style="display:flex; align-items:center;">
+        <input
+            type="date"
+            id="dob"
+            name="dob"
+            value="{{ current_user.dob.strftime('%Y-%m-%d') if current_user.dob else '' }}"
+            class="dob-input"
+        >
+    </div>
 </div>
 
 
