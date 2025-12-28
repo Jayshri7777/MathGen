@@ -466,7 +466,7 @@ def my_scores():
 # --- LOGIN MANAGER SETUP ---
 login_manager = LoginManager()
 login_manager.init_app(app)
-login_manager.login_view = 'login'
+login_manager.refresh_view = 'login'
 login_manager.login_message = "Please log in to access this page."
 login_manager.login_message_category = "warning"
 
@@ -902,13 +902,26 @@ def login():
 
     return render_template('login.html')
 
+@app.route('/login-fragment')
+def login_fragment():
+    if current_user.is_authenticated:
+        return "", 204  # nothing to show
+
+    return render_template('partials/login_fragment.html')
+
+@app.route('/profile-fragment')
+@login_required
+def profile_fragment():
+    return render_template('partials/profile_fragment.html')
+
 
 @app.route('/logout')
 @login_required
 def logout():
     logout_user()
+    session.clear()
     flash('You have been successfully logged out.', 'info')
-    return redirect(url_for('login'))
+    return redirect(url_for('landing_page'))
 
 # --- GOOGLE OAUTH LOGIN ROUTES ---
 @app.route('/login/google')
@@ -944,7 +957,8 @@ def google_callback():
             db.session.add(user)
             db.session.commit()
 
-        login_user(user)
+        login_user(user, remember=False)
+
 
         # ✅ SEND NEW USERS TO PROFILE COMPLETION
         if not user.profile_completed:
