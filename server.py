@@ -37,6 +37,23 @@ import docx as docx_reader
 import io 
 import csv
 
+
+def is_valid_indian_mobile(phone):
+    # Must be exactly 10 digits and start with 6–9
+    if not re.fullmatch(r"[6-9]\d{9}", phone):
+        return False
+
+    # Reject repeated digits (0000000000, 1111111111, etc.)
+    if len(set(phone)) == 1:
+        return False
+
+    # Reject common fake numbers
+    if phone in {"1234567890", "0123456789", "9876543210"}:
+        return False
+
+    return True
+
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 TOPICS_CSV = os.path.join(BASE_DIR, "topics.csv")
 
@@ -760,14 +777,17 @@ def register():
                 errors['dob'] = 'Invalid date format.'
 
         # ---------- PHONE ----------
-        phone_digits = phone_number_main
-        if phone_digits:
-            if not phone_digits.isdigit():
-                errors['phone'] = 'Mobile number must contain only digits.'
-            elif len(phone_digits) != 10:
-                errors['phone'] = 'Mobile number must be exactly 10 digits.'
+        # ---------- PHONE (STRICT VALIDATION) ----------
+        phone_digits = re.sub(r"\D", "", phone_number_main)
+
+        if not phone_digits:
+            errors['phone'] = 'Mobile number is required.'
+
+        elif not is_valid_indian_mobile(phone_digits):
+            errors['phone'] = 'Enter a valid 10-digit Indian mobile number.'
 
         full_phone = f"{country_code}{phone_digits}"
+
 
         # ---------- EMAIL ----------
         email_regex = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
@@ -829,8 +849,6 @@ def register():
 
     return render_template('register.html', errors={}, form={})
 
-
-
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
@@ -852,14 +870,26 @@ def login():
             user = User.query.filter_by(email=email).first()
 
         elif login_method == 'phone':
-            # Normalize phone
             phone = re.sub(r'\D', '', login_identifier)
-            user = User.query.filter_by(phone_number=phone).first()
 
-            if phone.startswith('91') and len(phone) == 12:
-                phone = phone[2:]
+            # ✅ Must be exactly 10 digits and start with 6–9
+            if not re.fullmatch(r"[6-9]\d{9}", phone):
+                flash("Enter a valid 10-digit mobile number.", "error")
+                return redirect(url_for("login"))
 
-            user = User.query.filter_by(phone_number=phone).first()
+            # ✅ Reject repeated digits
+            if len(set(phone)) == 1:
+                flash("Invalid mobile number.", "error")
+                return redirect(url_for("login"))
+
+            # ✅ Reject obvious fake numbers
+            if phone in {"1234567890", "0123456789", "9876543210"}:
+                flash("Invalid mobile number.", "error")
+                return redirect(url_for("login"))
+
+            # ✅ NORMALIZE TO DB FORMAT
+            full_phone = "+91" + phone
+            user = User.query.filter_by(phone_number=full_phone).first()
 
         if user is None or not user.check_password(password):
             flash('Invalid email/phone or password.', 'error')
@@ -871,6 +901,7 @@ def login():
         return redirect(next_page or url_for('serve_index'))
 
     return render_template('login.html')
+
 
 @app.route('/logout')
 @login_required
@@ -994,9 +1025,10 @@ def profile():
         # -------------------------
         # REQUIRED FIELD CHECK
         # -------------------------
-        if not name or not grade or not age or not dob_str:
+        if not name or not grade or not age:
             flash("Please fill all required fields marked with *", "danger")
             return redirect(url_for("profile"))
+
 
         # -------------------------
         # NAME VALIDATION
@@ -1022,11 +1054,27 @@ def profile():
         # -------------------------
         # DOB VALIDATION
         # -------------------------
-        try:
-            dob = datetime.strptime(dob_str, "%Y-%m-%d").date()
-        except ValueError:
-            flash("Invalid Date of Birth format.", "danger")
-            return redirect(url_for("profile"))
+        # -------------------------
+        # DOB VALIDATION (OPTIONAL)
+        # -------------------------
+        # -------------------------
+        # DOB VALIDATION (OPTIONAL)
+        # -------------------------
+        dob = None
+        if dob_str:
+            try:
+                dob = datetime.strptime(dob_str, "%Y-%m-%d").date()
+
+                # 🚫 PREVENT FUTURE DATE
+                if dob > datetime.today().date():
+                    flash("Date of Birth cannot be in the future.", "danger")
+                    return redirect(url_for("profile"))
+
+            except ValueError:
+                flash("Invalid Date of Birth format.", "danger")
+                return redirect(url_for("profile"))
+
+
 
         # -------------------------
         # SAVE BASIC INFO
