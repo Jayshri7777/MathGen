@@ -267,30 +267,24 @@
     {% if current_user.phone_number %}
         <!-- SHOW SAVED NUMBER (READ-ONLY) -->
         <input type="tel"
-       value="{{ current_user.phone_number[ len(current_user.country_code): ] if current_user.phone_number else '' }}"
+       value="{{ current_user.phone_number }}"
        disabled>
 
 
         <small>Mobile number cannot be changed. Contact support if needed.</small>
 
     {% else %}
-        <!-- ALLOW ADDING NUMBER (GOOGLE LOGIN CASE) -->
-        <div class="phone-input-group">
-    <input type="text"
-           value="{{ current_user.country_code }}"
-           disabled
-           style="width:110px; font-weight:600; text-align:center;">
-
-    <input type="tel"
-           value="{{ current_user.phone_number.replace(current_user.country_code, '') }}"
-           disabled>
-</div>
-
-<small>Mobile number cannot be changed. Contact support if needed.</small>
-
+        <!-- GOOGLE LOGIN USER (NO PHONE) -->
+        <input type="tel"
+               value=""
+               placeholder="Not provided via Google login"
+               disabled>
+        <small>
+            Mobile number not available.
+            Please contact support if you want to add one.
+        </small>
     {% endif %}
 </div>
-
 
             <div class="form-group">
                 <label class="required">Board</label>
