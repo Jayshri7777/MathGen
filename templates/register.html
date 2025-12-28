@@ -397,5 +397,56 @@ whatsappInput.addEventListener("input", () => {
         whatsappInput.value === phoneInput.value ? "block" : "none";
 });
 </script>
+<script>
+const phoneInput = document.querySelector("input[name='phone_number_main']");
+let phoneErrorDiv = document.createElement("div");
+
+phoneErrorDiv.className = "error-text";
+phoneErrorDiv.style.display = "none";
+phoneInput.parentElement.appendChild(phoneErrorDiv);
+
+phoneInput.addEventListener("input", () => {
+    phoneInput.value = phoneInput.value.replace(/\D/g, "");
+    validatePhone();
+});
+
+function validatePhone() {
+    const phone = phoneInput.value;
+
+    phoneErrorDiv.style.display = "none";
+    phoneInput.setCustomValidity("");
+
+    // Must be exactly 10 digits
+    if (phone.length !== 10) {
+        return showError("Mobile number must be exactly 10 digits.");
+    }
+
+    // Must start with 6–9
+    if (!/^[6-9]/.test(phone)) {
+        return showError("Mobile number must start with 6, 7, 8, or 9.");
+    }
+
+    // Reject repeated digits
+    if (/^(\d)\1{9}$/.test(phone)) {
+        return showError("Invalid mobile number.");
+    }
+
+    // Reject obvious fake numbers
+    const fakeNumbers = ["1234567890", "0123456789", "9876543210"];
+    if (fakeNumbers.includes(phone)) {
+        return showError("Invalid mobile number.");
+    }
+
+    return true;
+}
+
+function showError(msg) {
+    phoneErrorDiv.innerText = msg;
+    phoneErrorDiv.style.display = "block";
+    phoneInput.setCustomValidity(msg);
+    return false;
+}
+</script>
+
 
 {% endblock %}
