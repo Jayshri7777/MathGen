@@ -21,12 +21,47 @@
     padding: 40px;
     box-shadow: 0 14px 32px rgba(0,0,0,0.1);
 }
+.vertical-or {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    color: #8a4a4a;
+    gap: 12px;
+}
+
+.vertical-or::before,
+.vertical-or::after {
+    content: "";
+    width: 1px;
+    flex: 1;
+    background: #d8a79b;
+}
 
 .ws-grid {
     display: grid;
-    grid-template-columns: 1.3fr 1fr;
-    gap: 45px;
+    grid-template-columns: 1.3fr auto 1fr; /* LEFT | OR | RIGHT */
+    gap: 35px;
+    align-items: stretch;
 }
+@media (max-width: 900px) {
+    .ws-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .vertical-or {
+        flex-direction: row;
+    }
+
+    .vertical-or::before,
+    .vertical-or::after {
+        width: 40px;
+        height: 1px;
+    }
+}
+
+
 
 .form-group {
     margin-bottom: 22px;
@@ -110,20 +145,78 @@
     opacity: 0.7;
 }
 .answer-key-bar {
-    max-width: 1100px;
-    margin: 25px auto 10px;
-    padding: 14px 22px;
+    max-width: 600px;          /* 👈 narrower looks better */
+    margin: 25px auto;         /* 👈 centers it horizontally */
+    padding: 16px 24px;
+    font-weight: 700;     /* 👈 bold */
+    font-size: 16px;      /* 👈 slightly stronger presence */
+    color: #5a1f1f;       
     background: rgba(255, 255, 255, 0.6);
     border-radius: 14px;
     box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+    display: flex;             /* 👈 center contents */
+    justify-content: center;
 }
-
 .answer-key-bar .checkbox-group {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 10px;
-    font-weight: 600;
+    transform: scale(1.1);
 }
+
+.upload-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.upload-zone {
+    border: 2px dashed #d8a79b;
+    border-radius: 18px;
+    padding: 30px 20px;
+    text-align: center;
+    background: rgba(255,255,255,0.4);
+}
+
+.upload-icon {
+    font-size: 36px;
+    margin-bottom: 10px;
+}
+
+.upload-title {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 6px;
+}
+
+.upload-subtext {
+    font-size: 13px;
+    color: #7a4a4a;
+    margin-bottom: 18px;
+}
+
+.upload-btn {
+    display: inline-block;
+    padding: 10px 18px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #7a1f2b, #a83246);
+    color: white;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-bottom: 14px;
+}
+
+.upload-btn:hover {
+    opacity: 0.95;
+}
+
+.upload-hint {
+    font-size: 12px;
+    color: #8a5a5a;
+}
+
 
 </style>
 
@@ -138,96 +231,96 @@
 >
 
 <div class="ws-card">
-<div class="ws-grid">
+    <div class="ws-grid">
 
-<!-- LEFT -->
-<!-- LEFT -->
-<div>
+        <!-- LEFT: GENERATE NEW WORKSHEET -->
+        <div>
 
-    <!-- GRADE (LOCKED) -->
-    <div class="form-group">
-        <label>Grade</label>
-        <input
-            type="text"
-            class="pretty-input"
-            value="{{ current_user.grade }}"
-            disabled
-        >
-        <input type="hidden" name="grade" id="grade" value="{{ current_user.grade }}">
-    </div>
+            <!-- GRADE -->
+            <div class="form-group">
+                <label>Grade</label>
+                <input class="pretty-input" value="{{ current_user.grade }}" disabled>
+                <input type="hidden" name="grade" id="grade" value="{{ current_user.grade }}">
+            </div>
 
-    <!-- BOARD (LOCKED) -->
-    <div class="form-group">
-        <label>Board</label>
-        <input
-            type="text"
-            class="pretty-input"
-            value="{{ current_user.board }}"
-            disabled
-        >
-        <input type="hidden" name="board" id="board" value="{{ current_user.board }}">
-    </div>
+            <!-- BOARD -->
+            <div class="form-group">
+                <label>Board</label>
+                <input class="pretty-input" value="{{ current_user.board }}" disabled>
+                <input type="hidden" name="board" id="board" value="{{ current_user.board }}">
+            </div>
 
-    <!-- TOPIC -->
-    <div class="form-group">
-        <label>Topic</label>
-        <select class="pretty-select" name="topic" id="topic" required disabled>
-            <option value="">Loading topics...</option>
-        </select>
-    </div>
+            <!-- TOPIC -->
+            <div class="form-group">
+                <label>Topic</label>
+                <select class="pretty-select" name="topic" id="topic" required disabled>
+                    <option value="">Loading topics...</option>
+                </select>
+            </div>
 
-    <!-- SUB TOPIC -->
-    <div class="form-group">
-        <label>Sub-Topic (Optional)</label>
-        <input class="pretty-input" name="subtopic" placeholder="e.g. Linear Equations">
-    </div>
-
+            <!-- SUB TOPIC -->
+            <div class="form-group">
+    <label>Select Subtopic</label>
+    <select class="pretty-select" name="subtopic" id="subtopic" disabled>
+        <option value="">Select Sub-Topic</option>
+    </select>
 </div>
 
 
-<!-- RIGHT -->
-<div>
-    <div class="form-group">
-        <label>Difficulty</label>
-        <select class="pretty-select" name="difficulty">
-            <option value="Easy">Easy</option>
-            <option value="Medium">Medium</option>
-            <option value="Hard">Hard</option>
-        </select>
+            <!-- DIFFICULTY -->
+            <div class="form-group">
+                <label>Difficulty</label>
+                <select class="pretty-select" name="difficulty">
+                    <option value="Easy">Easy</option>
+                    <option value="Medium">Medium</option>
+                    <option value="Hard">Hard</option>
+                </select>
+            </div>
+
+            <!-- DOWNLOAD FORMAT -->
+            <div class="form-group">
+                <label>Download As</label>
+                <select class="pretty-select" name="format">
+                    <option value="pdf">PDF</option>
+                    <option value="docx">DOCX</option>
+                    <option value="txt">TXT</option>
+                    <option value="jpg">JPG</option>
+                    <option value="png">PNG</option>
+                    <option value="gif">GIF</option>
+                </select>
+            </div>
+
+        </div>
+
+        <div class="vertical-or">OR</div>
+
+
+        <!-- RIGHT: UPLOAD EXISTING WORKSHEET ONLY -->
+        <div class="ws-card secondary upload-card">
+    <h3>Existing Worksheet</h3>
+
+    <div class="upload-zone">
+        <div class="upload-icon">📄</div>
+
+        <p class="upload-title">Upload an existing worksheet</p>
+        <p class="upload-subtext">
+            Supported formats: PDF, DOCX, JPG, PNG
+        </p>
+
+        <label class="upload-btn">
+            Choose File
+            <input type="file" name="worksheet_file" hidden>
+        </label>
+
+        <p class="upload-hint">
+            We’ll analyze your worksheet and generate a refined version.
+        </p>
     </div>
+</div>
 
-    <div class="form-group">
-        <label>Download As</label>
-        <select class="pretty-select" name="format">
-            <option value="pdf">PDF</option>
-            <option value="docx">DOCX</option>
-            <option value="txt">TXT</option>
-            <option value="jpg">JPG</option>
-            <option value="png">PNG</option>
-            <option value="gif">GIF</option>
-        </select>
     </div>
-
 </div>
 
-</div>
-</div>
-
-<!-- OR DIVIDER -->
-<div class="or-divider">OR</div>
-
-
-<!-- SECOND BOX -->
-<div class="ws-card secondary">
-
-<h3>Existing Worksheet Options</h3>
-
-<div class="form-group">
-    <label>Upload Existing Worksheet</label>
-    <input type="file" class="file-box" name="worksheet_file">
-</div>
-
-</div>
 
 <!-- COMMON ANSWER KEY OPTION -->
 <!-- COMMON ANSWER KEY OPTION (THIN) -->
@@ -298,6 +391,7 @@ async function loadTopics() {
 document.addEventListener("DOMContentLoaded", () => {
     loadTopics();
 });
+
 </script>
 <script>
 const grade = document.getElementById("grade");
@@ -338,17 +432,60 @@ function checkFormValidity() {
     el.addEventListener("change", checkFormValidity);
 });
 </script>
-
 <script>
-document.addEventListener("DOMContentLoaded", () => {
+const topicSelect = document.getElementById("topic");
+const subTopicSelect = document.getElementById("subtopic");
+
+async function loadSubTopics() {
     const grade = document.getElementById("grade").value;
     const board = document.getElementById("board").value;
+    const majorTopic = topicSelect.value;
 
-    if (grade && board) {
-        loadTopics();
+    subTopicSelect.innerHTML = "<option>Loading sub-topics...</option>";
+    subTopicSelect.disabled = true;
+
+    if (!majorTopic) {
+        subTopicSelect.innerHTML =
+            "<option value=''>Select Sub-Topic (Optional)</option>";
+        return;
     }
-});
+
+    try {
+        const res = await fetch(
+            `/get-minor-topics?grade=${grade}&board=${board}&subject=mathematics&major_topic=${encodeURIComponent(majorTopic)}`
+        );
+
+        const data = await res.json();
+
+        subTopicSelect.innerHTML =
+            "<option value=''>Select Sub-Topic (Optional)</option>";
+
+        if (data.length === 0) {
+            subTopicSelect.innerHTML =
+                "<option value=''>No sub-topics available</option>";
+            return;
+        }
+
+        data.forEach(sub => {
+            const opt = document.createElement("option");
+            opt.value = sub;
+            opt.textContent = sub;
+            subTopicSelect.appendChild(opt);
+        });
+
+        subTopicSelect.disabled = false;
+
+    } catch (err) {
+        console.error(err);
+        subTopicSelect.innerHTML =
+            "<option value=''>Error loading sub-topics</option>";
+    }
+}
+
+topicSelect.addEventListener("change", loadSubTopics);
 </script>
+
+
 
 
 
