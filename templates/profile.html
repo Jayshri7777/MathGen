@@ -267,8 +267,9 @@
     {% if current_user.phone_number %}
         <!-- SHOW SAVED NUMBER (READ-ONLY) -->
         <input type="tel"
-       value="{{ current_user.phone_number[3:] }}"
+       value="{{ current_user.phone_number[ len(current_user.country_code): ] if current_user.phone_number else '' }}"
        disabled>
+
 
         <small>Mobile number cannot be changed. Contact support if needed.</small>
 
