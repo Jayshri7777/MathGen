@@ -1,25 +1,60 @@
-<form method="POST" action="{{ url_for('login') }}">
+<form method="POST"
+      action="{{ url_for('login') }}"
+      class="glass-form auth-form">
 
-    <input type="hidden" name="login_method" value="email">
+    <h1>Login</h1>
 
+    <!-- LOGIN METHOD -->
     <div class="form-group">
-        <label>Email</label>
-        <input type="email" name="login_identifier" required>
+        <label>Login using:</label>
+
+        <div class="login-methods">
+            <label>
+                <input type="radio" name="login_method" value="email" checked>
+                Email
+            </label>
+
+            <label>
+                <input type="radio" name="login_method" value="phone">
+                Phone Number
+            </label>
+        </div>
     </div>
 
+    <!-- EMAIL / PHONE -->
     <div class="form-group">
-        <label>Password</label>
-        <input type="password" name="password" required>
+        <label id="login-label">Email Address:</label>
+        <input
+            type="email"
+            id="login_identifier"
+            name="login_identifier"
+            required
+            placeholder="Enter your email"
+        >
+    </div>
+
+    <!-- PASSWORD -->
+    <div class="form-group">
+        <label>Password:</label>
+        <input
+            type="password"
+            name="password"
+            required
+            placeholder="Enter your password"
+        >
     </div>
 
     <button type="submit">Login</button>
 
-    <div style="text-align:center;margin:14px 0;">OR</div>
+    <div class="divider">OR</div>
 
-    <a href="{{ url_for('login_google') }}">Continue with Google</a>
+    <a href="{{ url_for('login_google') }}"
+       class="oauth-button google">
+        Continue with Google
+    </a>
 
-    <p style="text-align:center;">
-        Don’t have an account?
-        <a href="/register">Register</a>
+    <p class="auth-switch">
+        Don't have an account?
+        <a href="/register">Register here</a>
     </p>
 </form>
