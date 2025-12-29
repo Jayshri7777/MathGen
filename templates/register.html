@@ -193,6 +193,69 @@
     accent-color: #c44536;
     cursor: pointer;
 }
+/* ===== PASSWORD FIELD WITH EYE ICON ===== */
+/* ===== PASSWORD FIELD WITH EYE ICON (CLEAN VERSION) ===== */
+.password-wrapper {
+    position: relative;
+}
+
+.password-wrapper input {
+    padding-right: 48px; /* space for icon */
+}
+
+/* Eye icon */
+.eye-icon {
+    position: absolute;
+    top: 50%;
+    right: 14px;
+    transform: translateY(-50%);
+
+    font-size: 17px;
+    cursor: pointer;
+
+    color: #8b4a4a;
+    opacity: 0.7;
+
+    user-select: none;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.eye-icon:hover {
+    opacity: 1;
+    transform: translateY(-50%) scale(1.15);
+}
+
+/* Password hint text */
+.password-hint {
+    font-size: 12.5px;
+    color: #7a3a3a;
+    margin-top: 6px;
+    display: block;
+}
+.password-toggle {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    width: 20px;
+    height: 20px;
+    color: #8b4a4a;
+    opacity: 0.7;
+}
+
+.password-toggle:hover {
+    opacity: 1;
+}
+
+.password-toggle svg {
+    width: 20px;
+    height: 20px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
+}
+
 
 </style>
 
@@ -225,14 +288,23 @@
             <!-- NAME -->
             <div class="form-group">
                 <label>Full Name <span class="required">*</span></label>
-                <input type="text" name="name" value="{{ form.get('name','') }}" required>
+                <input type="text"
+       name="name"
+       placeholder="Enter your full name"
+       value="{{ form.get('name','') }}"
+       required>
                 {% if errors.name %}<div class="error-text">{{ errors.name }}</div>{% endif %}
             </div>
 
             <!-- EMAIL -->
             <div class="form-group">
                 <label>Email <span class="required">*</span></label>
-                <input type="email" name="email" value="{{ form.get('email','') }}" required>
+                <input type="email"
+       name="email"
+       placeholder="Enter your email address"
+       value="{{ form.get('email','') }}"
+       required>
+
                 {% if errors.email %}<div class="error-text">{{ errors.email }}</div>{% endif %}
             </div>
 
@@ -253,6 +325,7 @@
                         value="{{ form.get('phone_number_main','') }}"
                         oninput="this.value=this.value.replace(/[^0-9]/g,'')"
                         class="{% if errors.phone %}input-error{% endif %}"
+                        placeholder="Enter 10 Digit Mobile number"
                         required>
                 </div>
                 {% if errors.phone %}<div class="error-text">{{ errors.phone }}</div>{% endif %}
@@ -304,7 +377,13 @@
             <!-- AGE -->
             <div class="form-group">
                 <label>Age <span class="required">*</span></label>
-                <input type="number" name="age" value="{{ form.get('age','') }}">
+                <input type="number"
+       name="age"
+       value="{{ form.get('age','') }}"
+       min="1"
+       placeholder="Enter your age"
+       required>
+
             </div>
 
             <!-- DOB -->
@@ -316,13 +395,24 @@
             <!-- CITY -->
             <div class="form-group">
                 <label>City/Town(Nearest) <span class="required">*</span></label>
-                <input type="text" name="city" value="{{ form.get('city','') }}">
+                <input type="text"
+       name="city"
+       value="{{ form.get('city','') }}"
+       placeholder="Enter your city/town"
+       required>
+
             </div>
 
             <!-- POSTAL -->
             <div class="form-group">
                 <label>Postal/ZIP Code <span class="required">*</span></label>
-                <input type="text" name="postal_code" value="{{ form.get('postal_code','') }}">
+                <input type="text"
+       name="postal_code"
+       value="{{ form.get('postal_code','') }}"
+       pattern="\d{6}"
+       placeholder="Enter a valid 6-digit PIN code"
+       required>
+
             </div>
 
             <!-- TIMEZONE -->
@@ -337,18 +427,65 @@
             </div>
 
             <!-- PASSWORD -->
-            <div class="form-group">
-                <label>Password <span class="required">*</span></label>
-                <input type="password" name="password" required>
-                {% if errors.password %}<div class="error-text">{{ errors.password }}</div>{% endif %}
-            </div>
+<div class="form-group">
+    <label>Password <span class="required">*</span></label>
+
+    <div class="password-wrapper">
+        <input
+            type="password"
+            id="password"
+            name="password"
+            placeholder="Create a strong password"
+            required
+        >
+
+        <span class="password-toggle" onclick="togglePassword('password', this)">
+            <!-- EYE CLOSED (default) -->
+            <svg viewBox="0 0 24 24" class="eye-closed">
+                <path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/>
+                <line x1="2" y1="2" x2="22" y2="22"/>
+            </svg>
+        </span>
+    </div>
+
+    <small class="password-hint">
+        Must be at least 8 characters, include uppercase, lowercase, number & special character.
+    </small>
+
+    {% if errors.password %}
+        <div class="error-text">{{ errors.password }}</div>
+    {% endif %}
+</div>
+
+
 
             <!-- CONFIRM -->
-            <div class="form-group">
-                <label>Confirm Password <span class="required">*</span></label>
-                <input type="password" name="confirm_password" required>
-                {% if errors.confirm_password %}<div class="error-text">{{ errors.confirm_password }}</div>{% endif %}
-            </div>
+<div class="form-group">
+    <label>Confirm Password <span class="required">*</span></label>
+
+    <div class="password-wrapper">
+        <input
+            type="password"
+            id="confirm_password"
+            name="confirm_password"
+            placeholder="Re-enter your password"
+            required
+        >
+
+        <span class="password-toggle" onclick="togglePassword('confirm_password', this)">
+            <svg viewBox="0 0 24 24" class="eye-closed">
+                <path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/>
+                <line x1="2" y1="2" x2="22" y2="22"/>
+            </svg>
+        </span>
+    </div>
+
+    {% if errors.confirm_password %}
+        <div class="error-text">{{ errors.confirm_password }}</div>
+    {% endif %}
+</div>
+
+
 
             <div class="form-group checkbox-group">
     <label class="checkbox-label">
@@ -447,6 +584,31 @@ function showError(msg) {
     return false;
 }
 </script>
+<script>
+function togglePassword(inputId, iconWrapper) {
+    const input = document.getElementById(inputId);
+    if (!input) return;
+
+    if (input.type === "password") {
+        input.type = "text";
+        iconWrapper.innerHTML = `
+            <svg viewBox="0 0 24 24">
+                <path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/>
+                <circle cx="12" cy="12" r="3"/>
+            </svg>
+        `;
+    } else {
+        input.type = "password";
+        iconWrapper.innerHTML = `
+            <svg viewBox="0 0 24 24">
+                <path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/>
+                <line x1="2" y1="2" x2="22" y2="22"/>
+            </svg>
+        `;
+    }
+}
+</script>
+
 
 
 {% endblock %}
