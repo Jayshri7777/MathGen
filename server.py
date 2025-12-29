@@ -231,6 +231,15 @@ IMPORTANT:
 - Do NOT include explanations
 - Do NOT include markdown
 - Do NOT include extra text
+CRITICAL FORMAT RULES (MANDATORY):
+- Use ONLY plain text math
+- NO LaTeX
+- NO $, \\, \\alpha, \\beta, \\sqrt
+- Use unicode symbols ONLY:
+  π, α, β, √, ≤, ≥, ×, ÷
+- Use normal brackets only: (), [], {{}},
+- Write math exactly how students write in notebooks
+
 [
   {{
     "question": "...",
@@ -247,7 +256,17 @@ IMPORTANT:
     )
 
     try:
-        return json.loads(response.text)
+        raw = extract_json_from_ai(response.text)
+        if not raw:
+            return []
+
+        for q in raw:
+            q["question"] = clean_ai_text(q["question"])
+            q["options"] = [clean_ai_text(opt) for opt in q["options"]]
+            q["explanation"] = clean_ai_text(q["explanation"])
+
+        return raw
+
     except Exception as e:
         print("❌ Gemini JSON parse error:", e)
         print("RAW RESPONSE ↓↓↓")
@@ -502,22 +521,21 @@ oauth.register(
 class CustomPDF(FPDF):
     def __init__(self, title, sub_info, header_text="", footer_text=""):
         super().__init__()
+        FONT_PATH = os.path.join(BASE_DIR, "fonts", "DejaVuSans.ttf")
+        self.add_font("DejaVu", "", FONT_PATH, uni=True)
         self.worksheet_title = title
         self.sub_info = sub_info
         self.header_text = header_text
         self.footer_text = footer_text
 
     def header(self):
-        # --- Custom Header Text ---
-        self.set_font("Arial", "B", 10)
+        self.set_font("DejaVu", "", 10)
         self.cell(0, 8, self.header_text, 0, 1, "C")
 
-        # --- Main Title ---
-        self.set_font("Arial", "B", 16)
+        self.set_font("DejaVu", "", 16)
         self.cell(0, 10, self.worksheet_title, 0, 1, "C")
 
-        # --- Sub Info ---
-        self.set_font("Arial", "", 10)
+        self.set_font("DejaVu", "", 10)
         sub_header_text = (
             f"Date: {self.sub_info['date']}   |   "
             f"Marks: {self.sub_info['marks']}   |   "
@@ -526,9 +544,10 @@ class CustomPDF(FPDF):
         self.cell(0, 8, sub_header_text, 0, 1, "C")
         self.ln(6)
 
+
     def footer(self):
         self.set_y(-15)
-        self.set_font("Arial", "I", 8)
+        self.set_font("DejaVu", "", 8)
 
         # --- Footer Left Text ---
         self.cell(0, 8, self.footer_text, 0, 0, "L")
@@ -550,9 +569,9 @@ def create_pdf(content, title, sub_title_info, filename="worksheet.pdf",
     footer_text=footer_text
 
 )
-    content = content.encode("latin-1", "replace").decode("latin-1")
     pdf.add_page()
-    pdf.set_font("Arial", "", 12)
+    pdf.set_font("DejaVu", "", 12)
+
     try:
         pdf.multi_cell(0, 10, content)
     except UnicodeEncodeError:
@@ -666,8 +685,11 @@ def create_image(content, title, sub_title_info, fmt="png"):
     img = Image.new("RGB", (width, height), "white")
     draw = ImageDraw.Draw(img)
 
-    font_title = ImageFont.truetype("DejaVuSans.ttf", 36)
-    font_body = ImageFont.truetype("DejaVuSans.ttf", 22)
+    FONT_PATH = os.path.join(BASE_DIR, "fonts", "DejaVuSans.ttf")
+
+    font_title = ImageFont.truetype(FONT_PATH, 36)
+    font_body = ImageFont.truetype(FONT_PATH, 22)
+
 
     y = margin_y
     draw.text((margin_x, y), title, font=font_title, fill="black")
@@ -1284,39 +1306,81 @@ def review_attempt(attempt_id):
     for q in questions:
         selected = answers.get(q.id)
         rows.append({
-            "qno": q.qno,
-            "question": q.question_text,
-            "options": q.options(),
-            "correct": q.correct_option,
-            "selected": selected,
-            "is_correct": selected == q.correct_option_index,
-            "explanation": q.explanation 
-            })
+    "qno": q.qno,
+    "question": clean_ai_text(q.question_text),
+    "options": [clean_ai_text(o) for o in q.options()],
+    "correct": clean_ai_text(q.correct_option),
+    "selected": selected,
+    "is_correct": selected == q.correct_option_index,
+    "explanation": clean_ai_text(q.explanation)
+})
+
 
     return render_template("review.html", rows=rows, attempt=attempt, test=test)
 
 def clean_ai_text(text):
+    # Convert LaTeX fractions to a/b
+    text = re.sub(r"\\frac\s*\{([^}]+)\}\{([^}]+)\}", r"\1/\2", text)
+
     if not text:
         return ""
 
+    # ---------- LaTeX → Unicode Math ----------
     replacements = {
-        "$": "",
-        "\\sqrt{": "√(",
-        "}": ")",
+        # Greek
+        "\\alpha": "α", "\\beta": "β", "\\gamma": "γ",
+        "\\delta": "δ", "\\theta": "θ", "\\pi": "π",
+        "\\lambda": "λ", "\\mu": "μ", "\\sigma": "σ",
+
+        # Roots & powers
+        "\\sqrt": "√",
+        "^2": "²", "^3": "³",
+        "^4": "⁴", "^5": "⁵",
+
+        # Operators
+        "\\times": "×",
+        "\\cdot": "·",
+        "\\pm": "±",
+        "\\div": "÷",
+
+        # Relations
+        "\\le": "≤",
+        "\\ge": "≥",
+        "\\neq": "≠",
+        "\\approx": "≈",
+
+        # Brackets
         "\\left(": "(",
         "\\right)": ")",
+        "\\left[": "[",
+        "\\right]": "]",
+        "\\left\\{": "{",
+        "\\right\\}": "}",
+
+        # Noise
+        "$": "",
         "\\(": "",
         "\\)": "",
-        "**": "",
-        "---": "",
+        "\\,": " ",
+        "\\;": " ",
+        "\\!": "",
+        "\\": "",
     }
 
     for k, v in replacements.items():
         text = text.replace(k, v)
 
-    # Remove extra blank lines
+    # ---------- Fix remaining math formatting ----------
+    # sqrt(x) → √x
+    text = re.sub(r"√\(([^)]+)\)", r"√\1", text)
+
+    # Remove double spaces
+    text = re.sub(r"\s{2,}", " ", text)
+
+    # Clean lines
     lines = [line.strip() for line in text.splitlines() if line.strip()]
     return "\n".join(lines)
+
 
 def extract_json_from_ai(text):
     """
@@ -1364,16 +1428,15 @@ def format_questions_for_exam(text):
     return "".join(lines)
 
 def normalize_questions(questions_json):
-    """
-    Converts AI JSON into clean, student-ready text blocks
-    """
     lines = []
     for i, q in enumerate(questions_json, 1):
-        lines.append(f"{i}) {q['question']}")
+        question = clean_ai_text(q["question"])
+        lines.append(f"{i}) {question}")
         for _ in range(q.get("answer_space_lines", 3)):
             lines.append("______________________________")
-        lines.append("")  # spacing
+        lines.append("")
     return "\n".join(lines)
+
 
 
 @app.route('/generate-worksheet', methods=['GET', 'POST'])
