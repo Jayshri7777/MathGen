@@ -1,104 +1,7 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Math Worksheet Generator</title>
 
-    <link rel="stylesheet" href="{{ url_for('serve_static', filename='style.css') }}">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-
-    <style>
-        .auth-container {
-            max-width: 450px;
-            margin: 0 auto;
-        }
-
-        .auth-form h1 {
-            font-size: 2.2em;
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        .auth-form .form-group {
-            margin-bottom: 20px;
-        }
-
-        .divider {
-            text-align: center;
-            margin: 25px 0;
-            font-weight: bold;
-            font-size: 0.9em;
-        }
-
-        .oauth-button {
-            width: 100%;
-            padding: 12px;
-            border-radius: 8px;
-            font-size: 1.1em;
-            font-weight: 600;
-            cursor: pointer;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            text-decoration: none;
-            color: white;
-        }
-
-        .oauth-button.google {
-            background-color: #db4437;
-        }
-
-        .auth-switch {
-            text-align: center;
-            margin-top: 25px;
-        }
-
-        /* FLASH MESSAGES */
-        .flash-messages {
-            margin-bottom: 15px;
-        }
-
-        .flash {
-            padding: 10px 14px;
-            border-radius: 6px;
-            font-size: 0.95em;
-            text-align: center;
-        }
-
-        .flash.error {
-    background: #e63946;
-    color: #ffffff;
-    border: none;
-}
-
-    
-        .flash.success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-        .login-methods {
-    display: flex;
-    gap: 28px;
-    align-items: center;
-}
-
-.login-methods label {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    white-space: nowrap; /* 🔥 THIS IS THE REAL FIX */
-    font-weight: 600;
-}
-
-    </style>
-</head>
-
-<body>
 <div class="main-content-wrapper auth-container">
 
-    <form method="POST" action="{{ url_for('login') }}" class="glass-form auth-form">
+    <form id="loginForm" method="post" action="/login" class="glass-form auth-form">
 
         <h1>Login</h1>
 
@@ -113,10 +16,11 @@
         </label>
 
         <label>
-            <input type="radio" name="login_method" value="phone">
-            <div id="phoneError" class="flash error" style="display:none;"></div>
-            Phone Number
-        </label>
+  <input type="radio" name="login_method" value="phone">
+  Phone Number
+</label>
+<div id="phoneError" class="flash error" style="display:none;"></div>
+
     </div>
 </div>
 
@@ -147,17 +51,6 @@
         required
         placeholder="Enter your password"
     >
-    {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-        {% for category, message in messages %}
-            {% if category == 'error' %}
-                <div class="flash error" style="margin-top:8px;">
-                    {{ message }}
-                </div>
-            {% endif %}
-        {% endfor %}
-    {% endif %}
-{% endwith %}
 
 </div>
 
@@ -166,9 +59,9 @@
 
         <div class="divider">OR</div>
 
-        <a href="{{ url_for('login_google') }}" class="oauth-button google">
-            Continue with Google
-        </a>
+<a href="/login/google" class="oauth-button google">
+  Continue with Google
+</a>
 
         <p class="auth-switch">
             Don't have an account?
@@ -178,62 +71,49 @@
     </form>
 </div>
 
-<!-- LOGIN SWITCH SCRIPT -->
 <script>
-const emailRadio = document.querySelector("input[value='email']");
-const phoneRadio = document.querySelector("input[value='phone']");
-const input = document.getElementById("login_identifier");
-const label = document.getElementById("login-label");
-const phoneError = document.getElementById("phoneError");
-
-emailRadio.addEventListener("change", () => {
-    input.type = "email";
-    input.value = "";
-    input.placeholder = "Enter your email";
-    label.innerText = "Email Address:";
-    phoneError.style.display = "none";
-});
-
-phoneRadio.addEventListener("change", () => {
-    input.type = "tel";
-    input.value = "";
-    input.placeholder = "Enter 10-digit mobile number";
-    label.innerText = "Phone Number:";
-    phoneError.style.display = "none";
-});
-
-// Block alphabets instantly
-input.addEventListener("input", () => {
-    if (phoneRadio.checked) {
-        input.value = input.value.replace(/\D/g, "").slice(0, 10);
-    }
-});
-
-// Final validation on submit
-document.querySelector("form").addEventListener("submit", (e) => {
-    if (!phoneRadio.checked) return;
-
-    const phone = input.value;
-
-    if (!/^\d{10}$/.test(phone)) {
-        showError("Mobile number must be exactly 10 digits.");
-        e.preventDefault();
-        return;
-    }
-
-    if (/^(\d)\1{9}$/.test(phone)) {
-        showError("Invalid mobile number.");
-        e.preventDefault();
-    }
-});
-
 function showError(msg) {
-    phoneError.innerText = msg;
-    phoneError.style.display = "block";
+  let err = document.getElementById("formError");
+  if (!err) {
+    err = document.createElement("div");
+    err.id = "formError";
+    err.className = "flash error";
+    err.style.marginTop = "10px";
+    document.querySelector(".auth-form").prepend(err);
+  }
+  err.innerText = msg;
 }
+</script>
+<script>
+(function () {
+  const form = document.getElementById("loginForm");
+  if (!form) return;
+
+  form.addEventListener("submit", async function (e) {
+    e.preventDefault();
+
+    const formData = new FormData(form);
+
+    const res = await fetch("/login", {
+      method: "POST",
+      headers: {
+        "X-Requested-With": "XMLHttpRequest"
+      },
+      body: formData,
+      credentials: "same-origin"
+    });
+
+    const data = await res.json();
+
+    if (data.success) {
+      // 🔥 FORCE redirect to home
+      window.location.href = "/";
+    } else {
+      alert(data.error || "Login failed");
+    }
+  });
+})();
 </script>
 
 
 
-</body>
-</html>
