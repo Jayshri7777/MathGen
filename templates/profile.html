@@ -1,233 +1,8 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Profile</title>
-    <!-- Link the main stylesheet -->
-    <link rel="stylesheet" href="{{ url_for('serve_static', filename='style.css') }}">
-    <!-- Link Google Font -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
-    <!-- Styles specific to auth page layout -->
-    <style>
-       .auth-container {
-    margin: 0 auto 30px;
-}
-.glass-form.auth-form {
-    padding-top: 18px;   /* controlled, clean spacing */
-}
 
 
+        <!-- 🔽 MOVE YOUR EXISTING FORM INSIDE HERE 🔽 -->
 
-
-        .auth-form h1 {
-            font-size: 2.2em;
-            color: var(--text-color-primary);
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        .auth-form .form-group { margin-bottom: 20px; }
-        .auth-form .form-group label { 
-            display: block;
-            font-weight: 600;
-            color: var(--text-color-secondary);
-            margin-bottom: 8px; 
-         }
-        .auth-form button[type="submit"] { margin-top: 15px; }
-        .auth-form small {
-             display: block;
-             margin-top: 6px;
-             font-size: 0.85em;
-             color: var(--text-color-secondary);
-         }
-         
-        /* Style for disabled inputs */
-        .form-group input:disabled {
-            background-color: rgba(200, 200, 200, 0.3); /* Greyed out */
-            color: var(--text-color-secondary);
-            cursor: not-allowed;
-            border-color: rgba(120, 120, 120, 0.2);
-        }
-        [data-theme="dark"] .form-group input:disabled {
-             background-color: rgba(50, 50, 50, 0.5); /* Darker greyed out */
-             color: var(--text-color-secondary);
-             border-color: rgba(255, 255, 255, 0.1);
-        }
-
-
-        /* --- Phone Input Group Styling (Copied from register) --- */
-         .phone-input-group {
-             display: flex;
-             gap: 10px;
-         }
-         .phone-input-group select {
-             width: 110px;
-             flex-shrink: 0;
-             padding: 12px 15px;
-             border: 1px solid var(--input-border-color);
-             border-radius: 8px;
-             background-color: var(--input-bg-color);
-             font-size: 1rem;
-             color: var(--input-text-color);
-             box-sizing: border-box;
-             appearance: none;
-             background-image: url("data:image/svg+xml;charset=UTF8,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='%237F2B2B'%3E%3Cpath%20d='M7%2010l5%205%205-5H7z'/%3E%3C/svg%3E");
-             background-repeat: no-repeat;
-             background-position: right 10px center;
-             background-size: 1.2em;
-             padding-right: 30px;
-             font-family: var(--font-family);
-         }
-         [data-theme="dark"] .phone-input-group select {
-             background-image: url("data:image/svg+xml;charset=UTF8,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='%23F0E68C'%3E%3Cpath%20d='M7%2010l5%205%205-5H7z'/%3E%3C/svg%3E");
-         }
-         .phone-input-group input[type="tel"] {
-             flex-grow: 1;
-             width: auto;
-         }
-         /* --- End Phone Input Group --- */
-
-        .flash-messages { list-style: none; padding: 0; margin-bottom: 20px; }
-        .flash-messages li { padding: 10px 15px; margin-bottom: 10px; border-radius: 8px; font-weight: bold; border: 1px solid transparent; }
-        .flash-messages .success { background-color: #d4edda; color: #155724; border-color: #c3e6cb;}
-        .flash-messages .warning { background-color: #fff3cd; color: #856404; border-color: #ffeeba;}
-        .flash-messages .danger { background-color: #f8d7da; color: #721c24; border-color: #f5c6cb;}
-        .flash-messages .info { background-color: #d1ecf1; color: #0c5460; border-color: #bee5eb;}
-        
-        .back-link {
-             text-align: center;
-             margin-top: 25px;
-             color: var(--text-color-secondary);
-         }
-        .back-link a {
-             color: var(--logout-link-color);
-             text-decoration: none;
-             font-weight: 600;
-         }
-        .back-link a:hover {
-             text-decoration: underline;
-         }
-
-         /* Apply input styles from main CSS to all inputs/selects in this form */
-         .auth-form input[type="text"],
-         .auth-form input[type="email"],
-         .auth-form input[type="tel"],
-         .auth-form input[type="password"],
-         .auth-form input[type="number"],
-         .auth-form select {
-            width: 100%;
-            padding: 12px 15px;
-            border: 1px solid var(--input-border-color);
-            border-radius: 8px;
-            background-color: var(--input-bg-color);
-            font-family: var(--font-family);
-            font-size: 1rem;
-            color: var(--input-text-color);
-            box-sizing: border-box;
-            transition: border-color 0.3s ease, box-shadow 0.3s ease;
-         }
-        .auth-form input:focus,
-        .auth-form select:focus {
-            outline: none;
-            border-color: var(--input-focus-border-color);
-            box-shadow: 0 0 0 0.2rem var(--input-focus-shadow-color);
-        }
-        .auth-form input::placeholder {
-            color: var(--input-placeholder-color);
-        }
-        
-        /* Checkbox style from main form */
-        .checkbox-group {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-top: 10px;
-        }
-        .checkbox-group label {
-            margin-bottom: 0;
-            font-weight: normal;
-            color: var(--text-color-primary);
-        }
-        .checkbox-group input[type="checkbox"] {
-            width: 1.3em;
-            height: 1.3em;
-            cursor: pointer;
-            accent-color: var(--button-bg-color);
-        }
-        /* 🔥 MOBILE FIX FOR COUNTRY CODE WIDTH ISSUE */
-.phone-input-group select {
-    width: 110px !important;
-    min-width: 110px;
-    max-width: 110px;
-    flex-shrink: 0;
-}
-
-@media (max-width: 600px) {
-    .phone-input-group select {
-        width: 80px !important;
-        min-width: 80px;
-        max-width: 80px;
-    }
-
-    .phone-input-group input[type="tel"] {
-        width: calc(100% - 90px);
-    }
-}
-/* Required field star */
-.required::after {
-    content: " *";
-    color: #b11226;        /* soft red / maroon */
-    font-weight: 700;
-    font-size: 0.9em;
-}
-/* ---------- DOB INPUT ---------- */
-.dob-input {
-    width: 220px;              /* 👈 FIXED SIZE */
-    padding: 10px 12px;
-    border-radius: 8px;
-    border: 1.5px solid #f2c4b8;
-    font-size: 14px;
-    background-color: #fffaf8;
-    color: #4a1f1f;
-    cursor: pointer;
-}
-
-/* Remove ugly native styles */
-.dob-input::-webkit-calendar-picker-indicator {
-    cursor: pointer;
-    filter: invert(32%) sepia(18%) saturate(900%) hue-rotate(330deg);
-}
-
-/* Focus effect */
-.dob-input:focus {
-    outline: none;
-    border-color: #c44536;
-    box-shadow: 0 0 0 2px rgba(196, 69, 54, 0.15);
-}
-
-/* Placeholder-like lighter text when empty */
-.dob-input:invalid {
-    color: #9b6b6b;
-}
-.glass-form.auth-form {
-    background: linear-gradient(180deg, #fff5f2, #ffffff);
-}
-.form-title {
-    margin: 0 0 18px;
-    padding-bottom: 10px;
-    font-size: 22px;
-    font-weight: 700;
-    color: #7a1f2b;
-    border-bottom: 2px solid #f2c4b8;
-}
-
-
-    </style>
-</head>
-<body>
     <!-- Use main-content-wrapper to center the auth box -->
-    <div class="main-content-wrapper auth-container">
         
         <!-- Display Flash Messages -->
         {% with messages = get_flashed_messages(with_categories=true) %}
@@ -261,20 +36,26 @@
             </div>
 
             <!-- --- MODIFIED PHONE NUMBER FIELD --- -->
-            <div class="form-group">
+           <div class="form-group">
     <label class="required">Mobile Number</label>
 
     {% if current_user.phone_number %}
-        <!-- SHOW SAVED NUMBER (READ-ONLY) -->
-        <input type="tel"
-       value="{{ current_user.phone_number }}"
-       disabled>
+        <!-- SPLIT PHONE NUMBER -->
+        <div class="phone-display">
+            <input type="text"
+                   class="country-code"
+                   value="{{ current_user.phone_number[:3] }}"
+                   disabled>
 
+            <input type="text"
+                   class="phone-main"
+                   value="{{ current_user.phone_number[3:] }}"
+                   disabled>
+        </div>
 
         <small>Mobile number cannot be changed. Contact support if needed.</small>
 
     {% else %}
-        <!-- GOOGLE LOGIN USER (NO PHONE) -->
         <input type="tel"
                value=""
                placeholder="Not provided via Google login"
@@ -285,6 +66,7 @@
         </small>
     {% endif %}
 </div>
+
 
             <div class="form-group">
                 <label class="required">Board</label>
@@ -325,7 +107,12 @@
             <!-- --- NEW FIELDS --- -->
             <div class="form-group">
                 <label for="age" class="required">Age</label>
-                <input type="number" id="age" name="age" placeholder="e.g., 25" value="{{ current_user.age or '' }}" min="1">
+                <input type="number" id="age" name="age"
+       placeholder="e.g., 25"
+       value="{{ current_user.age or '' }}"
+       min="1"
+       required>
+
             </div>
 
             <div class="form-group">
@@ -348,12 +135,19 @@
 
             <div class="form-group">
                 <label for="city" class="required">City/Town (Nearest)</label>
-                <input type="text" id="city" name="city" placeholder="e.g., Bengaluru" value="{{ current_user.city or '' }}">
+                <input type="text" id="city" name="city"
+       placeholder="e.g., Bengaluru"
+       value="{{ current_user.city or '' }}"
+       required>
+
             </div>
             
             <div class="form-group">
                <label for="postal_code" class="required">Postal/ZIP Code</label>
-                <input type="text" id="postal_code" name="postal_code" placeholder="e.g., 560089" value="{{ current_user.postal_code or '' }}">
+                <input type="text" id="postal_code" name="postal_code"
+       placeholder="e.g., 560089"
+       value="{{ current_user.postal_code or '' }}"
+       required>
             </div>
             
             <div class="form-group">
@@ -389,9 +183,10 @@
 
             <button type="submit">Update Profile</button>
 
-            <p class="back-link">Back to <a href="{{ url_for('serve_index') }}">Generator</a></p>
-        </form>
-    </div>
-</body>
-</html>
+<button type="button" class="secondary-btn" onclick="closePopup()">
+    Close
+</button>
 
+
+
+</form>
