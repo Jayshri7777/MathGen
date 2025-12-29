@@ -61,7 +61,16 @@ TOPICS_CSV = os.path.join(BASE_DIR, "topics.csv")
 app = Flask(__name__,
             static_folder='static',
             template_folder='templates')
-CORS(app)
+
+CORS(app, supports_credentials=True)
+
+app.config.update(
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE="Lax",
+    SESSION_COOKIE_SECURE=False,
+    REMEMBER_COOKIE_DURATION=0 # IMPORTANT for localhost
+)
+
 
 app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY', 'default-super-secret-key-change-me-immediately')
 app.config['GOOGLE_CLIENT_ID'] = os.environ.get('GOOGLE_CLIENT_ID')
@@ -466,9 +475,12 @@ def my_scores():
 # --- LOGIN MANAGER SETUP ---
 login_manager = LoginManager()
 login_manager.init_app(app)
-login_manager.refresh_view = 'login'
-login_manager.login_message = "Please log in to access this page."
-login_manager.login_message_category = "warning"
+login_manager.login_view = None
+login_manager.refresh_view = None
+login_manager.login_view = None
+
+
+
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -736,6 +748,9 @@ def register():
         phone_number_main = form.get('phone_number_main', '').strip()
         grade = form.get('grade', '').strip()
         board = form.get('board', '').strip()
+        age = form.get('age', '')
+        city = form.get('city', '')
+        postal_code = form.get('postal_code', '')
         dob_str = form.get('dob', '').strip()
         password = form.get('password', '')
         confirm_password = form.get('confirm_password', '')
@@ -753,6 +768,15 @@ def register():
 
         if not grade:
             errors['grade'] = 'Grade is required.'
+        
+        if not age:
+            errors['age'] = 'Age is required.'
+
+        if not city:
+            errors['city'] = 'City is required.'
+
+        if not postal_code:
+            errors['postal_code'] = 'Postal code is required.'
 
         if not board:
             errors['board'] = 'Board is required.'
@@ -767,6 +791,11 @@ def register():
         if grade:
             if not grade.isdigit() or not (1 <= int(grade) <= 12):
                 errors['grade'] = 'Grade must be between 1 and 12.'
+                
+        if age:
+            if not age.isdigit() or int(age) < 1 or int(age) > 100:
+                errors['age'] = 'Enter a valid age.'
+
 
         # ---------- DOB (CRITICAL FIX) ----------
         dob = None
@@ -830,7 +859,10 @@ def register():
                 country_code=country_code,
                 grade=int(grade),
                 board=board,
-                dob=dob,                 # ✅ PYTHON DATE OBJECT
+                age=int(age),                 # ✅ ADD  
+                dob=dob,                # ✅ ADD
+                city=city,                    # ✅ ADD
+                postal_code=postal_code,    # ✅ PYTHON DATE OBJECT
                 profile_completed=True
             )
 
@@ -839,7 +871,10 @@ def register():
             db.session.commit()
 
             flash('Account created successfully. Please login.', 'success')
-            return redirect(url_for('login'))
+            return redirect(url_for('landing_page', show_login=1))
+
+
+
 
         except Exception as e:
             db.session.rollback()
@@ -849,65 +884,63 @@ def register():
 
     return render_template('register.html', errors={}, form={})
 
-@app.route('/login', methods=['GET', 'POST'])
+
+from flask import jsonify
+
+@app.route('/login', methods=['POST'])
 def login():
     if current_user.is_authenticated:
-        return redirect(url_for('serve_index'))
+        return jsonify({"success": True})
 
-    if request.method == 'POST':
-        login_method = request.form.get('login_method')  # email / phone
-        login_identifier = request.form.get('login_identifier', '').strip()
-        password = request.form.get('password')
+    login_method = request.form.get("login_method")
+    login_identifier = request.form.get("login_identifier", "").strip()
+    password = request.form.get("password")
 
-        if not login_identifier or not password:
-            flash('Please enter both email/phone and password.', 'error')
-            return redirect(url_for('login'))
+    if not login_identifier or not password:
+        return jsonify({
+            "success": False,
+            "error": "Please enter both email/phone and password."
+        })
 
-        user = None
+    user = None
 
-        if login_method == 'email':
-            email = login_identifier.lower()
-            user = User.query.filter_by(email=email).first()
+    if login_method == "email":
+        user = User.query.filter_by(email=login_identifier.lower()).first()
 
-        elif login_method == 'phone':
-            phone = re.sub(r'\D', '', login_identifier)
+    elif login_method == "phone":
+        phone = re.sub(r"\D", "", login_identifier)
+        user = User.query.filter_by(phone_number="+91" + phone).first()
 
-            # ✅ Must be exactly 10 digits and start with 6–9
-            if not re.fullmatch(r"[6-9]\d{9}", phone):
-                flash("Enter a valid 10-digit mobile number.", "error")
-                return redirect(url_for("login"))
+    if not user or not user.check_password(password):
+        return jsonify({
+            "success": False,
+            "error": "Invalid email/phone or password."
+        })
 
-            # ✅ Reject repeated digits
-            if len(set(phone)) == 1:
-                flash("Invalid mobile number.", "error")
-                return redirect(url_for("login"))
+    login_user(user, remember=False)
+    return jsonify({"success": True})
 
-            # ✅ Reject obvious fake numbers
-            if phone in {"1234567890", "0123456789", "9876543210"}:
-                flash("Invalid mobile number.", "error")
-                return redirect(url_for("login"))
 
-            # ✅ NORMALIZE TO DB FORMAT
-            full_phone = "+91" + phone
-            user = User.query.filter_by(phone_number=full_phone).first()
+@login_manager.unauthorized_handler
+def unauthorized():
+    if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        return jsonify({"unauthorized": True}), 401
 
-        if user is None or not user.check_password(password):
-            flash('Invalid email/phone or password.', 'error')
-            return redirect(url_for('login'))
+    return redirect(url_for("landing_page", show_login=1))
 
-        login_user(user, remember=True)
 
-        next_page = request.args.get('next')
-        return redirect(next_page or url_for('serve_index'))
 
-    return render_template('login.html')
 
-@app.route('/login-fragment')
-def login_fragment():
+    # Normal browser request → redirect to landing page
+    return redirect(url_for("landing_page"))
+
+@app.route("/login-popup")
+def login_popup():
     if current_user.is_authenticated:
-        return "", 204  # nothing to show
+        return ""
 
-    return render_template('partials/login_fragment.html')
+    return render_template("login.html")
+
 
 @app.route('/profile-fragment')
 @login_required
@@ -919,19 +952,22 @@ def profile_fragment():
 @login_required
 def logout():
     logout_user()
-    session.clear()
-    flash('You have been successfully logged out.', 'info')
-    return redirect(url_for('landing_page'))
+    session.pop('_flashes', None)
+
+    response = redirect(url_for('landing_page'))
+    return response
+
+
+
 
 # --- GOOGLE OAUTH LOGIN ROUTES ---
 @app.route('/login/google')
 def login_google():
     if not app.config.get('GOOGLE_CLIENT_ID') or not app.config.get('GOOGLE_CLIENT_SECRET'):
-        flash('Google login is not configured on the server.', 'danger')
-        return redirect(url_for('login'))
+        return redirect(url_for('landing_page', show_login=1))
 
     return oauth.google.authorize_redirect(
-        "https://mathgen.onrender.com/auth/google/callback"
+        url_for('google_callback', _external=True)
     )
 
 
@@ -973,12 +1009,14 @@ def google_callback():
         return redirect(url_for('login'))
 
 
+
+
 from datetime import datetime
 @app.route('/complete-profile', methods=['GET', 'POST'])
 @login_required
 def complete_profile():
     if current_user.profile_completed:
-        return redirect(url_for('server_index'))
+        return redirect(url_for('serve_index'))
 
     if request.method == 'POST':
         current_user.name = request.form.get('name')
@@ -1016,83 +1054,61 @@ def complete_profile():
 @login_required
 def profile():
     from datetime import datetime
-    import re  # ✅ FIX: missing import
-    from flask import get_flashed_messages
+    import re
 
-    get_flashed_messages() 
+    is_ajax = request.headers.get("X-Requested-With") == "XMLHttpRequest"
 
     if request.method == "POST":
-        # -------------------------
-        # Fetch & sanitize inputs
-        # -------------------------
+
         name = request.form.get("name", "").strip()
         grade = request.form.get("grade", "").strip()
         age = request.form.get("age", "").strip()
         city = request.form.get("city", "").strip()
         postal_code = request.form.get("postal_code", "").strip()
         timezone = request.form.get("timezone", "").strip()
-        dob_str = request.form.get("dob", "").strip()  # ✅ FIX: moved here
+        dob_str = request.form.get("dob", "").strip()
 
         whatsapp_consent = bool(request.form.get("whatsapp_consent"))
         newsletter_consent = bool(request.form.get("newsletter_consent"))
 
-        # -------------------------
-        # REQUIRED FIELD CHECK
-        # -------------------------
+        # ---------- REQUIRED ----------
         if not name or not grade or not age:
+            if is_ajax:
+                return jsonify(success=False, error="Please fill all required fields.")
             flash("Please fill all required fields marked with *", "danger")
             return redirect(url_for("profile"))
 
-
-        # -------------------------
-        # NAME VALIDATION
-        # -------------------------
         if len(name) < 2:
+            if is_ajax:
+                return jsonify(success=False, error="Name too short.")
             flash("Name must be at least 2 characters long.", "danger")
             return redirect(url_for("profile"))
 
-        # -------------------------
-        # GRADE VALIDATION (1–12)
-        # -------------------------
         if not grade.isdigit() or not (1 <= int(grade) <= 12):
-            flash("Grade must be a number between 1 and 12.", "danger")
+            if is_ajax:
+                return jsonify(success=False, error="Invalid grade.")
+            flash("Grade must be between 1 and 12.", "danger")
             return redirect(url_for("profile"))
 
-        # -------------------------
-        # AGE VALIDATION
-        # -------------------------
         if not age.isdigit() or int(age) < 1:
+            if is_ajax:
+                return jsonify(success=False, error="Invalid age.")
             flash("Please enter a valid age.", "danger")
             return redirect(url_for("profile"))
 
-        # -------------------------
-        # DOB VALIDATION
-        # -------------------------
-        # -------------------------
-        # DOB VALIDATION (OPTIONAL)
-        # -------------------------
-        # -------------------------
-        # DOB VALIDATION (OPTIONAL)
-        # -------------------------
         dob = None
         if dob_str:
             try:
                 dob = datetime.strptime(dob_str, "%Y-%m-%d").date()
-
-                # 🚫 PREVENT FUTURE DATE
                 if dob > datetime.today().date():
-                    flash("Date of Birth cannot be in the future.", "danger")
-                    return redirect(url_for("profile"))
-
+                    raise ValueError
             except ValueError:
-                flash("Invalid Date of Birth format.", "danger")
+                if is_ajax:
+                    return jsonify(success=False, error="Invalid Date of Birth.")
+                flash("Invalid Date of Birth.", "danger")
                 return redirect(url_for("profile"))
 
-
-
-        # -------------------------
-        # SAVE BASIC INFO
-        # -------------------------
+        # ---------- SAVE ----------
         current_user.name = name
         current_user.grade = int(grade)
         current_user.age = int(age)
@@ -1100,48 +1116,27 @@ def profile():
         current_user.city = city or None
         current_user.postal_code = postal_code or None
         current_user.timezone = timezone or None
-        current_user.whatsapp_consent = whatsapp_consent
-        current_user.newsletter_consent = newsletter_consent
+        current_user.whatsapp_consent = 'whatsapp_consent' in request.form
+        current_user.newsletter_consent = 'newsletter_consent' in request.form
 
-        # -------------------------
-        # ADD PHONE NUMBER (ONLY IF EMPTY)
-        # -------------------------
-        if current_user.phone_number is None:
-            country_code = request.form.get("country_code")
-            phone_number = request.form.get("phone_number_main", "").strip()
-
-            if phone_number:
-                if not country_code:
-                    flash("Please select a country code.", "danger")
-                    return redirect(url_for("profile"))
-
-                full_phone = country_code + phone_number
-
-                if not re.match(r'^\+\d{7,}$', full_phone):
-                    flash("Invalid phone number format.", "danger")
-                    return redirect(url_for("profile"))
-
-                if User.query.filter_by(phone_number=full_phone).first():
-                    flash("Phone number already registered.", "danger")
-                    return redirect(url_for("profile"))
-
-                current_user.phone_number = full_phone
-
-        # -------------------------
-        # COMMIT
-        # -------------------------
         try:
             db.session.commit()
+            if is_ajax:
+                return jsonify(success=True)
             flash("Profile updated successfully!", "success")
+            return redirect(url_for("profile"))
+
         except Exception as e:
             db.session.rollback()
-            flash("Something went wrong. Please try again.", "danger")
             print("Profile update error:", e)
+            if is_ajax:
+                return jsonify(success=False, error="Server error.")
+            flash("Something went wrong.", "danger")
+            return redirect(url_for("profile"))
 
-        return redirect(url_for("serve_index"))
-
-    # GET request
+    # ---------- GET ----------
     return render_template("profile.html", errors={}, form={})
+
 
 @app.route('/settings', methods=['GET', 'POST'])
 @login_required
@@ -1158,24 +1153,52 @@ def settings():
         if not current_user.check_password(old_password):
             flash('Incorrect old password.', 'danger')
             return redirect(url_for('settings'))
+
         if new_password1 != new_password2:
             flash('New passwords do not match.', 'warning')
             return redirect(url_for('settings'))
-        if len(new_password1) < 8: flash('Password requires at least 8 characters.', 'warning'); return redirect(url_for('settings'))
-        if not re.search(r'[A-Z]', new_password1): flash('Password requires at least one uppercase letter.', 'warning'); return redirect(url_for('settings'))
-        if not re.search(r'[a-z]', new_password1): flash('Password requires at least one lowercase letter.', 'warning'); return redirect(url_for('settings'))
-        if not re.search(r'\d', new_password1): flash('Password requires at least one digit.', 'warning'); return redirect(url_for('settings'))
-        if not re.search(r'[!@#$%^&*()_+=\-\[\]{};\'\\:"|,.<>\/?~`]', new_password1): flash('Password requires at least one special character.', 'warning'); return redirect(url_for('settings'))
-        if re.search(r'\s', new_password1): flash('Password cannot contain spaces.', 'warning'); return redirect(url_for('settings'))
+
+        if len(new_password1) < 8:
+            flash('Password requires at least 8 characters.', 'warning')
+            return redirect(url_for('settings'))
+
+        if not re.search(r'[A-Z]', new_password1):
+            flash('Password requires at least one uppercase letter.', 'warning')
+            return redirect(url_for('settings'))
+
+        if not re.search(r'[a-z]', new_password1):
+            flash('Password requires at least one lowercase letter.', 'warning')
+            return redirect(url_for('settings'))
+
+        if not re.search(r'\d', new_password1):
+            flash('Password requires at least one digit.', 'warning')
+            return redirect(url_for('settings'))
+
+        if not re.search(r'[!@#$%^&*()_+=\-\[\]{};\'\\:"|,.<>\/?~`]', new_password1):
+            flash('Password requires at least one special character.', 'warning')
+            return redirect(url_for('settings'))
+
+        if re.search(r'\s', new_password1):
+            flash('Password cannot contain spaces.', 'warning')
+            return redirect(url_for('settings'))
+
         if current_user.check_password(new_password1):
             flash('New password cannot be the same as the old password.', 'warning')
             return redirect(url_for('settings'))
 
+        # ✅ SET PASSWORD
         current_user.set_password(new_password1)
+
         try:
             db.session.commit()
             flash('Password updated successfully!', 'success')
+
+            # ✅ POPUP RESPONSE
+            if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                return jsonify({"success": True})
+
             return redirect(url_for('settings'))
+
         except Exception as e:
             db.session.rollback()
             flash(f'An error occurred: {e}', 'danger')
@@ -1183,6 +1206,7 @@ def settings():
             return redirect(url_for('settings'))
 
     return render_template('settings.html')
+
 
 
 @app.route("/whatsapp_webhook", methods=['POST'])
@@ -1377,6 +1401,9 @@ def generate_worksheet():
 
             file = request.files['worksheet_file']
             filename = file.filename.lower()
+            output_format = request.form.get('format', 'pdf').lower()
+            include_answers = request.form.get('answer_key') == '1'
+
 
             if filename.endswith('.pdf'):
                 worksheet_text = get_text_from_pdf(file)
@@ -1386,39 +1413,6 @@ def generate_worksheet():
 
             elif filename.endswith('.txt'):
                 worksheet_text = file.read().decode('utf-8', errors='ignore')
-
-            elif filename.endswith(('.png', '.jpg', '.jpeg', '.gif')):
-                img = Image.open(file.stream)
-                response = client.models.generate_content(
-                    model="models/gemini-flash-latest",
-                    contents=[
-                        "Extract all math questions and generate ONLY the answer key.",
-                        img
-                    ]
-                )
-                answers_text = clean_ai_text(response.text)
-                solution_path = create_pdf(
-                    answers_text,
-                    "Worksheet Solutions",
-                    info,
-                    filename="Solutions.pdf",
-                    header_text="MathGen - Solution Sheet",
-                    footer_text="For reference only | © 2025 MathGen"
-                )
-
-                zip_buffer = io.BytesIO()
-                with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zipf:
-                    zipf.write(solution_path, arcname="solutions/Solutions.pdf")
-
-                zip_buffer.seek(0)
-                os.remove(solution_path)
-
-                return send_file(
-                    zip_buffer,
-                    mimetype="application/zip",
-                    as_attachment=True,
-                    download_name="worksheet_solutions.zip"
-                )
 
 
             else:
@@ -1442,34 +1436,55 @@ Worksheet:
             )
 
             answers_text = clean_ai_text(response.text)
-            # -------- CREATE PDF FILES IN MEMORY ----------
-            worksheet_pdf_path = create_pdf(worksheet_text, title, info)
-
-            solution_pdf_path = None
-            if answers_text:
-                solution_pdf_path = create_pdf(
-                answers_text,
-                f"{title} - Solutions",
-                info,
-                filename="solutions.pdf",
-                header_text="MathGen - Solution Sheet",
-                footer_text="For reference only | © 2025 MathGen"
-            )
-
-
-
             files_to_zip = []
 
-            solution_path = create_pdf(
-                answers_text,
-                f"{title} - Solutions",
-                info,
-                filename="Solutions.pdf",
-                header_text="MathGen - Solution Sheet",
-                footer_text="For reference only | © 2025 MathGen"
-            )
+            # ========= IMAGE =========
+            if output_format in ["png", "jpg", "gif"]:
+                ws = create_image(worksheet_text, title, info, fmt=output_format)
+                files_to_zip.append((f"worksheet/Worksheet.{output_format}", ws))
 
-            files_to_zip.append(("solutions/Solutions.pdf", solution_path))
+                if include_answers and answers_text:
+                    sol = create_image(
+                        answers_text, f"{title} - Solutions", info, fmt=output_format
+                    )
+                    files_to_zip.append((f"solutions/Solutions.{output_format}", sol))
+
+            # ========= TXT =========
+            elif output_format == "txt":
+                ws = create_txt(worksheet_text, title, info, "Worksheet.txt")
+                files_to_zip.append(("worksheet/Worksheet.txt", ws))
+
+                if include_answers and answers_text:
+                    sol = create_txt(
+                        answers_text, f"{title} - Solutions", info, "Solutions.txt"
+                    )
+                    files_to_zip.append(("solutions/Solutions.txt", sol))
+
+            # ========= DOCX =========
+            elif output_format == "docx":
+                ws = create_docx(worksheet_text, title, info, "Worksheet.docx")
+                files_to_zip.append(("worksheet/Worksheet.docx", ws))
+
+                if include_answers and answers_text:
+                    sol = create_docx(
+                        answers_text, f"{title} - Solutions", info, "Solutions.docx"
+                    )
+                    files_to_zip.append(("solutions/Solutions.docx", sol))
+
+            # ========= PDF =========
+            else:
+                ws = create_pdf(worksheet_text, title, info, "Worksheet.pdf")
+                files_to_zip.append(("worksheet/Worksheet.pdf", ws))
+
+                if include_answers and answers_text:
+                    sol = create_pdf(
+                        answers_text, f"{title} - Solutions", info, "Solutions.pdf"
+                    )
+                    files_to_zip.append(("solutions/Solutions.pdf", sol))
+                    
+                if not files_to_zip:
+                    return jsonify({"error": "No files generated"}), 500
+                
 
             zip_buffer = io.BytesIO()
             with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zipf:
@@ -1606,19 +1621,47 @@ Questions:
         # FORMAT SWITCH (TXT / DOCX / PDF)
         # =============================
         if output_format in ["png", "jpg", "gif"]:
-            image_path = create_image(
+            files_to_zip = []
+
+            # --- WORKSHEET IMAGE ---
+            worksheet_img_path = create_image(
                 worksheet_text,
                 title,
                 info,
                 fmt=output_format
             )
+            files_to_zip.append((f"worksheet/Worksheet.{output_format}", worksheet_img_path))
+
+            # --- ANSWER IMAGE ---
+            if include_answers and answers_text:
+                answer_img_path = create_image(
+                    answers_text,
+                    f"{title} - Solutions",
+                    info,
+                    fmt=output_format
+                )
+                files_to_zip.append((f"solutions/Solutions.{output_format}", answer_img_path))
+
+            # --- ZIP ---
+            zip_buffer = io.BytesIO()
+            with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zipf:
+                for zip_name, path in files_to_zip:
+                    with open(path, "rb") as f:
+                        zipf.writestr(zip_name, f.read())
+
+            zip_buffer.seek(0)
+
+            # --- CLEANUP ---
+            for _, path in files_to_zip:
+                os.remove(path)
 
             return send_file(
-                image_path,
-                mimetype=f"image/{output_format}",
+                zip_buffer,
+                mimetype="application/zip",
                 as_attachment=True,
-                download_name=f"worksheet.{output_format}"
+                download_name="mathgen_worksheet_images.zip"
             )
+
 
         if output_format == "txt":
             worksheet_path = create_txt(
