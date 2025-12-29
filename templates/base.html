@@ -69,12 +69,36 @@
         }
 
         .profile-btn {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            cursor: pointer;
-            font-weight: 600;
-        }
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    padding: 8px 16px;
+    border-radius: 999px;
+
+    background: #fff;
+    border: 2px solid #f2b8c6;
+
+    font-size: 14px;
+    font-weight: 600;
+    color: #6b2b2b;
+
+    cursor: pointer;
+    outline: none;
+
+    transition: all 0.25s ease;
+}
+/* Hover effect */
+.profile-btn:hover {
+    background: linear-gradient(135deg, #ff9a9e, #fad0c4);
+    color: #4a1c1c;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 14px rgba(255,154,158,0.35);
+}
+.profile-btn {
+    appearance: none;
+    -webkit-appearance: none;
+}
 
         .profile-menu {
             display: none;
@@ -199,6 +223,330 @@
 }
 
 }
+/* ================= LOGIN POPUP BEAUTY FIX ================= */
+
+#popupBox {
+    background: linear-gradient(
+        180deg,
+        #fff1f4 0%,
+        #fff7f9 60%,
+        #ffffff 100%
+    );
+    border-radius: 22px;
+}
+
+
+/* Center form properly */
+#popupContent .auth-container {
+    margin: 0 auto;
+}
+#popupContent h1 {
+    font-size: 30px;
+    font-weight: 700;
+    text-align: center;
+    margin: 8px 0 20px;
+    color: #7a1f2b;
+}
+#popupContent input[type="radio"] {
+    width: auto;
+    margin: 0;
+    accent-color: #9b2c2c;
+}
+
+#popupContent button[type="submit"] {
+    margin-top: 8px;
+    border-radius: 16px;
+}
+
+
+/* Labels */
+#popupContent label {
+    font-weight: 600;
+    color: #6b2b2b;
+}
+
+/* Input focus */
+#popupContent input:focus {
+    outline: none;
+    border-color: #c44536;
+    box-shadow: 0 0 0 2px rgba(196,69,54,0.15);
+}
+
+/* Login button */
+#popupContent button[type="submit"] {
+    width: 100%;
+    padding: 14px;
+    border-radius: 14px;
+    border: none;
+    font-size: 17px;
+    font-weight: 600;
+    cursor: pointer;
+    color: white;
+    background: linear-gradient(135deg, #9b2c2c, #c44536);
+    box-shadow: 0 10px 24px rgba(155,44,44,0.35);
+    transition: all 0.3s ease;
+}
+
+#popupContent button[type="submit"]:hover {
+    transform: translateY(-2px);
+}
+
+#popupContent .divider {
+    text-align: center;
+    font-size: 13px;
+    margin: 22px 0;
+    color: #8b3b3b;
+}
+
+#popupContent .oauth-button.google {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    width: 100%;
+    max-width: 320px;
+    margin: 0 auto;
+
+    padding: 14px 16px;
+    border-radius: 14px;
+
+    background: #fff0f3;          /* 🌸 light pink */
+    color: #5a2a2a;
+    font-size: 15px;
+    font-weight: 600;
+
+    border: 1.5px solid #f2b8c6;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+
+    text-decoration: none;
+    transition: all 0.25s ease;
+}
+
+#popupContent .oauth-button.google:hover {
+    background: #ffe3ea;          /* 🌸 hover pink */
+    transform: translateY(-1px);
+    box-shadow: 0 10px 22px rgba(0,0,0,0.12);
+}
+
+
+
+/* Bottom text */
+#popupContent .auth-switch {
+    margin-top: 20px;
+    text-align: center;
+    font-size: 14px;
+}
+
+#popupContent .auth-switch a {
+    font-weight: 600;
+    color: #9b2c2c;
+}
+
+
+#popupContent .radio-option label {
+    margin: 0;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+/* Prevent popup CSS from breaking radios */
+#popupContent input[type="radio"] {
+    margin: 0;
+    accent-color: #9b2c2c;
+}
+#popupContent .form-group {
+    margin-bottom: 18px;
+}
+.hidden {
+    display: none !important;
+}
+/* FORCE LOGIN INPUTS TO LOOK PRETTY */
+#popupContent input[type="email"],
+#popupContent input[type="password"],
+#popupContent input[type="tel"] {
+    width: 100%;
+    padding: 14px 16px;
+    border-radius: 14px;
+    border: 1.5px solid #f1c6bd;
+    background: #fffaf8;
+    font-size: 15px;
+}
+/* =====================================================
+   PROFILE FORM STYLING (POPUP)
+===================================================== */
+
+/* Required red star */
+label.required::after {
+    content: " *";
+    color: #c0392b;
+    font-weight: 700;
+}
+
+/* Form spacing */
+.auth-form .form-group {
+    margin-bottom: 18px;
+}
+
+/* Labels */
+.auth-form label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #6b1f1f;
+    margin-bottom: 6px;
+    display: block;
+}
+
+/* Inputs & selects */
+.auth-form input,
+.auth-form select {
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: 1.5px solid #f2c4b8;
+    background: #fffaf8;
+    font-size: 14px;
+}
+
+/* Focus effect */
+.auth-form input:focus,
+.auth-form select:focus {
+    outline: none;
+    border-color: #c44536;
+    box-shadow: 0 0 0 2px rgba(196,69,54,0.15);
+}
+
+/* Disabled fields (email, phone) */
+.auth-form input:disabled {
+    background: #fff3f0;
+    color: #9b6b6b;
+    cursor: not-allowed;
+}
+
+/* ================= CLOSE BUTTON (BOTTOM) ================= */
+.secondary-btn {
+    width: 100%;
+    margin-top: 12px;
+    padding: 12px;
+    border-radius: 14px;
+    border: 1.5px solid #c44536;
+    background: transparent;
+    color: #c44536;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.25s ease;
+}
+
+.secondary-btn:hover {
+    background: rgba(196,69,54,0.08);
+}
+
+/* ================= TOP CLOSE ❌ BUTTON ================= */
+.modal-close {
+    position: absolute;
+    top: 16px;
+    right: 18px;
+    background: #fff0f3;
+    border: none;
+    border-radius: 50%;
+    width: 34px;
+    height: 34px;
+    font-size: 18px;
+    font-weight: 700;
+    color: #9b2c2c;
+    cursor: pointer;
+    box-shadow: 0 6px 14px rgba(0,0,0,0.15);
+    transition: all 0.2s ease;
+}
+
+.modal-close:hover {
+    background: #ffe3ea;
+    transform: scale(1.1);
+}
+/* ================= CHECKBOX ALIGNMENT FIX ================= */
+
+.checkbox-group {
+    display: flex;
+    align-items: center;      /* ✅ vertical alignment */
+    gap: 10px;
+}
+
+.checkbox-group input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    margin: 0;               /* ❌ remove browser margin */
+    cursor: pointer;
+}
+
+.checkbox-group label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #6b1f1f;
+    line-height: 1.4;
+    cursor: pointer;
+}
+/* ===== MOBILE NUMBER SIDE-BY-SIDE FIX ===== */
+
+.phone-display {
+    display: flex;
+    gap: 12px;
+    width: 100%;
+}
+
+.phone-display input {
+    height: 52px;                 /* SAME HEIGHT */
+    border-radius: 14px;
+    border: 1.5px solid #f2c4b8;
+    background: #fff3f0;
+    font-size: 15px;
+    color: #6b1f1f;
+}
+
+/* Country code box */
+.phone-display .country-code {
+    width: 80px;                  /* SMALL */
+    text-align: center;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+/* Main number box */
+.phone-display .phone-main {
+    flex: 1;                      /* TAKES REMAINING SPACE */
+    font-weight: 500;
+}
+/* ===== POPUP CLOSE BUTTON (PRETTY) ===== */
+.popup-close-btn {
+    display: inline-block;
+    margin-top: 18px;
+    padding: 10px 22px;
+
+    background: #fff;
+    color: #9b2c2c;
+
+    border: 2px solid #f2b8c6;
+    border-radius: 999px;
+
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+
+    transition: all 0.25s ease;
+}
+
+.popup-close-btn:hover {
+    background: linear-gradient(135deg, #ff9a9e, #fad0c4);
+    color: #4a1c1c;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 14px rgba(255,154,158,0.35);
+}
+
+
+
 
 
     </style>
@@ -209,7 +557,7 @@
 <div class="navbar">
     <div class="logo">🧠 MathGen</div>
 
-    <nav class="navbar">
+    <nav class="nav-links">
     <a href="{{ url_for('landing_page') }}"
        class="{% if request.endpoint == 'landing_page' %}active{% endif %}">
         Home
@@ -238,43 +586,100 @@
 </nav>
 
     <div class="nav-right">
+        <span style="color:red;font-size:12px;">
+AUTH={{ current_user.is_authenticated }}
+</span>
 
-        <!-- DARK MODE -->
-        <div class="dark-toggle" onclick="toggleDark()">🌙</div>
 
-        {% if current_user.is_authenticated %}
-        <!-- PROFILE -->
+    <!-- DARK MODE -->
+    <div class="dark-toggle" onclick="toggleDark()">🌙</div>
+
+    {% if current_user.is_authenticated %}
+        <!-- LOGGED IN -->
         <div class="profile" id="profileBox">
-            <div class="profile-btn" onclick="toggleProfile()">
-                👤 {{ current_user.name }}
-            </div>
+           <button type="button" class="profile-btn" onclick="toggleProfile()">
+    👤 <span>{{ current_user.name }}</span>
+</button>
+
 
             <div class="profile-menu">
-                <div>
-                    <strong>{{ current_user.name }}</strong><br>
-                    <small>{{ current_user.email }}</small>
-                </div>
-                <a href="javascript:void(0)"
-   onclick="openPopup('/profile-fragment', 'Your Profile')">
-   Profile
-</a>
-
-                <a href="/settings">Settings</a>
-                <a href="/logout" style="color:#c0392b;">Logout</a>
+                <a href="#" onclick="openPopup('{{ url_for('profile') }}')">Profile</a>
+                <a href="#" onclick="openPopup('{{ url_for('settings') }}')">Settings</a>
+                <a href="{{ url_for('logout') }}" style="color:#c0392b;">Logout</a>
             </div>
         </div>
-        {% else %}
-        <a href="javascript:void(0)"
-   onclick="openPopup('/login-fragment', 'Login')">
-   Login
-</a>
 
-        <a href="/register">Sign Up</a>
-        {% endif %}
-    </div>
+    {% else %}
+        <!-- LOGGED OUT -->
+        <a href="#" id="loginBtn">Login</a>
+        <a href="{{ url_for('register') }}">Sign Up</a>
+    {% endif %}
+
+</div>
+
 </div>
 
 {% block content %}{% endblock %}
+<!-- ===== POPUP OVERLAY ===== -->
+<div id="popupOverlay" style="
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.45);
+  z-index:2000;
+"></div>
+
+<!-- ===== POPUP BOX ===== -->
+<div id="popupBox" style="
+  display:none;
+  position:fixed;
+  top:50%;
+  left:50%;
+  transform:translate(-50%, -50%);
+  width:90%;
+  max-width:520px;
+  max-height:85vh;
+  overflow:auto;
+  background:white;
+  border-radius:22px;
+  box-shadow:0 30px 80px rgba(0,0,0,0.35);
+  z-index:2001;
+">
+
+  <!-- Close Button -->
+ <button class="modal-close" onclick="closePopup()">✕</button>
+
+  <!-- Popup Content (ONLY ONE) -->
+  <div id="popupContent" style="padding:30px;"></div>
+</div>
+
+<script>
+function openPopup(url) {
+  fetch(url, {
+    headers: {
+      "X-Requested-With": "XMLHttpRequest"
+    }
+  })
+  .then(res => res.text())
+  .then(html => {
+    popupContent.innerHTML = html;
+    popupOverlay.style.display = "block";
+    popupBox.style.display = "block";
+    initLoginToggle(); // 🔥 your radio fix
+  });
+}
+
+
+function closePopup() {
+  document.getElementById("popupOverlay").style.display = "none";
+  document.getElementById("popupBox").style.display = "none";
+  document.getElementById("popupContent").innerHTML = "";
+}
+
+document.getElementById("popupOverlay")
+  ?.addEventListener("click", closePopup);
+</script>
+
 
 <script>
     function toggleProfile() {
@@ -311,71 +716,137 @@
   async>
 </script>
 
-<!-- ===== POPUP BACKDROP ===== -->
-<div id="popupOverlay" style="
-    display:none;
-    position:fixed;
-    inset:0;
-    background:rgba(0,0,0,0.45);
-    z-index:2000;
-"></div>
-
-<!-- ===== POPUP BOX ===== -->
-<div id="popupBox" style="
-    display:none;
-    position:fixed;
-    top:50%;
-    left:50%;
-    transform:translate(-50%, -50%);
-    width:90%;
-    max-width:520px;
-    max-height:85vh;
-    overflow:auto;
-    background:white;
-    border-radius:18px;
-    box-shadow:0 30px 80px rgba(0,0,0,0.35);
-    z-index:2001;
-">
-    <div style="
-        display:flex;
-        justify-content:space-between;
-        align-items:center;
-        padding:16px 20px;
-        border-bottom:1px solid #eee;
-        font-weight:600;
-    ">
-        <span id="popupTitle">Popup</span>
-        <button onclick="closePopup()" style="
-            border:none;
-            background:none;
-            font-size:20px;
-            cursor:pointer;
-        ">✕</button>
-    </div>
-
-    <div id="popupContent" style="padding:20px;"></div>
-</div>
 <script>
-function openPopup(url, title) {
-    document.getElementById("popupTitle").innerText = title;
+function initLoginToggle() {
+  const emailRadio = document.querySelector("input[name='login_method'][value='email']");
+  const phoneRadio = document.querySelector("input[name='login_method'][value='phone']");
+  const input = document.getElementById("login_identifier");
+  const label = document.getElementById("login-label");
 
-    fetch(url)
-        .then(res => res.text())
-        .then(html => {
-            document.getElementById("popupContent").innerHTML = html;
-            document.getElementById("popupOverlay").style.display = "block";
-            document.getElementById("popupBox").style.display = "block";
-        });
+  if (!emailRadio || !phoneRadio || !input || !label) {
+    return;
+  }
+
+  const update = () => {
+    if (phoneRadio.checked) {
+      input.type = "tel";
+      input.value = "";
+      input.placeholder = "Enter 10-digit mobile number";
+      label.innerText = "Phone Number:";
+    } else {
+      input.type = "email";
+      input.value = "";
+      input.placeholder = "Enter your email";
+      label.innerText = "Email Address:";
+    }
+  };
+
+  emailRadio.addEventListener("change", update);
+  phoneRadio.addEventListener("change", update);
+
+  input.addEventListener("input", () => {
+    if (phoneRadio.checked) {
+      input.value = input.value.replace(/\D/g, "").slice(0, 10);
+    }
+  });
+
+  update(); // 🔥 RUN ON LOAD
 }
-
-function closePopup() {
-    document.getElementById("popupOverlay").style.display = "none";
-    document.getElementById("popupBox").style.display = "none";
-    document.getElementById("popupContent").innerHTML = "";
-}
-
-document.getElementById("popupOverlay")?.addEventListener("click", closePopup);
 </script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const loginBtn = document.getElementById("loginBtn");
+
+  if (loginBtn) {
+    loginBtn.addEventListener("click", function (e) {
+      e.preventDefault();            // stop navigation
+      openPopup("/login-popup");     // ✅ correct function
+    });
+  }
+});
+</script>
+<script>
+document.addEventListener("submit", async function (e) {
+  const form = e.target;
+
+  // 🔥 ONLY handle login form
+  if (!form || form.id !== "loginForm") return;
+
+  e.preventDefault(); // 🚫 stop browser navigation
+
+  const formData = new FormData(form);
+
+  const res = await fetch("/login", {
+    method: "POST",
+    headers: {
+      "X-Requested-With": "XMLHttpRequest"
+    },
+    body: formData,
+    credentials: "same-origin"
+  });
+
+  const data = await res.json();
+
+  if (data.success) {
+  closePopup();
+
+  // ✅ remove show_login from URL completely
+  window.location.href = window.location.pathname;
+}
+
+  else {
+    alert(data.error || "Login failed");
+  }
+});
+</script>
+<script>
+document.addEventListener("submit", async function (e) {
+  const form = e.target;
+
+  // ❌ DO NOT touch login form
+  if (form.id === "loginForm") return;
+
+  // ✅ ONLY profile / settings forms
+  if (!form.classList.contains("auth-form")) return;
+  // ✅ RUN HTML VALIDATION FIRST
+if (!form.checkValidity()) {
+  form.reportValidity(); // shows "Please fill out this field"
+  return;
+}
+
+
+  e.preventDefault();
+
+  const res = await fetch(form.action, {
+    method: "POST",
+    body: new FormData(form),
+    headers: {
+      "X-Requested-With": "XMLHttpRequest"
+    },
+    credentials: "same-origin"
+  });
+
+  const data = await res.json();
+
+  if (data.success) {
+    closePopup();
+    location.reload();
+  }
+});
+</script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const params = new URLSearchParams(window.location.search);
+
+  // ✅ only open popup if user is logged out
+  if (params.get("show_login") === "1" && "{{ current_user.is_authenticated }}" === "False") {
+    openPopup("/login-popup");
+  }
+});
+</script>
+
+
 
 </body>
 </html>
