@@ -303,7 +303,7 @@
 
             <!-- AGE -->
             <div class="form-group">
-                <label>Age</label>
+                <label>Age <span class="required">*</span></label>
                 <input type="number" name="age" value="{{ form.get('age','') }}">
             </div>
 
@@ -315,13 +315,13 @@
 
             <!-- CITY -->
             <div class="form-group">
-                <label>City/Town</label>
+                <label>City/Town(Nearest) <span class="required">*</span></label>
                 <input type="text" name="city" value="{{ form.get('city','') }}">
             </div>
 
             <!-- POSTAL -->
             <div class="form-group">
-                <label>Postal Code</label>
+                <label>Postal/ZIP Code <span class="required">*</span></label>
                 <input type="text" name="postal_code" value="{{ form.get('postal_code','') }}">
             </div>
 
