@@ -1084,6 +1084,7 @@ def profile():
 
         name = request.form.get("name", "").strip()
         grade = request.form.get("grade", "").strip()
+        board = request.form.get("board", "").strip()
         age = request.form.get("age", "").strip()
         city = request.form.get("city", "").strip()
         postal_code = request.form.get("postal_code", "").strip()
@@ -1111,6 +1112,12 @@ def profile():
                 return jsonify(success=False, error="Invalid grade.")
             flash("Grade must be between 1 and 12.", "danger")
             return redirect(url_for("profile"))
+        
+        if not board:
+            if is_ajax:
+                return jsonify(success=False, error="Board is required.")
+            flash("Board is required.", "danger")
+            return redirect(url_for("profile"))
 
         if not age.isdigit() or int(age) < 1:
             if is_ajax:
@@ -1133,6 +1140,7 @@ def profile():
         # ---------- SAVE ----------
         current_user.name = name
         current_user.grade = int(grade)
+        current_user.board = board
         current_user.age = int(age)
         current_user.dob = dob
         current_user.city = city or None
