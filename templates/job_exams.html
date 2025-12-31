@@ -101,6 +101,30 @@
     cursor: pointer;
     box-shadow: 0 12px 28px rgba(229,107,111,0.4);
 }
+/* ---------- OR DIVIDER ---------- */
+.or-divider {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    margin: 18px 0 22px;
+}
+
+.or-divider::before,
+.or-divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: #d8a79b;
+}
+
+.or-divider span {
+    padding: 0 14px;
+    font-weight: 700;
+    font-size: 14px;
+    color: #7a1f1f;
+    letter-spacing: 1px;
+}
+
 </style>
 
 <div class="take-test-container">
@@ -124,7 +148,8 @@
 
     <!-- FORM -->
     <div class="test-section">
-        <form method="POST" action="{{ url_for('start_test') }}">
+        <form method="POST" action="{{ url_for('start_test') }}" enctype="multipart/form-data">
+
 
             <!-- TEST PERIOD -->
             <div class="form-group">
@@ -150,29 +175,74 @@ Monthly Test
                 </div>
             </div>
 
-            <!-- MAJOR TOPIC -->
-            <!-- MAJOR TOPIC -->
+            <!-- TEST CATEGORY -->
 <div class="form-group">
-    <label>Major Topic</label>
-
-    <!-- hidden values from logged-in user -->
-    <input type="hidden" id="board" value="{{ current_user.board }}">
-    <input type="hidden" id="grade" value="{{ current_user.grade }}">
-    <input type="hidden" id="subject" value="Mathematics">
-
-    <select name="topic" id="topic" class="pretty-select" required>
-        <option value="">Select topic</option>
-    </select>
+    <label>Test Category</label>
+    <div class="radio-group">
+        <label>
+            <input type="radio" name="test_category" value="school" checked>
+            School (Classes 1–12)
+        </label>
+        <label>
+            <input type="radio" name="test_category" value="job">
+            Job / Competitive Exam
+        </label>
+    </div>
 </div>
 
-<!-- MINOR TOPIC -->
-<div class="form-group">
-    <label>Minor Topic</label>
+            <!-- JOB TEST CONFIGURATION -->
+<div id="job-section" style="display:none;">
 
-    <select name="minor_topic" id="minor_topic" class="pretty-select" disabled>
-        <option value="">Select major topic first</option>
-    </select>
+    <div class="form-group">
+        <label>Job Type</label>
+        <select name="job_type" id="job_type" class="pretty-select">
+            <option value="">Select Job Type</option>
+            <option value="banking">Banking</option>
+            <option value="railway">Railway</option>
+            <option value="upsc">UPSC</option>
+            <option value="engineering">Engineering</option>
+            <option value="ssc">SSC</option>
+            <option value="defence">Defence</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label>Type of Exam</label>
+        <select name="exam_type" id="exam_type" class="pretty-select" disabled>
+            <option value="">Select job type first</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label>Exam Authority</label>
+        <select name="exam_authority" id="exam_authority" class="pretty-select" disabled>
+            <option value="">Select exam type first</option>
+        </select>
+    </div>
+
 </div>
+
+            <!-- MAJOR TOPIC -->
+            <!-- MAJOR TOPIC -->
+<div id="school-section">
+
+    <div class="form-group">
+        <label>Syllabus Topic</label>
+        <select name="topic" id="topic" class="pretty-select">
+
+            <option value="">Select topic</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label>Sub-topic (Optional)</label>
+        <select name="minor_topic" id="minor_topic" class="pretty-select" disabled>
+            <option value="">Select major topic first</option>
+        </select>
+    </div>
+
+</div>
+
 
 
             <!-- QUESTION COUNT -->
@@ -357,6 +427,98 @@ majorTopicSelect.addEventListener("change", async function () {
     } catch (err) {
         console.error("Failed to load minor topics", err);
     }
+});
+</script>
+<script>
+const jobExamMap = {
+    banking: {
+        clerical: ["IBPS", "SBI"],
+        po: ["SBI", "IBPS", "RBI"],
+        so: ["IBPS"]
+    },
+    railway: {
+        ntpc: ["RRB NTPC"],
+        group_d: ["RRB Group D"],
+        alp: ["RRB ALP / Technician"]
+    },
+    upsc: {
+        prelims: ["UPSC CSE"],
+        mains: ["UPSC CSE"]
+    },
+    engineering: {
+        gate: ["GATE"],
+        ese: ["ESE"]
+    },
+    ssc: {
+        cgl: ["SSC CGL"],
+        chsl: ["SSC CHSL"],
+        mts: ["SSC MTS"]
+    },
+    defence: {
+        nda: ["NDA"],
+        cds: ["CDS"]
+    }
+};
+
+const jobTypeSelect = document.getElementById("job_type");
+const examTypeSelect = document.getElementById("exam_type");
+const authoritySelect = document.getElementById("exam_authority");
+
+jobTypeSelect.addEventListener("change", () => {
+    const job = jobTypeSelect.value;
+
+    examTypeSelect.innerHTML = "<option value=''>Select exam type</option>";
+    authoritySelect.innerHTML = "<option value=''>Select exam type first</option>";
+    examTypeSelect.disabled = true;
+    authoritySelect.disabled = true;
+
+    if (!job) return;
+
+    Object.keys(jobExamMap[job]).forEach(exam => {
+        const opt = document.createElement("option");
+        opt.value = exam;
+        opt.textContent = exam.toUpperCase();
+        examTypeSelect.appendChild(opt);
+    });
+
+    examTypeSelect.disabled = false;
+});
+
+examTypeSelect.addEventListener("change", () => {
+    const job = jobTypeSelect.value;
+    const exam = examTypeSelect.value;
+
+    authoritySelect.innerHTML = "<option value=''>Select authority</option>";
+    authoritySelect.disabled = true;
+
+    if (!exam) return;
+
+    jobExamMap[job][exam].forEach(auth => {
+        const opt = document.createElement("option");
+        opt.value = auth;
+        opt.textContent = auth;
+        authoritySelect.appendChild(opt);
+    });
+
+    authoritySelect.disabled = false;
+});
+</script>
+<script>
+const categoryRadios = document.querySelectorAll("input[name='test_category']");
+const schoolSection = document.getElementById("school-section");
+const jobSection = document.getElementById("job-section");
+
+categoryRadios.forEach(radio => {
+    radio.addEventListener("change", () => {
+        if (radio.value === "school" && radio.checked) {
+            schoolSection.style.display = "block";
+            jobSection.style.display = "none";
+        }
+        if (radio.value === "job" && radio.checked) {
+            schoolSection.style.display = "none";
+            jobSection.style.display = "block";
+        }
+    });
 });
 </script>
 
