@@ -274,17 +274,182 @@ CRITICAL FORMAT RULES (MANDATORY):
         return []
 
 
+def start_job_ai_test(job_type, exam_type, authority, past_paper, test_type, count):
+    """
+    AI engine for job exams:
+    A) Solve past paper
+    B) Generate mock questions
+    C) Evaluate later
+    """
+
+    client = genai.Client(api_key=os.environ.get("GENAI_API_KEY"))
+
+    # ------------------------------
+    # A) SOLUTION GENERATION
+    # ------------------------------
+    solutions = []
+    if past_paper:
+        solution_prompt = f"""
+You are an expert examiner for {job_type.upper()} exams.
+
+Exam Type: {exam_type}
+Authority: {authority}
+
+Solve the following questions.
+Provide:
+- Question
+- Correct answer
+- Short explanation
+
+Return STRICT JSON ONLY:
+
+[
+  {{
+    "question": "...",
+    "answer": "...",
+    "explanation": "..."
+  }}
+]
+
+Questions:
+{past_paper}
+"""
+        sol_resp = client.models.generate_content(
+            model="models/gemini-flash-latest",
+            contents=solution_prompt
+        )
+
+        solutions = extract_json_from_ai(sol_resp.text) or []
+
+    # ------------------------------
+    # B) MOCK TEST GENERATION
+    # ------------------------------
+    mock_prompt = f"""
+You are generating a mock test for {job_type.upper()} exams.
+
+Exam Type: {exam_type}
+Authority: {authority}
+
+Generate {count} MCQs.
+Rules:
+- 4 options
+- Give correct option index (0-3)
+- Difficulty similar to real exam
+- STRICT JSON ONLY
+
+[
+  {{
+    "question": "...",
+    "options": ["A","B","C","D"],
+    "correct": 0,
+    "explanation": "..."
+  }}
+]
+"""
+
+    mock_resp = client.models.generate_content(
+        model="models/gemini-flash-latest",
+        contents=mock_prompt
+    )
+
+    questions = extract_json_from_ai(mock_resp.text)
+
+    if not questions:
+        flash("AI could not generate job test questions.", "danger")
+        return redirect(url_for("job_exams"))
+
+    # ------------------------------
+    # SAVE TEST
+    # ------------------------------
+    title = f"{job_type.upper()} {exam_type.upper()} Mock Test"
+
+    test = MockTest(
+        title=title,
+        category=test_type,
+        duration_minutes=20
+    )
+    db.session.add(test)
+    db.session.flush()
+
+    for idx, q in enumerate(questions, start=1):
+        mq = MockQuestion(
+            test_id=test.id,
+            qno=idx,
+            question_text=clean_ai_text(q["question"]),
+            options_json=json.dumps(q["options"]),
+            correct_option_index=int(q["correct"]),
+            explanation=clean_ai_text(q["explanation"])
+        )
+        db.session.add(mq)
+
+    attempt = MockAttempt(
+        user_id=current_user.id,
+        test_id=test.id,
+        total=len(questions)
+    )
+    db.session.add(attempt)
+    db.session.commit()
+
+    return redirect(url_for("take_test", attempt_id=attempt.id))
+
+
 @app.route("/start-test", methods=["POST"])
 @login_required
 def start_test():
+    uploaded_file = request.files.get("past_paper_file")
+    past_paper_text = request.form.get("past_paper", "").strip()
+    job_type = request.form.get("job_type")
+    exam_type = request.form.get("exam_type")
+    exam_authority = request.form.get("exam_authority")
     test_type = request.form.get("test_type", "job_daily")
     topic = request.form.get("topic")                     # MAJOR topic
     minor_topic = request.form.get("minor_topic")         # ✅ ADD (OPTIONAL)
     count = int(request.form.get("question_count", 5))
+    
+    # --------------------------------------
+    # READ PAST PAPER FROM FILE (IF UPLOADED)
+    # --------------------------------------
+    if uploaded_file and uploaded_file.filename:
+        filename = uploaded_file.filename.lower()
+
+        if filename.endswith(".pdf"):
+            extracted = get_text_from_pdf(uploaded_file)
+
+        elif filename.endswith(".docx"):
+            extracted = get_text_from_docx(uploaded_file)
+
+        elif filename.endswith(".txt"):
+            extracted = uploaded_file.read().decode("utf-8", errors="ignore")
+
+        else:
+            extracted = None
+
+        if extracted:
+            past_paper_text = extracted
+
+    
+    # ======================================================
+    # JOB-BASED AI TEST FLOW (Manager Requirement)
+    # ======================================================
+    if job_type:
+        if job_type:
+            if not exam_type or not exam_authority:
+                flash("Please select exam type and authority.", "warning")
+                return redirect(url_for("job_exams"))
+
+        return start_job_ai_test(
+            job_type=job_type,
+            exam_type=exam_type,
+            authority=exam_authority,
+            past_paper=past_paper_text,
+            test_type=test_type,
+            count=count
+        )
+
 
     # 🚨 HARD VALIDATION (MUST)
-    if not topic:
-        flash("Please select a topic before starting the test.", "warning")
+    if not job_type and not topic:
+        flash("Please select a topic/job type before starting the test.", "warning")
         return redirect(url_for("job_exams"))
 
     # ✅ FINAL TOPIC SELECTION (SAFE FALLBACK)
