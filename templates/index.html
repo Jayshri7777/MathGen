@@ -3,48 +3,54 @@
 
 <style>
 .ws-container {
-    max-width: 1100px;
+    max-width: 1000px;   /* 👈 REDUCED from 1040 */
     margin: auto;
-    padding: 80px 20px;
-    color: #4b1e1e;
-}
-
-.ws-container {
-    max-width: 1100px;
-    margin: 0 auto;
-    padding: 30px 20px 60px;
+    padding: 20px 16px 50px;
 }
 
 .ws-card {
     background: rgba(255, 255, 255, 0.55);
-    border-radius: 22px;
-    padding: 40px;
-    box-shadow: 0 14px 32px rgba(0,0,0,0.1);
+    border-radius: 20px;
+    padding: 26px;
+    box-shadow: 0 12px 28px rgba(0,0,0,0.08);
 }
+
 .vertical-or {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    font-weight: 700;
+
+    align-self: stretch;   /* stretch ONLY inside grid */
+    max-height: 100%;      /* prevent page overflow */
+
     color: #8a4a4a;
-    gap: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    gap: 10px;
 }
+
 
 .vertical-or::before,
 .vertical-or::after {
     content: "";
-    width: 1px;
-    flex: 1;
+    width: 1px;                /* 👈 vertical line */
+    flex: 1;                   /* 👈 stretches to ends */
     background: #d8a79b;
 }
 
+
+
 .ws-grid {
     display: grid;
-    grid-template-columns: 1.3fr auto 1fr; /* LEFT | OR | RIGHT */
-    gap: 35px;
+    grid-template-columns: 1fr auto 0.9fr;
+    gap: 24px;
     align-items: stretch;
+    position: relative;
 }
+
+
+
 @media (max-width: 900px) {
     .ws-grid {
         grid-template-columns: 1fr;
@@ -106,15 +112,17 @@
     box-shadow: 0 8px 20px rgba(122, 31, 43, 0.35);
 }
 .ws-card.secondary {
-    margin-top: 30px;
     background: rgba(255, 255, 255, 0.65);
     border: 2px dashed #d8a79b;
+    padding: 22px;
+    height: fit-content;     /* 👈 STOP STRETCHING */
 }
 
+
 .ws-card.secondary h3 {
-    font-size: 20px;
-    margin-bottom: 20px;
-    font-weight: 700;
+    font-size: 17px;
+    margin: 0 0 8px 0;
+    font-weight: 600;
 }
 
 .checkbox-group {
@@ -168,13 +176,15 @@
 .upload-card {
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: center; /* 👈 vertical centering */
+    text-align: center;
 }
+
 
 .upload-zone {
     border: 2px dashed #d8a79b;
     border-radius: 18px;
-    padding: 30px 20px;
+    padding: 22px 18px;
     text-align: center;
     background: rgba(255,255,255,0.4);
 }
@@ -185,13 +195,13 @@
 }
 
 .upload-title {
-    font-size: 16px;
-    font-weight: 700;
+    font-size: 14px;
+    font-weight: 600;
     margin-bottom: 6px;
 }
 
 .upload-subtext {
-    font-size: 13px;
+    font-size: 12px;
     color: #7a4a4a;
     margin-bottom: 18px;
 }
@@ -216,13 +226,71 @@
     font-size: 12px;
     color: #8a5a5a;
 }
+.page-title {
+    font-size: 22px;          /* 👈 key change */
+    font-weight: 600;
+    margin: 0 0 4px 0;
+    letter-spacing: 0.15px;
+}
+.section-title {
+    text-align: center;     /* 👈 center */
+    font-size: 22px;
+    font-weight: 700;       /* 👈 bold */
+    color: #4b1e1e;
+    margin-bottom: 6px;
+}
+
+
+.section-desc {
+    font-size: 12.5px;
+    margin-bottom: 18px;
+    color: #7a4a4a;
+}
+/* ===== PAGE HEADER FIX ===== */
+.page-header {
+    max-width: 640px;
+    margin: 28px auto 28px;   /* 👈 adds top gap */
+    text-align: center;
+}
+
+
+.page-title {
+    font-size: 26px;           /* 👈 strong but clean */
+    font-weight: 700;
+    margin: 0;
+    color: #4b1e1e;
+}
+
+.page-title span {
+    font-size: 22px;
+}
+
+.page-subtitle {
+    font-size: 14px;
+    margin-top: 6px;
+    color: #7a4a4a;
+    line-height: 1.4;
+}
+body {
+    background-attachment: fixed;
+}
+.left-panel {
+    display: flex;
+    flex-direction: column;
+}
+
 
 
 </style>
 
-<div class="ws-container">
-
-<h1>Math Worksheet Generator 🧠</h1>
+<div class="page-header">
+    <h1 class="page-title">
+        Worksheet & Answer Key Generator <span>🧠</span>
+    </h1>
+    <p class="page-subtitle">
+        Generate answer keys or create fresh worksheets in seconds.
+    </p>
+</div>
 
 <form
     method="POST"
@@ -230,11 +298,38 @@
     enctype="multipart/form-data"
 >
 
+<div class="ws-container">
+
 <div class="ws-card">
+    <div class="form-group">
+  <label class="required">Worksheet Type</label>
+
+  <label>
+    <input type="radio" name="worksheet_type" value="school" checked onchange="toggleWorksheetType()">
+    Classes 1–12
+  </label>
+
+  <label>
+    <input type="radio" name="worksheet_type" value="job" onchange="toggleWorksheetType()">
+    Job / Competitive Exams
+  </label>
+</div>
+
     <div class="ws-grid">
 
+
         <!-- LEFT: GENERATE NEW WORKSHEET -->
-        <div>
+        <!-- LEFT: GENERATE NEW WORKSHEET -->
+<div class="left-panel">
+
+    <div id="school-fields">
+
+
+
+<h3 class="section-title">Worksheet Generator</h3>
+<p class="section-desc">
+    Create a new worksheet by selecting topic, difficulty, and format.
+</p>
 
             <!-- GRADE -->
             <div class="form-group">
@@ -253,7 +348,7 @@
             <!-- TOPIC -->
             <div class="form-group">
                 <label>Topic</label>
-                <select class="pretty-select" name="topic" id="topic" required disabled>
+                <select class="pretty-select" name="topic" id="topic" disabled>
                     <option value="">Loading topics...</option>
                 </select>
             </div>
@@ -280,7 +375,8 @@
             <!-- DOWNLOAD FORMAT -->
             <div class="form-group">
                 <label>Download As</label>
-                <select class="pretty-select" name="format">
+                <select class="pretty-select" name="school_format" id="school-format">
+
                     <option value="pdf">PDF</option>
                     <option value="docx">DOCX</option>
                     <option value="txt">TXT</option>
@@ -289,22 +385,82 @@
                     <option value="gif">GIF</option>
                 </select>
             </div>
+</div> <!-- END school-fields -->
 
-        </div>
+<div id="job-fields" style="display:none;">
+
+
+
+    <h3 class="section-title">Job / Competitive Worksheet</h3>
+    <p class="section-desc">
+        Generate worksheets for competitive exams and job preparation.
+    </p>
+
+    <div class="form-group">
+        <label class="required">Job Category</label>
+        <select class="pretty-select" name="job_type" required>
+            <option value="">Select Job Category</option>
+            <option value="banking">Banking</option>
+            <option value="railway">Railway</option>
+            <option value="ssc">SSC</option>
+            <option value="upsc">UPSC</option>
+            <option value="defence">Defence</option>
+            <option value="teaching">Teaching</option>
+            <option value="engineering">Engineering</option>
+        </select>
+    </div>
+    <div class="form-group">
+    <label class="required">Exam Type</label>
+    <select class="pretty-select" name="exam_type" id="exam_type" disabled required>
+        <option value="">Select job category first</option>
+    </select>
+</div>
+
+<div class="form-group">
+    <label class="required">Exam Authority</label>
+    <select class="pretty-select" name="exam_authority" id="exam_authority" disabled required>
+        <option value="">Select exam type first</option>
+    </select>
+</div>
+
+<div class="form-group">
+    <label class="required">Download As</label>
+    <select class="pretty-select" name="job_format" id="job-format" required>
+
+        <option value="">Select format</option>
+        <option value="pdf">PDF</option>
+        <option value="docx">DOCX</option>
+        <option value="txt">TXT</option>
+        <option value="jpg">JPG</option>
+        <option value="png">PNG</option>
+<option value="gif">GIF</option>
+
+    </select>
+</div>
+
+
+</div>
+</div> <!-- END left-panel -->
+
+
 
         <div class="vertical-or">OR</div>
 
 
         <!-- RIGHT: UPLOAD EXISTING WORKSHEET ONLY -->
         <div class="ws-card secondary upload-card">
-    <h3>Existing Worksheet</h3>
+    <h3 class="section-title">Upload Question Paper</h3>
+<p class="section-desc">
+    Upload an existing worksheet or exam paper to generate answers.
+</p>
+
 
     <div class="upload-zone">
         <div class="upload-icon">📄</div>
 
         <p class="upload-title">Upload an existing worksheet</p>
         <p class="upload-subtext">
-            Supported formats: PDF, DOCX, JPG, PNG
+            Supported formats: PDF, DOCX, JPG, PNG, GIF
         </p>
 
         <label class="upload-btn">
@@ -313,7 +469,7 @@
         </label>
 
         <p class="upload-hint">
-            We’ll analyze your worksheet and generate a refined version.
+            We’ll analyze your worksheet and generate an accurate answer sheet.
         </p>
     </div>
 </div>
@@ -345,80 +501,44 @@
 
 <!-- ✅ TOPIC AUTO-LOAD SCRIPT -->
 <script>
-async function loadTopics() {
-    const grade = document.querySelector("input[name='grade']").value;
-    const board = document.querySelector("input[name='board']").value;
-
-    const topicSelect = document.getElementById("topic");
-
-    topicSelect.innerHTML = "<option>Loading topics...</option>";
-    topicSelect.disabled = true;
-
-    if (!grade || !board) {
-        topicSelect.innerHTML = "<option>Select Grade & Board first</option>";
-        return;
-    }
-
-    try {
-        const res = await fetch(`/get-topics?grade=${grade}&board=${board}`);
-        if (!res.ok) throw new Error("Failed to fetch topics");
-
-        const topics = await res.json();
-
-        topicSelect.innerHTML = "<option value=''>Select Topic</option>";
-
-        if (topics.length === 0) {
-            topicSelect.innerHTML = "<option>No topics found</option>";
-            return;
-        }
-
-        topics.forEach(t => {
-            const opt = document.createElement("option");
-            opt.value = t;
-            opt.textContent = t;
-            topicSelect.appendChild(opt);
-        });
-
-        topicSelect.disabled = false;
-        checkFormValidity();
-
-    } catch (err) {
-        console.error(err);
-        topicSelect.innerHTML = "<option>Error loading topics</option>";
-    }
-}
-
-document.addEventListener("DOMContentLoaded", () => {
-    loadTopics();
-});
-
-</script>
-<script>
 const grade = document.getElementById("grade");
 const board = document.getElementById("board");
 const topic = document.getElementById("topic");
 const difficulty = document.querySelector("select[name='difficulty']");
-const format = document.querySelector("select[name='format']");
 const worksheetFile = document.querySelector("input[name='worksheet_file']");
 const generateBtn = document.getElementById("generateBtn");
 
 function checkFormValidity() {
+    const worksheetType =
+        document.querySelector("input[name='worksheet_type']:checked").value;
 
-    // Flow A: Normal worksheet generation
-    const normalFlowValid =
-        grade.value &&
-        board.value &&
-        topic.value &&
-        difficulty.value &&
+    const format =
+        worksheetType === "school"
+            ? document.getElementById("school-format")
+            : document.getElementById("job-format");
+
+const schoolValid =
+    worksheetType === "school" &&
+    grade.value &&
+    board.value &&
+    difficulty.value &&
+    format.value &&
+    topic.value;
+
+
+    const jobValid =
+        worksheetType === "job" &&
+        document.querySelector("select[name='job_type']")?.value &&
+        document.querySelector("select[name='exam_type']")?.value &&
+        document.querySelector("select[name='exam_authority']")?.value &&
         format.value;
 
-    // Flow B: Upload worksheet
-    const uploadFlowValid =
+    const uploadValid =
         worksheetFile.files.length > 0;
 
-    // Enable if either flow is valid
-    generateBtn.disabled = !(normalFlowValid || uploadFlowValid);
+    generateBtn.disabled = !(schoolValid || jobValid || uploadValid);
 }
+
 
 // Listen to changes
 [
@@ -426,12 +546,19 @@ function checkFormValidity() {
     board,
     topic,
     difficulty,
-    format,
-    worksheetFile
-].forEach(el => {
+    document.getElementById("school-format"),
+    document.getElementById("job-format"),
+    worksheetFile,
+    document.querySelector("select[name='job_type']"),
+    document.querySelector("select[name='exam_type']"),
+    document.querySelector("select[name='exam_authority']")
+].filter(Boolean).forEach(el => {
     el.addEventListener("change", checkFormValidity);
 });
+
+
 </script>
+
 <script>
 const topicSelect = document.getElementById("topic");
 const subTopicSelect = document.getElementById("subtopic");
@@ -484,9 +611,162 @@ async function loadSubTopics() {
 
 topicSelect.addEventListener("change", loadSubTopics);
 </script>
+<script>
+async function loadTopics() {
+    const worksheetType =
+        document.querySelector("input[name='worksheet_type']:checked").value;
 
+    // 🚫 Do NOT load school topics in Job mode
+    if (worksheetType !== "school") return;
 
+    const grade = document.querySelector("input[name='grade']").value;
+    const board = document.querySelector("input[name='board']").value;
+    const topicSelect = document.getElementById("topic");
 
+    topicSelect.innerHTML = "<option>Loading topics...</option>";
+    topicSelect.disabled = true;
 
+    if (!grade || !board) {
+        topicSelect.innerHTML = "<option>Select Grade & Board first</option>";
+        return;
+    }
+
+    try {
+        const res = await fetch(`/get-topics?grade=${grade}&board=${board}`);
+        if (!res.ok) throw new Error("Failed to fetch topics");
+
+        const topics = await res.json();
+
+        topicSelect.innerHTML = "<option value=''>Select Topic</option>";
+
+        if (topics.length === 0) {
+            topicSelect.innerHTML = "<option>No topics found</option>";
+            return;
+        }
+
+        topics.forEach(t => {
+            const opt = document.createElement("option");
+            opt.value = t;
+            opt.textContent = t;
+            topicSelect.appendChild(opt);
+        });
+
+        topicSelect.disabled = false;
+        checkFormValidity();
+
+    } catch (err) {
+        console.error(err);
+        topicSelect.innerHTML = "<option>Error loading topics</option>";
+    }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    toggleWorksheetType();
+    loadTopics();
+    
+});
+
+</script>
+<script>
+function toggleWorksheetType() {
+    const type = document.querySelector(
+        "input[name='worksheet_type']:checked"
+    ).value;
+
+    const school = document.getElementById("school-fields");
+    const job = document.getElementById("job-fields");
+
+    school.style.display = type === "school" ? "block" : "none";
+    job.style.display = type === "job" ? "block" : "none";
+
+    if (type === "job") {
+        topic.disabled = true;
+        topic.value = "";
+        subTopicSelect.value = "";
+    } else {
+        topic.disabled = false;
+        loadTopics();
+    }
+
+    checkFormValidity();
+}
+
+</script>
+<script>
+const jobExamMap = {
+    banking: {
+        clerk: ["IBPS Clerk", "SBI Clerk"],
+        po: ["SBI PO", "IBPS PO", "RBI Grade B"],
+        so: ["IBPS SO"]
+    },
+    railway: {
+        ntpc: ["RRB NTPC"],
+        group_d: ["RRB Group D"],
+        alp: ["RRB ALP / Technician"]
+    },
+    ssc: {
+        cgl: ["SSC CGL"],
+        chsl: ["SSC CHSL"],
+        mts: ["SSC MTS"]
+    },
+    upsc: {
+        prelims: ["UPSC CSE"],
+        mains: ["UPSC CSE"]
+    },
+    defence: {
+        nda: ["UPSC NDA"],
+        cds: ["UPSC CDS"]
+    },
+    engineering: {
+        gate: ["GATE"],
+        ese: ["UPSC ESE"]
+    }
+};
+
+const jobTypeSelect = document.querySelector("select[name='job_type']");
+const examTypeSelect = document.getElementById("exam_type");
+const authoritySelect = document.getElementById("exam_authority");
+
+jobTypeSelect.addEventListener("change", () => {
+    const job = jobTypeSelect.value;
+
+    examTypeSelect.innerHTML = "<option value=''>Select exam type</option>";
+    authoritySelect.innerHTML = "<option value=''>Select exam type first</option>";
+    examTypeSelect.disabled = true;
+    authoritySelect.disabled = true;
+
+    if (!job) return;
+
+    Object.keys(jobExamMap[job]).forEach(exam => {
+        const opt = document.createElement("option");
+        opt.value = exam;
+        opt.textContent = exam.replace("_", " ").toUpperCase();
+        examTypeSelect.appendChild(opt);
+    });
+
+    examTypeSelect.disabled = false;
+});
+
+examTypeSelect.addEventListener("change", () => {
+    const job = jobTypeSelect.value;
+    const exam = examTypeSelect.value;
+
+    authoritySelect.innerHTML = "<option value=''>Select authority</option>";
+    authoritySelect.disabled = true;
+
+    if (!exam) return;
+
+    jobExamMap[job][exam].forEach(auth => {
+        const opt = document.createElement("option");
+        opt.value = auth;
+        opt.textContent = auth;
+        authoritySelect.appendChild(opt);
+    });
+
+    authoritySelect.disabled = false;
+});
+worksheetFile.addEventListener("change", checkFormValidity);
+
+</script>
 
 {% endblock %}
