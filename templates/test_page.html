@@ -1,6 +1,36 @@
 {% extends "base.html" %}
 {% block content %}
 
+<style>
+  .submit-wrapper {
+    text-align: center;
+    margin-top: 40px;
+}
+
+.submit-btn {
+    background: linear-gradient(135deg, #e56b6f, #ff8fa3);
+    border: none;
+    color: white;
+    padding: 16px 52px;
+    font-size: 18px;
+    font-weight: 700;
+    border-radius: 999px;
+    cursor: pointer;
+    box-shadow: 0 14px 32px rgba(229, 107, 111, 0.45);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.submit-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 18px 38px rgba(229, 107, 111, 0.55);
+}
+
+.submit-btn:active {
+    transform: scale(0.98);
+}
+
+</style>
+
 <div class="container" style="max-width:900px; margin:40px auto;">
 
     <h2 style="margin-bottom:24px;">Test</h2>
@@ -21,11 +51,12 @@
 {% endfor %}
 
 
-        <div style="text-align:center; margin-top:30px;">
-            <button type="submit" class="submit-btn">
-  Submit Test 🚀
-</button>
-        </div>
+<div class="submit-wrapper">
+    <button type="submit" class="submit-btn">
+        🚀 Submit Test
+    </button>
+</div>
+
 
     </form>
 
