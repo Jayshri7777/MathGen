@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Exam Papers Generator</h2>
+
+<form method="POST" action="/generate-exam-combo">
+
+  <!-- Grade Combo -->
+  <label>Grade</label>
+  <select name="grade" required>
+    <option value="">Select Grade</option>
+    <option value="10">10</option>
+    <option value="11">11</option>
+    <option value="12">12</option>
+    <option value="10-12">10–11–12 (Combined)</option>
+  </select>
+
+  <!-- Board Combo -->
+  <label>Board</label>
+  <select name="board" required>
+    <option value="">Select Board</option>
+    <option value="CBSE">CBSE</option>
+    <option value="ICSE">ICSE</option>
+    <option value="CBSE-ICSE">CBSE + ICSE (Combined)</option>
+  </select>
+
+  <!-- Paper Type -->
+  <label>Paper Type</label>
+  <select name="paper_type" id="paperType" onchange="toggleYear()" required>
+    <option value="">Select</option>
+    <option value="past">Past Paper</option>
+    <option value="mock">Mock Paper</option>
+  </select>
+
+  <!-- Year (only for past papers) -->
+  <div id="yearBlock" style="display:none;">
+    <label>Year</label>
+    <select name="year">
+      <option>2019</option>
+      <option>2020</option>
+      <option>2021</option>
+      <option>2022</option>
+      <option>2023</option>
+    </select>
+  </div>
+
+  <!-- Solutions -->
+  <label>
+    <input type="checkbox" name="include_answers" value="1">
+    Include Solutions
+  </label>
+
+  <br><br>
+  <button type="submit">Generate</button>
+
+</form>
+
+<script>
+function toggleYear() {
+  const type = document.getElementById("paperType").value;
+  document.getElementById("yearBlock").style.display =
+    type === "past" ? "block" : "none";
+}
+</script>
+
+{% endblock %}
