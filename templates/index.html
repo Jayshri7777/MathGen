@@ -556,6 +556,10 @@ const schoolValid =
     el.addEventListener("change", checkFormValidity);
 });
 
+// ✅ worksheet type radios
+document
+  .querySelectorAll("input[name='worksheet_type']")
+  .forEach(r => r.addEventListener("change", checkFormValidity));
 
 </script>
 
@@ -665,7 +669,6 @@ document.addEventListener("DOMContentLoaded", () => {
     loadTopics();
     
 });
-
 </script>
 <script>
 function toggleWorksheetType() {
@@ -679,14 +682,17 @@ function toggleWorksheetType() {
     school.style.display = type === "school" ? "block" : "none";
     job.style.display = type === "job" ? "block" : "none";
 
-    if (type === "job") {
-        topic.disabled = true;
-        topic.value = "";
-        subTopicSelect.value = "";
-    } else {
-        topic.disabled = false;
-        loadTopics();
-    }
+if (type === "job") {
+    topic.disabled = true;
+    topic.removeAttribute("name");   // ✅ ADD THIS
+    subTopicSelect.removeAttribute("name"); // ✅ ADD THIS
+} else {
+    topic.disabled = false;
+    topic.setAttribute("name", "topic"); // ✅ ADD THIS
+    subTopicSelect.setAttribute("name", "subtopic"); // ✅ ADD THIS
+    loadTopics();
+}
+
 
     checkFormValidity();
 }
