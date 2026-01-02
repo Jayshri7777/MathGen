@@ -12,7 +12,16 @@ from datetime import datetime
 from fpdf import FPDF
 from docx import Document
 from docx.shared import Pt
+from utils.exam_utils import *
 import io
+from utils.exam_utils import (
+    extract_json_from_ai,
+    normalize_questions,
+    normalize_answers,
+    clean_ai_text,
+    create_pdf
+)
+
 import zipfile
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from flask_cors import CORS
@@ -29,16 +38,12 @@ import PyPDF2
 import docx as docx_reader 
 import csv
 
-
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DATA_DIR = os.path.join(BASE_DIR, "data")
-os.makedirs(DATA_DIR, exist_ok=True)
+db_path = os.path.join(BASE_DIR, "users.db")
+
 
 TEMP_DIR = os.path.join(BASE_DIR, "temp_files")
 os.makedirs(TEMP_DIR, exist_ok=True)
-
-
-db_path = os.path.join(DATA_DIR, "users.db")
 
 
 def is_valid_indian_mobile(phone):
@@ -93,7 +98,7 @@ class User(UserMixin, db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     country_code = db.Column(db.String(5), nullable=False, default="+91")  # ✅ ADD
     phone_number = db.Column(db.String(30), unique=True, nullable=True)
-    grade = db.Column(db.Integer, nullable=True)
+    grade = db.Column(db.String(20))
     password_hash = db.Column(db.String(256), nullable=True)
     age = db.Column(db.Integer, nullable=True)
     city = db.Column(db.String(100), nullable=True)
@@ -546,8 +551,20 @@ def submit_test(attempt_id):
 @login_required
 def get_topics():
     board = request.args.get("board", "").strip().lower()
-    grade = str(request.args.get("grade", "")).strip()
+    grade = request.args.get("grade", "").strip()
     subject = "mathematics"
+
+    # ---------- HANDLE COMBO GRADE ----------
+    if grade == "10-12":
+        grades = {"10", "11", "12"}
+    else:
+        grades = {grade}
+
+    # ---------- HANDLE COMBO BOARD ----------
+    if board == "cbse-icse":
+        boards = {"cbse", "icse"}
+    else:
+        boards = {board}
 
     major_topics = set()
 
@@ -561,14 +578,15 @@ def get_topics():
             row_major = row.get("major_topic", "").strip()
 
             if (
-                row_board == board
-                and row_grade == grade
+                row_board in boards
+                and row_grade in grades
                 and row_subject == subject
                 and row_major
             ):
                 major_topics.add(row_major)
 
     return jsonify(sorted(list(major_topics)))
+
 
 
 @app.route("/get-minor-topics")
@@ -594,9 +612,19 @@ def get_minor_topics():
             row_major = row.get("major_topic", "").strip()
             row_minor = row.get("minor_topic", "").strip()
 
+            if grade == "10-12":
+                grades = {"10", "11", "12"}
+            else:
+                grades = {grade}
+
+            if board == "cbse-icse":
+                boards = {"cbse", "icse"}
+            else:
+                boards = {board}
+
             if (
-                row_board == board
-                and row_grade == grade
+                row_board in boards
+                and row_grade in grades
                 and row_subject == subject
                 and row_major == major_topic
                 and row_minor
@@ -686,67 +714,6 @@ oauth.register(
     }
 )
 
-# --- PDF Generation Class ---
-class CustomPDF(FPDF):
-    def __init__(self, title, sub_info, header_text="", footer_text=""):
-        super().__init__()
-        FONT_PATH = os.path.join(BASE_DIR, "fonts", "DejaVuSans.ttf")
-        self.add_font("DejaVu", "", FONT_PATH, uni=True)
-        self.worksheet_title = title
-        self.sub_info = sub_info
-        self.header_text = header_text
-        self.footer_text = footer_text
-
-    def header(self):
-        self.set_font("DejaVu", "", 10)
-        self.cell(0, 8, self.header_text, 0, 1, "C")
-
-        self.set_font("DejaVu", "", 16)
-        self.cell(0, 10, self.worksheet_title, 0, 1, "C")
-
-        self.set_font("DejaVu", "", 10)
-        sub_header_text = (
-            f"Date: {self.sub_info['date']}   |   "
-            f"Marks: {self.sub_info['marks']}   |   "
-            f"Topic: {self.sub_info['sub-title']}"
-        )
-        self.cell(0, 8, sub_header_text, 0, 1, "C")
-        self.ln(6)
-
-
-    def footer(self):
-        self.set_y(-15)
-        self.set_font("DejaVu", "", 8)
-
-        # --- Footer Left Text ---
-        self.cell(0, 8, self.footer_text, 0, 0, "L")
-
-        # --- Page Number (Right) ---
-        self.cell(0, 8, f"Page {self.page_no()}", 0, 0, "R")
-
-
-
-# --- File Creation Functions ---
-def create_pdf(content, title, sub_title_info, filename="worksheet.pdf",
-               header_text="", footer_text=""):
-
-    uid = datetime.now().strftime("%Y%m%d%H%M%S")
-    filename = f"Worksheet_{uid}.pdf"
-    file_path = os.path.join(TEMP_DIR, filename)
-
-    pdf = CustomPDF(
-        title,
-        sub_title_info,
-        header_text=header_text,
-        footer_text=footer_text
-    )
-    pdf.add_page()
-    pdf.set_font("DejaVu", "", 12)
-
-    pdf.multi_cell(0, 10, content)  # ✅ NO normalization here
-
-    pdf.output(file_path)
-    return file_path
 
 
 
@@ -911,11 +878,18 @@ def landing_page():
 @app.route('/generator')
 @login_required
 def serve_index():
+
+    # 🔥 COMBO USERS → EXAM COMBO UI
+    if current_user.grade == "10-12" or current_user.board == "CBSE-ICSE":
+        return redirect(url_for("exam_combo_page"))
+
+    # NORMAL USERS → WORKSHEET UI
     return render_template(
         'index.html',
         user_grade=current_user.grade,
         user_board=current_user.board
     )
+
 
 @app.route('/static/<path:filename>')
 def serve_static(filename):
@@ -994,9 +968,15 @@ def register():
             errors['confirm_password'] = 'Please confirm your password.'
 
         # ---------- GRADE ----------
+        # ---------- GRADE ----------
         if grade:
-            if not grade.isdigit() or not (1 <= int(grade) <= 12):
-                errors['grade'] = 'Grade must be between 1 and 12.'
+            if grade == "10-12":
+                pass  # ✅ combo allowed
+            elif grade.isdigit() and 1 <= int(grade) <= 12:
+                pass
+            else:
+                errors['grade'] = 'Invalid grade selection.'
+
                 
         if age:
             if not age.isdigit() or int(age) < 1 or int(age) > 100:
@@ -1066,7 +1046,7 @@ def register():
                 email=email,
                 phone_number=full_phone,
                 country_code=country_code,
-                grade=int(grade),
+                grade=grade,  # ✅ KEEP AS STRING
                 board=board,
                 age=int(age),                 # ✅ ADD  
                 dob=dob,                # ✅ ADD
@@ -1235,7 +1215,7 @@ def complete_profile():
         # grade
         grade = request.form.get('grade')
         if grade:
-            current_user.grade = int(grade)
+            current_user.grade = grade  # keep as string
 
         current_user.board = request.form.get('board')
 
@@ -1291,11 +1271,14 @@ def profile():
             flash("Name must be at least 2 characters long.", "danger")
             return redirect(url_for("profile"))
 
-        if not grade.isdigit() or not (1 <= int(grade) <= 12):
-            if is_ajax:
-                return jsonify(success=False, error="Invalid grade.")
-            flash("Grade must be between 1 and 12.", "danger")
+        if grade == "10-12":
+            pass
+        elif grade.isdigit() and 1 <= int(grade) <= 12:
+            pass
+        else:
+            flash("Invalid grade.", "danger")
             return redirect(url_for("profile"))
+
         
         if not board:
             if is_ajax:
@@ -1323,7 +1306,7 @@ def profile():
 
         # ---------- SAVE ----------
         current_user.name = name
-        current_user.grade = int(grade)
+        current_user.grade = grade  # keep as string
         current_user.board = board
         current_user.age = int(age)
         current_user.dob = dob
@@ -1466,6 +1449,8 @@ def whatsapp_webhook():
     
     return str(resp)
 
+
+
 @app.route("/test/<int:attempt_id>")
 @login_required
 def take_test(attempt_id):
@@ -1510,68 +1495,6 @@ def review_attempt(attempt_id):
 
     return render_template("review.html", rows=rows, attempt=attempt, test=test)
 
-def clean_ai_text(text):
-    # Convert LaTeX fractions to a/b
-    text = re.sub(r"\\frac\s*\{([^}]+)\}\{([^}]+)\}", r"\1/\2", text)
-
-    if not text:
-        return ""
-
-    # ---------- LaTeX → Unicode Math ----------
-    replacements = {
-        # Greek
-        "\\alpha": "α", "\\beta": "β", "\\gamma": "γ",
-        "\\delta": "δ", "\\theta": "θ", "\\pi": "π",
-        "\\lambda": "λ", "\\mu": "μ", "\\sigma": "σ",
-
-        # Roots & powers
-        "\\sqrt": "√",
-        "^2": "²", "^3": "³",
-        "^4": "⁴", "^5": "⁵",
-
-        # Operators
-        "\\times": "×",
-        "\\cdot": "·",
-        "\\pm": "±",
-        "\\div": "÷",
-
-        # Relations
-        "\\le": "≤",
-        "\\ge": "≥",
-        "\\neq": "≠",
-        "\\approx": "≈",
-
-        # Brackets
-        "\\left(": "(",
-        "\\right)": ")",
-        "\\left[": "[",
-        "\\right]": "]",
-        "\\left\\{": "{",
-        "\\right\\}": "}",
-
-        # Noise
-        "$": "",
-        "\\(": "",
-        "\\)": "",
-        "\\,": " ",
-        "\\;": " ",
-        "\\!": "",
-        "\\": "",
-    }
-
-    for k, v in replacements.items():
-        text = text.replace(k, v)
-
-    # ---------- Fix remaining math formatting ----------
-    # sqrt(x) → √x
-    text = re.sub(r"√\(([^)]+)\)", r"√\1", text)
-
-    # Remove double spaces
-    text = re.sub(r"\s{2,}", " ", text)
-
-    # Clean lines
-    lines = [line.strip() for line in text.splitlines() if line.strip()]
-    return "\n".join(lines)
 
 def format_answers_numbered(text):
     """
@@ -1592,30 +1515,6 @@ def format_answers_numbered(text):
     text = re.sub(r"(\d+)\)", r"\n\1)", text)
 
     return text.strip()
-
-
-def extract_json_from_ai(text):
-    """
-    Safely extract JSON array from Gemini output
-    """
-    if not text:
-        return None
-
-    # Try direct JSON
-    try:
-        return json.loads(text)
-    except Exception:
-        pass
-
-    # Try extracting JSON inside text
-    match = re.search(r"\[[\s\S]*\]", text)
-    if match:
-        try:
-            return json.loads(match.group())
-        except Exception:
-            return None
-
-    return None
 
 
 def format_questions_for_exam(text):
@@ -1639,24 +1538,6 @@ def format_questions_for_exam(text):
 
     return "".join(lines)
 
-def normalize_questions(questions_json):
-    lines = []
-    for i, q in enumerate(questions_json, 1):
-        question = clean_ai_text(q["question"])
-        lines.append(f"{i}) {question}")
-        lines.append("")  # spacing between questions
-    return "\n".join(lines)
-
-def normalize_answers(text):
-    if not text:
-        return ""
-
-    # Replace "1) answer 2) answer" → line breaks
-    text = re.sub(r"\s*(\d+\))", r"\n\1", text)
-
-    lines = [line.strip() for line in text.splitlines() if line.strip()]
-    return "\n".join(lines)
-
 
 def get_output_format():
     return (
@@ -1665,6 +1546,22 @@ def get_output_format():
         or request.form.get("format")
         or "pdf"
     ).lower()
+
+
+@app.route("/exam-combo")
+@login_required
+def exam_combo_page():
+    return render_template("exam_combo.html")
+
+from exam_combo import handle_exam_combo
+
+@app.route("/generate-exam-combo", methods=["POST"])
+@login_required
+def generate_exam_combo():
+    try:
+        return handle_exam_combo(request)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route('/generate-worksheet', methods=['GET', 'POST'])
