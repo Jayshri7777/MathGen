@@ -29,9 +29,14 @@ import PyPDF2
 import docx as docx_reader 
 import csv
 
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(BASE_DIR, "data")
 os.makedirs(DATA_DIR, exist_ok=True)
+
+TEMP_DIR = os.path.join(BASE_DIR, "temp_files")
+os.makedirs(TEMP_DIR, exist_ok=True)
+
 
 db_path = os.path.join(DATA_DIR, "users.db")
 
@@ -429,10 +434,9 @@ def start_test():
     # JOB-BASED AI TEST FLOW (Manager Requirement)
     # ======================================================
     if job_type:
-        if job_type:
-            if not exam_type or not exam_authority:
-                flash("Please select exam type and authority.", "warning")
-                return redirect(url_for("job_exams"))
+        if not exam_type or not exam_authority:
+            flash("Please select exam type and authority.", "warning")
+            return redirect(url_for("job_exams"))
 
         return start_job_ai_test(
             job_type=job_type,
@@ -662,7 +666,6 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = None
 login_manager.refresh_view = None
-login_manager.login_view = None
 
 
 
@@ -726,28 +729,26 @@ class CustomPDF(FPDF):
 # --- File Creation Functions ---
 def create_pdf(content, title, sub_title_info, filename="worksheet.pdf",
                header_text="", footer_text=""):
+
     uid = datetime.now().strftime("%Y%m%d%H%M%S")
     filename = f"Worksheet_{uid}.pdf"
+    file_path = os.path.join(TEMP_DIR, filename)
 
-    content = content.replace("–", "-")
-    print("Generating PDF...")
     pdf = CustomPDF(
-    title,
-    sub_title_info,
-    header_text=header_text,
-    footer_text=footer_text
-
-)
+        title,
+        sub_title_info,
+        header_text=header_text,
+        footer_text=footer_text
+    )
     pdf.add_page()
     pdf.set_font("DejaVu", "", 12)
 
-    try:
-        pdf.multi_cell(0, 10, content)
-    except UnicodeEncodeError:
-        print("Warning: Encoding issue detected in PDF generation. Using latin-1 replacement.")
-        pdf.multi_cell(0, 10, content.encode('latin-1', 'replace').decode('latin-1'))
-    pdf.output(filename)
-    return filename
+    pdf.multi_cell(0, 10, content)  # ✅ NO normalization here
+
+    pdf.output(file_path)
+    return file_path
+
+
 
 def create_docx(content, title, sub_title_info, filename="worksheet.docx"):
     uid = datetime.now().strftime("%Y%m%d%H%M%S")
@@ -783,14 +784,18 @@ def create_docx(content, title, sub_title_info, filename="worksheet.docx"):
     footer_p.text = "MathGen | Generated for learning purposes"
     footer_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
 
-    doc.save(filename)
-    return filename
+    file_path = os.path.join(TEMP_DIR, filename)
+    doc.save(file_path)
+    return file_path
+
 
 
 def create_txt(content, title, sub_title_info, filename="worksheet.txt"):
     print("Generating TXT...")
 
-    with open(filename, "w", encoding="utf-8") as f:
+    file_path = os.path.join(TEMP_DIR, filename)
+    with open(file_path, "w", encoding="utf-8") as f:
+
         # ---------- HEADER ----------
         f.write("=" * 50 + "\n")
         f.write(f"{title}\n")
@@ -819,7 +824,8 @@ def create_txt(content, title, sub_title_info, filename="worksheet.txt"):
         f.write("End of Worksheet\n")
         f.write("-" * 50 + "\n")
 
-    return filename
+    return file_path
+
 
 
 # --- Helper functions to read uploaded files ---
@@ -883,8 +889,11 @@ def create_image(content, title, sub_title_info, fmt="png"):
             y += line_height
 
     filename = f"worksheet_{uuid.uuid4()}.{fmt}"
-    img.save(filename)
-    return filename
+    file_path = os.path.join(TEMP_DIR, filename)
+    img.save(file_path)
+    return file_path
+
+
 
 # ----------------------------------------------------
 
@@ -1130,12 +1139,6 @@ def unauthorized():
         return jsonify({"unauthorized": True}), 401
 
     return redirect(url_for("landing_page", show_login=1))
-
-
-
-
-    # Normal browser request → redirect to landing page
-    return redirect(url_for("landing_page"))
 
 @app.route("/login-popup")
 def login_popup():
@@ -1570,6 +1573,26 @@ def clean_ai_text(text):
     lines = [line.strip() for line in text.splitlines() if line.strip()]
     return "\n".join(lines)
 
+def format_answers_numbered(text):
+    """
+    Forces each numbered answer onto a new line.
+    Converts: '1) ... 2) ... 3) ...'
+    Into:
+    1) ...
+    2) ...
+    3) ...
+    """
+    if not text:
+        return ""
+
+    # Normalize spaces
+    text = re.sub(r"\s+", " ", text)
+
+    # Force line break before each number like "1)" or "2)"
+    text = re.sub(r"(\d+)\)", r"\n\1)", text)
+
+    return text.strip()
+
 
 def extract_json_from_ai(text):
     """
@@ -1621,10 +1644,19 @@ def normalize_questions(questions_json):
     for i, q in enumerate(questions_json, 1):
         question = clean_ai_text(q["question"])
         lines.append(f"{i}) {question}")
-        for _ in range(q.get("answer_space_lines", 3)):
-            lines.append("______________________________")
-        lines.append("")
+        lines.append("")  # spacing between questions
     return "\n".join(lines)
+
+def normalize_answers(text):
+    if not text:
+        return ""
+
+    # Replace "1) answer 2) answer" → line breaks
+    text = re.sub(r"\s*(\d+\))", r"\n\1", text)
+
+    lines = [line.strip() for line in text.splitlines() if line.strip()]
+    return "\n".join(lines)
+
 
 def get_output_format():
     return (
@@ -1654,177 +1686,18 @@ def generate_worksheet():
     try:
         client = genai.Client(api_key=os.environ.get("GENAI_API_KEY"))
 
-        worksheet_type = request.form.get("worksheet_type", "school")
+        worksheet_type = request.form.get("worksheet_type")
+        if worksheet_type not in ("school", "job"):
+            return jsonify({"error": "Invalid worksheet type"}), 400
 
-        job_type = request.form.get("job_type")
+
+        job_type = request.form.get("job_type") or None
         exam_type = request.form.get("exam_type")
         exam_authority = request.form.get("exam_authority")
-
-
-
+        
         # =====================================================
-        # FILE UPLOAD FLOW (ANSWER KEY ONLY)
+        # JOB / COMPETITIVE WORKSHEET GENERATION
         # =====================================================
-        if (
-            'worksheet_file' in request.files
-            and request.files['worksheet_file']
-            and request.files['worksheet_file'].filename.strip() != ""
-):
-
-
-            file = request.files['worksheet_file']
-            filename = file.filename.lower()
-            output_format = get_output_format()
-            include_answers = request.form.get('answer_key') == '1'
-
-
-            if filename.endswith('.pdf'):
-                worksheet_text = get_text_from_pdf(file)
-
-            elif filename.endswith('.docx'):
-                worksheet_text = get_text_from_docx(file)
-
-            elif filename.endswith('.txt'):
-                worksheet_text = file.read().decode('utf-8', errors='ignore')
-
-
-            else:
-                return jsonify({"error": "Unsupported file type"}), 400
-
-            if not worksheet_text.strip():
-                return jsonify({"error": "Could not read worksheet"}), 400
-
-            prompt = f"""
-You are a math teacher.
-Provide ONLY the answer key.
-Number answers properly.
-
-Worksheet:
-{worksheet_text}
-"""
-
-            response = client.models.generate_content(
-                model="models/gemini-flash-latest",
-                contents=prompt
-            )
-
-            answers_text = clean_ai_text(response.text)
-
-
-            files_to_zip = []
-
-            # ========= IMAGE =========
-            # ---------- IMAGE FORMATS ----------
-            if output_format in ["jpg", "png", "gif"]:
-                worksheet_path = create_image(
-                    worksheet_text,
-                    title,
-                    info,
-                    fmt=output_format
-                )
-                files_to_zip.append((f"worksheet/Worksheet.{output_format}", worksheet_path))
-
-                if include_answers and answers_text:
-                    solution_path = create_image(
-                        answers_text,
-                        f"{title} - Solutions",
-                        info,
-                        fmt=output_format
-                    )
-                    files_to_zip.append((f"solutions/Solutions.{output_format}", solution_path))
-
-
-
-            # ---------- TXT ----------
-            elif output_format == "txt":
-                worksheet_path = create_txt(
-                    worksheet_text,
-                    title,
-                    info,
-                    filename="Worksheet.txt"
-                )
-                files_to_zip.append(("worksheet/Worksheet.txt", worksheet_path))
-
-                if include_answers and answers_text:
-                    solution_path = create_txt(
-                        answers_text,
-                        f"{title} - Solutions",
-                        info,
-                        filename="Solutions.txt"
-                    )
-                    files_to_zip.append(("solutions/Solutions.txt", solution_path))
-
-
-            # ---------- DOCX ----------
-            elif output_format == "docx":
-                worksheet_path = create_docx(
-                    worksheet_text,
-                    title,
-                    info,
-                    filename="Worksheet.docx"
-                )
-                files_to_zip.append(("worksheet/Worksheet.docx", worksheet_path))
-
-                if include_answers and answers_text:
-                    solution_path = create_docx(
-                        answers_text,
-                        f"{title} - Solutions",
-                        info,
-                        filename="Solutions.docx"
-                    )
-                    files_to_zip.append(("solutions/Solutions.docx", solution_path))
-
-
-            # ---------- PDF ----------
-            elif output_format == "pdf":
-                worksheet_path = create_pdf(
-                    worksheet_text,
-                    title,
-                    info,
-                    filename="Worksheet.pdf"
-                )
-                files_to_zip.append(("worksheet/Worksheet.pdf", worksheet_path))
-
-                if include_answers and answers_text:
-                    solution_path = create_pdf(
-                        answers_text,
-                        f"{title} - Solutions",
-                        info,
-                        filename="Solutions.pdf"
-                    )
-                    files_to_zip.append(("solutions/Solutions.pdf", solution_path))
-
-
-            else:
-                return jsonify({"error": "Invalid format selected"}), 400
-            
-            if not files_to_zip:
-                return jsonify({"error": "Nothing to download"}), 400
-
-
-                
-            zip_buffer = io.BytesIO()
-            with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zipf:
-                for zip_name, file_path in files_to_zip:
-                    with open(file_path, "rb") as f:
-                        zipf.writestr(zip_name, f.read())
-
-            zip_buffer.seek(0)
-
-            for _, file_path in files_to_zip:
-                if os.path.exists(file_path):
-                    os.remove(file_path)
-
-            return send_file(
-                zip_buffer,
-                mimetype="application/zip",
-                as_attachment=True,
-                download_name="Worksheet_Solutions.zip"
-            )
-            
-            # =====================================================
-            # JOB / COMPETITIVE WORKSHEET GENERATION
-            # =====================================================
         if worksheet_type == "job":
             if not job_type or not exam_type or not exam_authority:
                 return jsonify({"error": "Job type, exam type and authority required"}), 400
@@ -1871,69 +1744,138 @@ Return STRICT JSON ONLY:
                 print(job_response.text)
                 return jsonify({"error": "AI failed to generate job questions"}), 500
 
-            worksheet_text = normalize_questions(questions_json)
+            worksheet_questions_text = normalize_questions(questions_json)
+
 
             title = f"{job_type_upper} {exam_type.upper()} Worksheet"
             info["sub-title"] = exam_authority
 
-            answers_text = None
+            solution_answers_text = None
+
             if include_answers:
                 answers_prompt = f"""
-Provide ONLY the correct answers.
-Number answers properly.
+Return ONLY the answers.
+
+STRICT RULES:
+- DO NOT repeat questions
+- DO NOT explain
+- One answer per line
+- Format EXACTLY:
+1) Answer
+2) Answer
 
 Questions:
-{worksheet_text}
+{worksheet_questions_text}
 """
                 a_response = client.models.generate_content(
                     model="models/gemini-flash-latest",
                     contents=answers_prompt
                 )
-                answers_text = clean_ai_text(a_response.text)
+
+                solution_answers_text = normalize_answers(
+                    clean_ai_text(a_response.text)
+                )
+
+            if solution_answers_text and (
+                worksheet_questions_text.strip() == solution_answers_text.strip()
+            ):
+                raise ValueError(
+                    "Worksheet and Solutions content are identical. Aborting ZIP generation."
+                )
+
+
+
 
             files_to_zip = []
 
             # ---------- IMAGE ----------
             if output_format in ["jpg", "png", "gif"]:
-                ws = create_image(worksheet_text, title, info, fmt=output_format)
+                ws = create_image(
+                    worksheet_questions_text,
+                    title,
+                    info,
+                    fmt=output_format
+                )
                 files_to_zip.append((f"worksheet/Worksheet.{output_format}", ws))
 
-
-                if include_answers and answers_text:
-                    sol = create_image(answers_text, f"{title} - Solutions", info, fmt=output_format)
+                if include_answers and solution_answers_text:
+                    sol = create_image(
+                        solution_answers_text,
+                        f"{title} - Solutions",
+                        info,
+                        fmt=output_format
+                    )
                     files_to_zip.append((f"solutions/Solutions.{output_format}", sol))
 
 
             # ---------- TXT ----------
             elif output_format == "txt":
-                ws = create_txt(worksheet_text, title, info, "Worksheet.txt")
+                ws = create_txt(
+                    worksheet_questions_text,
+                    title,
+                    info,
+                    "Worksheet.txt"
+                )
                 files_to_zip.append(("worksheet/Worksheet.txt", ws))
 
-
-                if include_answers and answers_text:
-                    sol = create_txt(answers_text, f"{title} - Solutions", info, "Solutions.txt")
+                if include_answers and solution_answers_text:
+                    sol = create_txt(
+                        solution_answers_text,
+                        f"{title} - Solutions",
+                        info,
+                        "Solutions.txt"
+                    )
                     files_to_zip.append(("solutions/Solutions.txt", sol))
+
 
 
             # ---------- DOCX ----------
             elif output_format == "docx":
-                ws = create_docx(worksheet_text, title, info, "Worksheet.docx")
+                ws = create_docx(
+                    worksheet_questions_text,
+                    title,
+                    info,
+                    "Worksheet.docx"
+                )
                 files_to_zip.append(("worksheet/Worksheet.docx", ws))
 
-                if include_answers and answers_text:
-                    sol = create_docx(answers_text, f"{title} - Solutions", info, "Solutions.docx")
+                if include_answers and solution_answers_text:
+                    sol = create_docx(
+                        solution_answers_text,
+                        f"{title} - Solutions",
+                        info,
+                        "Solutions.docx"
+                    )
                     files_to_zip.append(("solutions/Solutions.docx", sol))
+
+
 
 
             # ---------- PDF ----------
             elif output_format == "pdf":
-                ws = create_pdf(worksheet_text, title, info, "Worksheet.pdf")
-                files_to_zip.append(("worksheet/Worksheet.pdf", ws))
+                worksheet_path = create_pdf(
+                    worksheet_questions_text,
+                    title,
+                    info
+                )
+                files_to_zip.append(
+                    (f"worksheet/{os.path.basename(worksheet_path)}", worksheet_path)
+                )
 
+                if include_answers and solution_answers_text:
+                    solution_path = create_pdf(
+                        solution_answers_text,
+                        f"{title} - Solutions",
+                        info
+                    )
+                    files_to_zip.append(
+                        (f"solutions/{os.path.basename(solution_path)}", solution_path)
+                    )
 
-                if include_answers and answers_text:
-                    sol = create_pdf(answers_text, f"{title} - Solutions", info, "Solutions.pdf")
-                    files_to_zip.append(("solutions/Solutions.pdf", sol))
+            
+            
+            
+
 
             else:
                 return jsonify({"error": "Invalid format selected"}), 400
@@ -1949,25 +1891,183 @@ Questions:
                         zipf.writestr(name, f.read())
 
             zip_buffer.seek(0)
+            
+            return send_file(
+    zip_buffer,
+    mimetype="application/zip",
+    as_attachment=True,
+    download_name="Job_Worksheet.zip"
+)
 
-            for _, path in files_to_zip:
-                os.remove(path)
+
+
+
+
+        # =====================================================
+        # FILE UPLOAD FLOW (ANSWER KEY ONLY)
+        # =====================================================
+        if (
+            'worksheet_file' in request.files
+            and request.files['worksheet_file']
+            and request.files['worksheet_file'].filename.strip() != ""
+):
+
+
+            file = request.files['worksheet_file']
+            filename = file.filename.lower()
+            output_format = get_output_format()
+            include_answers = request.form.get('answer_key') == '1'
+
+
+            if filename.endswith('.pdf'):
+                worksheet_questions_text = get_text_from_pdf(file)
+
+            elif filename.endswith('.docx'):
+                worksheet_questions_text = get_text_from_docx(file)
+
+            elif filename.endswith('.txt'):
+                worksheet_questions_text = file.read().decode('utf-8', errors='ignore')
+
+
+            else:
+                return jsonify({"error": "Unsupported file type"}), 400
+
+            if not worksheet_questions_text.strip():
+                return jsonify({"error": "Could not read worksheet"}), 400
+
+            prompt = f"""
+You are a math teacher.
+Provide ONLY the answer key.
+Number answers properly.
+
+Worksheet:
+{worksheet_questions_text}
+"""
+
+            response = client.models.generate_content(
+                model="models/gemini-flash-latest",
+                contents=prompt
+            )
+
+            solution_answers_text = clean_ai_text(response.text)
+
+
+            files_to_zip = []
+
+            # ========= IMAGE =========
+            # ---------- IMAGE FORMATS ----------
+            if output_format in ["jpg", "png", "gif"]:
+                worksheet_path = create_image(
+                    worksheet_questions_text,
+                    title,
+                    info,
+                    fmt=output_format
+                )
+                files_to_zip.append((f"worksheet/Worksheet.{output_format}", worksheet_path))
+
+                if include_answers and solution_answers_text:
+                    solution_path = create_image(
+                        solution_answers_text,
+                        f"{title} - Solutions",
+                        info,
+                        fmt=output_format
+                    )
+                    files_to_zip.append((f"solutions/Solutions.{output_format}", solution_path))
+
+
+
+            # ---------- TXT ----------
+            elif output_format == "txt":
+                worksheet_path = create_txt(
+                    worksheet_questions_text,
+                    title,
+                    info,
+                    filename="Worksheet.txt"
+                )
+                files_to_zip.append(("worksheet/Worksheet.txt", worksheet_path))
+
+                if include_answers and solution_answers_text:
+                    solution_path = create_txt(
+                        solution_answers_text,
+                        f"{title} - Solutions",
+                        info,
+                        filename="Solutions.txt"
+                    )
+                    files_to_zip.append(("solutions/Solutions.txt", solution_path))
+
+
+            # ---------- DOCX ----------
+            elif output_format == "docx":
+                worksheet_path = create_docx(
+                    worksheet_questions_text,
+                    title,
+                    info,
+                    filename="Worksheet.docx"
+                )
+                files_to_zip.append(("worksheet/Worksheet.docx", worksheet_path))
+
+                if include_answers and solution_answers_text:
+                    solution_path = create_docx(
+                        solution_answers_text,
+                        f"{title} - Solutions",
+                        info,
+                        filename="Solutions.docx"
+                    )
+                    files_to_zip.append(("solutions/Solutions.docx", solution_path))
+
+
+            # ---------- PDF ----------
+            elif output_format == "pdf":
+                worksheet_path = create_pdf(worksheet_questions_text, title, info)
+                files_to_zip.append(
+                    (f"worksheet/{os.path.basename(worksheet_path)}", worksheet_path)
+                )
+
+                if include_answers and solution_answers_text:
+                    solution_path = create_pdf(
+                        solution_answers_text,
+                        f"{title} - Solutions",
+                        info
+                    )
+                    files_to_zip.append(
+                        (f"solutions/{os.path.basename(solution_path)}", solution_path)
+                    )
+
+
+
+            else:
+                return jsonify({"error": "Invalid format selected"}), 400
+            
+            if not files_to_zip:
+                return jsonify({"error": "Nothing to download"}), 400
+
+
+                
+            zip_buffer = io.BytesIO()
+            with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zipf:
+                for zip_name, file_path in files_to_zip:
+                    with open(file_path, "rb") as f:
+                        zipf.writestr(zip_name, f.read())
+
+            zip_buffer.seek(0)
 
             return send_file(
                 zip_buffer,
                 mimetype="application/zip",
                 as_attachment=True,
-                download_name="Job_Exam_Worksheet.zip"
+                download_name="Worksheet_Solutions.zip"
             )
-
-
+            
         # =====================================================
         # NEW WORKSHEET GENERATION FLOW
         # =====================================================
-        if worksheet_type == "school" and not job_type:
+        if worksheet_type == "school":
+            topic = request.form.get('topic')
+            if not topic:
+                return jsonify({"error": "Topic is required for school worksheet"}), 400
+
             grade = request.form.get('grade') or current_user.grade
             board = request.form.get('board')
-            topic = request.form.get('topic')
             subtopic = request.form.get('subtopic') or "General"
             difficulty = request.form.get('difficulty', 'Easy')
             output_format = get_output_format()
@@ -2037,26 +2137,47 @@ Difficulty: {difficulty}
                     "error": "AI returned invalid question format. Please try again."
                 }), 500
             
-            worksheet_text = normalize_questions(questions_json)
+            worksheet_questions_text = normalize_questions(questions_json)
+
+
+            solution_answers_text = None
 
             title = f"Grade {grade} Math Worksheet"
             info["sub-title"] = subtopic
 
             # -------- ANSWERS ----------
-            answers_text = None
             if include_answers:
                 answers_prompt = f"""
-Provide ONLY the answers.
-Number answers correctly.
+Return ONLY the answers.
+
+STRICT RULES:
+- DO NOT repeat questions
+- DO NOT explain
+- One answer per line
+- Format EXACTLY like:
+1) Answer
+2) Answer
+3) Answer
 
 Questions:
-{worksheet_text}
+{worksheet_questions_text}
 """
                 a_response = client.models.generate_content(
                     model="models/gemini-flash-latest",
                     contents=answers_prompt
                 )
-                answers_text = clean_ai_text(a_response.text)
+                solution_answers_text = normalize_answers(
+                    clean_ai_text(a_response.text)
+                    )
+                if solution_answers_text and (
+                    worksheet_questions_text.strip() == solution_answers_text.strip()
+                    ):
+                    raise ValueError(
+                        "Worksheet and Solutions content are identical. Aborting ZIP generation."
+                        )
+
+
+
 
             # =====================================================
             # OUTPUT
@@ -2073,16 +2194,16 @@ Questions:
             # ---------- IMAGE FORMATS ----------
             if output_format in ["jpg", "png", "gif"]:
                 worksheet_path = create_image(
-                    worksheet_text,
+                    worksheet_questions_text,
                     title,
                     info,
                     fmt=output_format
                 )
                 files_to_zip.append((f"worksheet/Worksheet.{output_format}", worksheet_path))
 
-                if include_answers and answers_text:
+                if include_answers and solution_answers_text:
                     solution_path = create_image(
-                        answers_text,
+                        solution_answers_text,
                         f"{title} - Solutions",
                         info,
                         fmt=output_format
@@ -2094,7 +2215,7 @@ Questions:
             # ---------- TXT ----------
             elif output_format == "txt":
                 worksheet_path = create_txt(
-                    worksheet_text,
+                    worksheet_questions_text,
                     title,
                     info,
                     filename="Worksheet.txt"
@@ -2102,9 +2223,9 @@ Questions:
                 files_to_zip.append(("worksheet/Worksheet.txt", worksheet_path))
             
 
-                if include_answers and answers_text:
+                if include_answers and solution_answers_text:
                     solution_path = create_txt(
-                        answers_text,
+                        solution_answers_text,
                         f"{title} - Solutions",
                         info,
                         filename="Solutions.txt"
@@ -2116,7 +2237,7 @@ Questions:
             # ---------- DOCX ----------
             elif output_format == "docx":
                 worksheet_path = create_docx(
-                    worksheet_text,
+                    worksheet_questions_text,
                     title,
                     info,
                     filename="Worksheet.docx"
@@ -2124,9 +2245,9 @@ Questions:
                 files_to_zip.append(("worksheet/Worksheet.docx", worksheet_path))
             
 
-                if include_answers and answers_text:
+                if include_answers and solution_answers_text:
                     solution_path = create_docx(
-                        answers_text,
+                        solution_answers_text,
                         f"{title} - Solutions",
                         info,
                         filename="Solutions.docx"
@@ -2138,22 +2259,25 @@ Questions:
             # ---------- PDF ----------
             elif output_format == "pdf":
                 worksheet_path = create_pdf(
-                    worksheet_text,
+                    worksheet_questions_text,
                     title,
-                    info,
-                    filename="Worksheet.pdf"
+                    info
                 )
-                files_to_zip.append(("worksheet/Worksheet.pdf", worksheet_path))
-        
+                files_to_zip.append((
+                    f"worksheet/{os.path.basename(worksheet_path)}",
+                    worksheet_path
+                ))
 
-                if include_answers and answers_text:
+                if include_answers and solution_answers_text:
                     solution_path = create_pdf(
-                        answers_text,
+                        solution_answers_text,
                         f"{title} - Solutions",
-                        info,
-                        filename="Solutions.pdf"
+                        info
                     )
-                    files_to_zip.append(("solutions/Solutions.pdf", solution_path))
+                    files_to_zip.append((
+                        f"solutions/{os.path.basename(solution_path)}",
+                        solution_path
+                    ))
 
 
             else:
@@ -2170,10 +2294,6 @@ Questions:
                         zipf.writestr(zip_name, f.read())
 
             zip_buffer.seek(0)
-
-            for _, file_path in files_to_zip:
-                if os.path.exists(file_path):
-                    os.remove(file_path)
 
             return send_file(
                 zip_buffer,
@@ -2192,16 +2312,23 @@ Questions:
         # =============================
         return jsonify({"error": "Invalid worksheet type"}), 400
 
-
-
-
     except Exception as e:
         import traceback
         traceback.print_exc()
         if "429" in str(e):
             return jsonify({"error": "AI quota exceeded. Try again later."}), 429
-        return jsonify({"error": "Worksheet generation failed."}), 500
+        return jsonify({
+        "error": str(e),
+        "type": str(type(e))
+    }), 500
 
+def cleanup_files(paths):
+    for path in paths:
+        try:
+            if os.path.exists(path):
+                os.remove(path)
+        except Exception as e:
+            print("Cleanup error:", path, e)
 
 
 
