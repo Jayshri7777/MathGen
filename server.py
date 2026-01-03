@@ -1309,6 +1309,19 @@ def profile():
 
         try:
             db.session.commit()
+
+            # 🔥 NEW LOGIC: redirect to exam combo if user switches to combo
+            # ✅ decide redirect target
+            if current_user.grade == "10-12" or current_user.board == "CBSE-ICSE":
+                redirect_url = url_for("exam_combo_page")
+            else:
+                redirect_url = url_for("serve_index")
+
+            if is_ajax:
+                return jsonify(success=True, redirect=redirect_url)
+
+
+            # normal users stay on profile
             if is_ajax:
                 return jsonify(success=True)
             flash("Profile updated successfully!", "success")
@@ -2226,7 +2239,10 @@ Worksheet:
                 contents=prompt
             )
 
-            solution_answers_text = clean_ai_text(response.text)
+            solution_answers_text = normalize_answers(
+    clean_ai_text(response.text)
+)
+
 
 
             files_to_zip = []
