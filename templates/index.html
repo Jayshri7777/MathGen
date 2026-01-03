@@ -296,7 +296,9 @@ body {
     method="POST"
     action="{{ url_for('generate_worksheet') }}"
     enctype="multipart/form-data"
+    novalidate
 >
+
 
 <div class="ws-container">
 
@@ -464,8 +466,15 @@ body {
 
         <label class="upload-btn">
             Choose File
-            <input type="file" name="worksheet_file" hidden>
+            <input type="file" name="worksheet_file" id="worksheetFile" hidden>
         </label>
+        <p id="selectedFileName" style="
+  font-size: 13px;
+  font-weight: 600;
+  color: #6b2b2b;
+  margin-top: 8px;
+"></p>
+
 
         <p class="upload-hint">
             We’ll analyze your worksheet and generate an accurate answer sheet.
@@ -490,7 +499,7 @@ body {
 
 
 <div class="generate-btn">
-    <button type="submit" id="generateBtn" disabled>
+<button type="submit" id="generateBtn" disabled>
     ✨ Generate Worksheet
 </button>
 </div>
@@ -508,34 +517,36 @@ const worksheetFile = document.querySelector("input[name='worksheet_file']");
 const generateBtn = document.getElementById("generateBtn");
 
 function checkFormValidity() {
+    if (!worksheetFile || !generateBtn) return;
+
+    // ✅ UPLOAD MODE ALWAYS WINS
+    if (worksheetFile.files.length > 0) {
+        return;
+    }
+
     const worksheetType =
-        document.querySelector("input[name='worksheet_type']:checked").value;
+        document.querySelector("input[name='worksheet_type']:checked")?.value;
 
     const format =
         worksheetType === "school"
             ? document.getElementById("school-format")
             : document.getElementById("job-format");
 
-const schoolValid =
-    worksheetType === "school" &&
-    grade.value &&
-    board.value &&
-    difficulty.value &&
-    format.value &&
-    topic.value;
-
+    const schoolValid =
+        worksheetType === "school" &&
+        grade.value &&
+        board.value &&
+        difficulty.value &&
+        format?.value &&
+        topic.value;
 
     const jobValid =
         worksheetType === "job" &&
         document.querySelector("select[name='job_type']")?.value &&
         document.querySelector("select[name='exam_type']")?.value &&
         document.querySelector("select[name='exam_authority']")?.value &&
-        format.value;
+        format?.value;
 
-    const uploadValid =
-        worksheetFile.files.length > 0;
-
-    generateBtn.disabled = !(schoolValid || jobValid || uploadValid);
 }
 
 
@@ -559,6 +570,11 @@ const schoolValid =
 document
   .querySelectorAll("input[name='worksheet_type']")
   .forEach(r => r.addEventListener("change", checkFormValidity));
+
+</script>
+<script>
+worksheetFile.addEventListener("change", () => {
+});
 
 </script>
 
@@ -772,6 +788,30 @@ examTypeSelect.addEventListener("change", () => {
 });
 worksheetFile.addEventListener("change", checkFormValidity);
 
+</script>
+<script>
+document.getElementById("worksheetFile")?.addEventListener("change", function () {
+  const fileName = this.files[0]?.name || "";
+  document.getElementById("selectedFileName").innerText =
+    fileName ? `Selected: ${fileName}` : "";
+});
+</script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const generateBtn = document.getElementById("generateBtn");
+
+    // Enable button on ANY user interaction inside the form
+    document.querySelectorAll(
+        "input, select, textarea"
+    ).forEach(el => {
+        el.addEventListener("change", () => {
+            generateBtn.disabled = false;
+        });
+        el.addEventListener("input", () => {
+            generateBtn.disabled = false;
+        });
+    });
+});
 </script>
 
 {% endblock %}
