@@ -12,16 +12,7 @@ from datetime import datetime
 from fpdf import FPDF
 from docx import Document
 from docx.shared import Pt
-from utils.exam_utils import *
 import io
-from utils.exam_utils import (
-    extract_json_from_ai,
-    normalize_questions,
-    normalize_answers,
-    clean_ai_text,
-    create_pdf
-)
-
 import zipfile
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from flask_cors import CORS
@@ -33,6 +24,7 @@ from flask_login import login_required, current_user
 from datetime import datetime
 from PIL import Image, ImageDraw, ImageFont
 import textwrap
+import uuid
 import uuid
 import PyPDF2  
 import docx as docx_reader 
@@ -715,8 +707,6 @@ oauth.register(
 )
 
 
-
-
 def create_docx(content, title, sub_title_info, filename="worksheet.docx"):
     uid = datetime.now().strftime("%Y%m%d%H%M%S")
     filename = f"Worksheet_{uid}.docx"
@@ -824,7 +814,7 @@ def get_text_from_docx(file_storage):
     
 def create_image(content, title, sub_title_info, fmt="png"):
     uid = datetime.now().strftime("%Y%m%d%H%M%S")
-    filename = f"worksheet_{uuid.uuid4()}.{fmt}"
+    filename = f"Worksheet.{fmt}"
 
     width, height = 1240, 1754
     margin_x, margin_y = 60, 60
@@ -855,7 +845,7 @@ def create_image(content, title, sub_title_info, fmt="png"):
             draw.text((margin_x, y), w, font=font_body, fill="black")
             y += line_height
 
-    filename = f"worksheet_{uuid.uuid4()}.{fmt}"
+    filename = f"Worksheet.{fmt}"
     file_path = os.path.join(TEMP_DIR, filename)
     img.save(file_path)
     return file_path
@@ -879,16 +869,17 @@ def landing_page():
 @login_required
 def serve_index():
 
-    # 🔥 COMBO USERS → EXAM COMBO UI
+    # 🔥 COMBO USERS → EXAM COMBO PAGE
     if current_user.grade == "10-12" or current_user.board == "CBSE-ICSE":
         return redirect(url_for("exam_combo_page"))
 
-    # NORMAL USERS → WORKSHEET UI
+    # ✅ NORMAL USERS → WORKSHEET UI
     return render_template(
         'index.html',
         user_grade=current_user.grade,
         user_board=current_user.board
     )
+
 
 
 @app.route('/static/<path:filename>')
@@ -1538,39 +1529,418 @@ def format_questions_for_exam(text):
 
     return "".join(lines)
 
+def normalize_job_questions(questions_json):
+    lines = []
+    for i, q in enumerate(questions_json, 1):
+        question = clean_ai_text(q["question"])
+        lines.append(f"{i}) {question}")
+        lines.append("")  # space after question
+        lines.append("_" * 40)
+        lines.append("_" * 40)
+        lines.append("")
+    return "\n".join(lines)
+
 
 def get_output_format():
-    return (
-        request.form.get("school_format")
-        or request.form.get("job_format")
-        or request.form.get("format")
-        or "pdf"
-    ).lower()
+    worksheet_type = request.form.get("worksheet_type")
 
+    if worksheet_type == "job":
+        return (request.form.get("job_format") or "pdf").lower()
 
-@app.route("/exam-combo")
+    if worksheet_type == "school":
+        return (request.form.get("school_format") or "pdf").lower()
+
+    return "pdf"
+
+@app.route("/exam-combo", methods=["GET"])
 @login_required
 def exam_combo_page():
     return render_template("exam_combo.html")
 
-from exam_combo import handle_exam_combo
-
 @app.route("/generate-exam-combo", methods=["POST"])
 @login_required
 def generate_exam_combo():
+    return handle_exam_combo(request)
+
+from docx import Document
+from docx.shared import Pt
+from docx.enum.text import WD_ALIGN_PARAGRAPH
+import io
+import zipfile
+from flask import send_file
+from google import genai
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+TEMP_DIR = os.path.join(BASE_DIR, "temp_files")
+os.makedirs(TEMP_DIR, exist_ok=True)
+
+
+def extract_json_from_ai(text):
+    """
+    Safely extract JSON array from Gemini output
+    """
+    if not text:
+        return None
+
+    # Try direct JSON
     try:
-        return handle_exam_combo(request)
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return json.loads(text)
+    except Exception:
+        pass
+
+    # Try extracting JSON inside text
+    match = re.search(r"\[[\s\S]*\]", text)
+    if match:
+        try:
+            return json.loads(match.group())
+        except Exception:
+            return None
+
+    return None
+  
+def clean_ai_text(text):
+    # Convert LaTeX fractions to a/b
+    text = re.sub(r"\\frac\s*\{([^}]+)\}\{([^}]+)\}", r"\1/\2", text)
+
+    if not text:
+        return ""
+
+    # ---------- LaTeX → Unicode Math ----------
+    replacements = {
+        # Greek
+        "\\alpha": "α", "\\beta": "β", "\\gamma": "γ",
+        "\\delta": "δ", "\\theta": "θ", "\\pi": "π",
+        "\\lambda": "λ", "\\mu": "μ", "\\sigma": "σ",
+
+        # Roots & powers
+        "\\sqrt": "√",
+        "^2": "²", "^3": "³",
+        "^4": "⁴", "^5": "⁵",
+
+        # Operators
+        "\\times": "×",
+        "\\cdot": "·",
+        "\\pm": "±",
+        "\\div": "÷",
+
+        # Relations
+        "\\le": "≤",
+        "\\ge": "≥",
+        "\\neq": "≠",
+        "\\approx": "≈",
+
+        # Brackets
+        "\\left(": "(",
+        "\\right)": ")",
+        "\\left[": "[",
+        "\\right]": "]",
+        "\\left\\{": "{",
+        "\\right\\}": "}",
+
+        # Noise
+        "$": "",
+        "\\(": "",
+        "\\)": "",
+        "\\,": " ",
+        "\\;": " ",
+        "\\!": "",
+        "\\": "",
+        
+        "tan^{-1}": "tan⁻¹",
+        "sin^{-1}": "sin⁻¹",
+        "cos^{-1}": "cos⁻¹",
+        "{": "",
+        "}": "",
+
+    }
+
+    for k, v in replacements.items():
+        text = text.replace(k, v)
+
+    # ---------- Fix remaining math formatting ----------
+    # sqrt(x) → √x
+    text = re.sub(r"√\(([^)]+)\)", r"√\1", text)
+
+    # Remove double spaces
+    text = re.sub(r"\s{2,}", " ", text)
+
+    # Clean lines
+    lines = [line.strip() for line in text.splitlines() if line.strip()]
+    return "\n".join(lines)
+  
+def normalize_questions(questions_json):
+    lines = []
+    for i, q in enumerate(questions_json, 1):
+        question = clean_ai_text(q["question"])
+        lines.append(f"{i}) {question}")
+        lines.append("")  # spacing between questions
+    return "\n".join(lines)
+
+def normalize_answers(text):
+    if not text:
+        return ""
+
+    text = clean_ai_text(text)
+
+    # Force new line before numbered answers
+    text = re.sub(r"\s*(\d+[\)\.])", r"\n\1 ", text)
+
+    # Fix common LaTeX leftovers
+    text = text.replace("tan^{-1}", "tan⁻¹")
+    text = re.sub(r"√\{([^}]+)\}", r"√\1", text)
+    text = text.replace("f^{-1}", "f⁻¹")
+
+    # Break merged math expressions
+    text = re.sub(r";", "\n", text)
+
+    lines = []
+    for line in text.splitlines():
+        line = line.strip()
+        if line:
+            lines.append(line)
+
+    return "\n".join(lines)
+
+
+# --- PDF Generation Class ---
+class CustomPDF(FPDF):
+    def __init__(self, title, sub_info, header_text="", footer_text=""):
+        super().__init__()
+        FONT_PATH = os.path.join(BASE_DIR, "fonts", "DejaVuSans.ttf")
+        self.add_font("DejaVu", "", FONT_PATH, uni=True)
+        self.worksheet_title = title
+        self.sub_info = sub_info
+        self.header_text = header_text
+        self.footer_text = footer_text
+
+    def header(self):
+        self.set_font("DejaVu", "", 10)
+        self.cell(0, 8, self.header_text, 0, 1, "C")
+
+        self.set_font("DejaVu", "", 16)
+        self.cell(0, 10, self.worksheet_title, 0, 1, "C")
+
+        self.set_font("DejaVu", "", 10)
+        sub_header_text = (
+            f"Date: {self.sub_info['date']}   |   "
+            f"Marks: {self.sub_info['marks']}   |   "
+            f"Topic: {self.sub_info['sub-title']}"
+        )
+        self.cell(0, 8, sub_header_text, 0, 1, "C")
+        self.ln(6)
+
+
+    def footer(self):
+        self.set_y(-15)
+        self.set_font("DejaVu", "", 8)
+
+        # --- Footer Left Text ---
+        self.cell(0, 8, self.footer_text, 0, 0, "L")
+
+        # --- Page Number (Right) ---
+        self.cell(0, 8, f"Page {self.page_no()}", 0, 0, "R")
+
+# --- File Creation Functions ---
+def create_pdf(content, title, sub_title_info, filename=None):
+    if not filename:
+        filename = f"{uuid.uuid4()}.pdf"
+
+    file_path = os.path.join(TEMP_DIR, filename)
+
+    pdf = CustomPDF(title, sub_title_info)
+    pdf.add_page()
+    pdf.set_font("DejaVu", "", 12)
+    pdf.multi_cell(0, 10, content)
+    pdf.output(file_path)
+
+    return file_path
+
+
+import io
+import zipfile
+from datetime import datetime
+from google import genai
+from flask import send_file
+import csv
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+
+def get_combo_syllabus(board, grade):
+    TOPICS_CSV = os.path.join(BASE_DIR, "topics.csv")
+
+    grades = {"10", "11", "12"} if grade == "10-12" else {grade}
+    boards = {"cbse", "icse"} if board.lower() == "cbse-icse" else {board.lower()}
+
+    topics = []
+
+    with open(TOPICS_CSV, newline="", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            if (
+                row["board"].lower() in boards
+                and row["grade"] in grades
+                and row["subject"].lower() == "mathematics"
+            ):
+                major = row["major_topic"].strip()
+                minor = row["minor_topic"].strip()
+
+                topics.append(f"{major} - {minor}" if minor else major)
+
+    return list(set(topics))
+
+
+def handle_exam_combo(request):
+    grade = request.form.get("grade")
+    board = request.form.get("board")
+    paper_type = request.form.get("paper_type")
+    year = request.form.get("year")
+    include_answers = request.form.get("include_answers") == "1"
+
+    if not grade or not board or not paper_type:
+        raise ValueError("Missing required fields")
+
+    syllabus_topics = get_combo_syllabus(board, grade)
+    if not syllabus_topics:
+        raise ValueError("No syllabus found")
+
+    syllabus_text = ", ".join(syllabus_topics)
+
+    client = genai.Client(api_key=os.environ.get("GENAI_API_KEY"))
+
+    if paper_type == "past":
+        prompt = f"""
+Generate a REALISTIC past exam paper.
+
+Year: {year}
+
+Syllabus (MUST MIX QUESTIONS FROM ALL):
+{syllabus_text}
+
+Rules:
+- Exam-level
+- NO answers
+- EXACTLY 15 questions
+- Plain text only
+
+Return STRICT JSON:
+[{{ "question": "..." }}]
+"""
+        title = f"Grade {grade} {board} Past Paper ({year})"
+    else:
+        prompt = f"""
+Generate a FULL SYLLABUS mock exam paper.
+
+Syllabus (MUST MIX QUESTIONS FROM ALL):
+{syllabus_text}
+
+Rules:
+- Exam-level
+- NO answers
+- EXACTLY 15 questions
+- Plain text only
+
+Return STRICT JSON:
+[{{ "question": "..." }}]
+"""
+        title = f"Grade {grade} {board} Mock Paper"
+
+    response = client.models.generate_content(
+        model="models/gemini-flash-latest",
+        contents=prompt
+    )
+
+    questions_json = extract_json_from_ai(response.text)
+
+    # 🔒 HARD VALIDATION: QUESTIONS ONLY
+    if not questions_json or not isinstance(questions_json, list):
+        raise ValueError("AI did not return valid questions")
+
+    for q in questions_json:
+        if "question" not in q:
+            raise ValueError("AI returned answers instead of questions")
+
+    worksheet_text = normalize_questions(questions_json)
+
+
+    solution_text = None
+    if include_answers:
+        answer_prompt = f"""
+    Return ONLY the answers.
+
+    STRICT RULES:
+    - DO NOT repeat questions
+    - DO NOT explain
+    - One answer per line ONLY
+    - Format EXACTLY like this:
+
+    1) Answer
+    2) Answer
+    3) Answer
+
+    Questions:
+    {worksheet_text}
+    """
+        a_response = client.models.generate_content(
+            model="models/gemini-flash-latest",
+            contents=answer_prompt
+        )
+
+        solution_text = normalize_answers(clean_ai_text(a_response.text))
+
+        # 🚨 HARD SAFETY CHECKS (ADD HERE)
+        if solution_text.strip() == worksheet_text.strip():
+            raise ValueError("AI returned questions instead of answers")
+
+        if solution_text.count("\n") < 10:
+            raise ValueError("AI returned malformed / incomplete solutions")
+
+
+    info = {
+        "date": datetime.now().strftime("%d %b %Y"),
+        "marks": "___ / 80",
+        "sub-title": "Full Syllabus"
+    }
+
+    files = []
+    ws = create_pdf(
+    worksheet_text,
+    title,
+    info,
+    filename="Worksheet.pdf"
+)
+    files.append(("worksheet/Worksheet.pdf", ws))
+
+    if solution_text:
+        sol = create_pdf(
+            solution_text,
+            f"{title} - Solutions",
+            info,
+            filename="Solutions.pdf"
+        )
+        files.append(("solutions/Solutions.pdf", sol))
+
+
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, "w") as zipf:
+        for name, path in files:
+            zipf.write(path, name)
+
+    zip_buffer.seek(0)
+    return send_file(zip_buffer, as_attachment=True, download_name="Exam_Papers.zip")
 
 
 @app.route('/generate-worksheet', methods=['GET', 'POST'])
 @login_required
 def generate_worksheet():
+    if request.form.get("grade") == "10-12" or request.form.get("board") == "CBSE-ICSE":
+        return jsonify({
+            "error": "Combo syllabus must be generated via Exam Papers section."
+        }), 400
 
     if request.method == 'GET':
         return render_template('index.html')
-
 
     title = "Math Worksheet"
     info = {
@@ -1641,8 +2011,7 @@ Return STRICT JSON ONLY:
                 print(job_response.text)
                 return jsonify({"error": "AI failed to generate job questions"}), 500
 
-            worksheet_questions_text = normalize_questions(questions_json)
-
+            worksheet_questions_text = normalize_job_questions(questions_json)
 
             title = f"{job_type_upper} {exam_type.upper()} Worksheet"
             info["sub-title"] = exam_authority
@@ -1672,6 +2041,17 @@ Questions:
                 solution_answers_text = normalize_answers(
                     clean_ai_text(a_response.text)
                 )
+                
+                # 🚨 HARD SAFETY CHECK — STOP ANSWERS LEAKING INTO WORKSHEET
+                # 🚨 HARD SAFETY CHECK — STOP ANSWERS LEAKING INTO WORKSHEET
+                if solution_answers_text:
+                    common = set(solution_answers_text.splitlines()) & set(worksheet_questions_text.splitlines())
+                    if len(common) > 2:
+                        raise ValueError(
+                            "CRITICAL: Answers leaked into worksheet (content overlap detected)"
+                        )
+
+
 
             if solution_answers_text and (
                 worksheet_questions_text.strip() == solution_answers_text.strip()
@@ -2226,6 +2606,7 @@ def cleanup_files(paths):
                 os.remove(path)
         except Exception as e:
             print("Cleanup error:", path, e)
+
 
 
 
