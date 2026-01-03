@@ -71,16 +71,22 @@
             <div class="form-group">
                 <label class="required">Board</label>
                 <select name="board" required class="{% if errors.board %}input-error{% endif %}">
+    <option value="">Select Board</option>
 
-                    <option value="">Select Board</option>
-                    {% for b in ['CBSE','ICSE','State Board','IB','IGCSE','College'] %}
-                    <option value="{{ b }}"
-    {% if current_user.board == b %}selected{% endif %}>
-    {{ b }}
-</option>
+    {% for b in ['CBSE','ICSE','State Board','IB','IGCSE','College'] %}
+        <option value="{{ b }}"
+            {% if current_user.board == b %}selected{% endif %}>
+            {{ b }}
+        </option>
+    {% endfor %}
 
-                    {% endfor %}
-                </select>
+    <!-- ✅ COMBO OPTION -->
+    <option value="CBSE-ICSE"
+        {% if current_user.board == "CBSE-ICSE" %}selected{% endif %}>
+        CBSE + ICSE (Combo)
+    </option>
+</select>
+
                 {% if errors.board %}
                 <div class="error-text">{{ errors.board }}</div>
                 {% endif %}
@@ -99,6 +105,11 @@
                 {{ g }}
             </option>
         {% endfor %}
+        <option value="10-12"
+    {% if current_user.grade == "10-12" %}selected{% endif %}>
+    Class 10–12 (Combo)
+</option>
+
     </select>
 </div>
 
