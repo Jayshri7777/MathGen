@@ -1559,10 +1559,15 @@ def get_output_format():
 
     return "pdf"
 
-@app.route("/exam-combo", methods=["GET"])
+@app.route("/exam-combo")
 @login_required
 def exam_combo_page():
-    return render_template("exam_combo.html")
+    return render_template(
+        "exam_combo.html",
+        user_grade=current_user.grade,
+        user_board=current_user.board
+    )
+
 
 @app.route("/generate-exam-combo", methods=["POST"])
 @login_required
