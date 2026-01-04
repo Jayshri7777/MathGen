@@ -25,7 +25,6 @@ from datetime import datetime
 from PIL import Image, ImageDraw, ImageFont
 import textwrap
 import uuid
-import uuid
 import PyPDF2  
 import docx as docx_reader 
 import csv
@@ -707,9 +706,8 @@ oauth.register(
 )
 
 
-def create_docx(content, title, sub_title_info, filename="worksheet.docx"):
-    uid = datetime.now().strftime("%Y%m%d%H%M%S")
-    filename = f"Worksheet_{uid}.docx"
+def create_docx(content, title, sub_title_info, filename):
+    file_path = os.path.join(TEMP_DIR, filename)
 
     print("Generating DOCX...")
 
@@ -745,9 +743,7 @@ def create_docx(content, title, sub_title_info, filename="worksheet.docx"):
     doc.save(file_path)
     return file_path
 
-
-
-def create_txt(content, title, sub_title_info, filename="worksheet.txt"):
+def create_txt(content, title, sub_title_info, filename):
     print("Generating TXT...")
 
     file_path = os.path.join(TEMP_DIR, filename)
@@ -812,9 +808,9 @@ def get_text_from_docx(file_storage):
         print(f"Error reading DOCX: {e}")
         return None
     
-def create_image(content, title, sub_title_info, fmt="png"):
-    uid = datetime.now().strftime("%Y%m%d%H%M%S")
-    filename = f"Worksheet.{fmt}"
+def create_image(content, title, sub_title_info, filename, fmt="png"):
+    file_path = os.path.join(TEMP_DIR, filename)
+
 
     width, height = 1240, 1754
     margin_x, margin_y = 60, 60
@@ -845,8 +841,6 @@ def create_image(content, title, sub_title_info, fmt="png"):
             draw.text((margin_x, y), w, font=font_body, fill="black")
             y += line_height
 
-    filename = f"Worksheet.{fmt}"
-    file_path = os.path.join(TEMP_DIR, filename)
     img.save(file_path)
     return file_path
 
@@ -1583,34 +1577,33 @@ import zipfile
 from flask import send_file
 from google import genai
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-
-TEMP_DIR = os.path.join(BASE_DIR, "temp_files")
 os.makedirs(TEMP_DIR, exist_ok=True)
 
 
 def extract_json_from_ai(text):
-    """
-    Safely extract JSON array from Gemini output
-    """
     if not text:
         return None
 
-    # Try direct JSON
-    try:
-        return json.loads(text)
-    except Exception:
-        pass
+    text = text.strip()
 
-    # Try extracting JSON inside text
-    match = re.search(r"\[[\s\S]*\]", text)
-    if match:
-        try:
-            return json.loads(match.group())
-        except Exception:
-            return None
+    # HARD FAIL if answers leaked
+    if "answer" in text.lower() and "question" not in text.lower():
+        return None
+
+    # Extract first JSON array ONLY
+    match = re.search(r"\[\s*\{[\s\S]*?\}\s*\]", text)
+    if not match:
+        return None
+
+    try:
+        data = json.loads(match.group())
+        if isinstance(data, list):
+            return data
+    except Exception:
+        return None
 
     return None
+
   
 def clean_ai_text(text):
     # Convert LaTeX fractions to a/b
@@ -1777,8 +1770,6 @@ from google import genai
 from flask import send_file
 import csv
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-
 
 def get_combo_syllabus(board, grade):
     TOPICS_CSV = os.path.join(BASE_DIR, "topics.csv")
@@ -1865,6 +1856,9 @@ Return STRICT JSON:
     )
 
     questions_json = extract_json_from_ai(response.text)
+    if not isinstance(questions_json, list):
+        raise ValueError("AI did not return a JSON list")
+
 
     # 🔒 HARD VALIDATION: QUESTIONS ONLY
     if not questions_json or not isinstance(questions_json, list):
@@ -1917,20 +1911,22 @@ Return STRICT JSON:
     }
 
     files = []
+    uid = uuid.uuid4().hex
     ws = create_pdf(
     worksheet_text,
     title,
     info,
-    filename="Worksheet.pdf"
+    filename=f"Worksheet_{uid}.pdf"
 )
     files.append(("worksheet/Worksheet.pdf", ws))
 
     if solution_text:
+        uid = uuid.uuid4().hex
         sol = create_pdf(
             solution_text,
             f"{title} - Solutions",
             info,
-            filename="Solutions.pdf"
+            filename=f"Solutions_{uid}.pdf"
         )
         files.append(("solutions/Solutions.pdf", sol))
 
@@ -1943,13 +1939,22 @@ Return STRICT JSON:
     zip_buffer.seek(0)
     return send_file(zip_buffer, as_attachment=True, download_name="Exam_Papers.zip")
 
+def clear_temp_dir():
+    for f in os.listdir(TEMP_DIR):
+        try:
+            os.remove(os.path.join(TEMP_DIR, f))
+        except:
+            pass
+
 
 @app.route('/generate-worksheet', methods=['GET', 'POST'])
 @login_required
 def generate_worksheet():
+    clear_temp_dir() 
     if request.form.get("grade") == "10-12" or request.form.get("board") == "CBSE-ICSE":
         return jsonify({
             "error": "Combo syllabus must be generated via Exam Papers section."
+            
         }), 400
 
     if request.method == 'GET':
@@ -2018,6 +2023,9 @@ Return STRICT JSON ONLY:
             )
 
             questions_json = extract_json_from_ai(job_response.text)
+            if not isinstance(questions_json, list):
+                raise ValueError("AI did not return a JSON list")
+
 
             if not questions_json or not isinstance(questions_json, list):
                 print("❌ RAW JOB RESPONSE ↓↓↓")
@@ -2080,40 +2088,46 @@ Questions:
 
             # ---------- IMAGE ----------
             if output_format in ["jpg", "png", "gif"]:
+                uid = uuid.uuid4().hex
                 ws = create_image(
                     worksheet_questions_text,
                     title,
                     info,
+                    filename=f"Worksheet_{uid}.{output_format}",
                     fmt=output_format
                 )
                 files_to_zip.append((f"worksheet/Worksheet.{output_format}", ws))
 
-                if include_answers and solution_answers_text:
-                    sol = create_image(
-                        solution_answers_text,
-                        f"{title} - Solutions",
-                        info,
-                        fmt=output_format
-                    )
-                    files_to_zip.append((f"solutions/Solutions.{output_format}", sol))
+                uid = uuid.uuid4().hex
+                sol = create_image(
+                    solution_answers_text,
+                    f"{title} - Solutions",
+                    info,
+                    filename=f"Solutions_{uid}.{output_format}",
+                    fmt=output_format
+                )
+                files_to_zip.append((f"solutions/Solutions.{output_format}", sol))
+
 
 
             # ---------- TXT ----------
             elif output_format == "txt":
+                uid = uuid.uuid4().hex
                 ws = create_txt(
                     worksheet_questions_text,
                     title,
                     info,
-                    "Worksheet.txt"
+                    f"Worksheet_{uid}.txt"
                 )
                 files_to_zip.append(("worksheet/Worksheet.txt", ws))
 
                 if include_answers and solution_answers_text:
+                    uid = uuid.uuid4().hex
                     sol = create_txt(
                         solution_answers_text,
                         f"{title} - Solutions",
                         info,
-                        "Solutions.txt"
+                        f"Solutions_{uid}.txt"
                     )
                     files_to_zip.append(("solutions/Solutions.txt", sol))
 
@@ -2121,20 +2135,22 @@ Questions:
 
             # ---------- DOCX ----------
             elif output_format == "docx":
+                uid = uuid.uuid4().hex
                 ws = create_docx(
                     worksheet_questions_text,
                     title,
                     info,
-                    "Worksheet.docx"
+                    f"Worksheet_{uid}.docx"
                 )
                 files_to_zip.append(("worksheet/Worksheet.docx", ws))
 
                 if include_answers and solution_answers_text:
+                    uid = uuid.uuid4().hex
                     sol = create_docx(
                         solution_answers_text,
                         f"{title} - Solutions",
                         info,
-                        "Solutions.docx"
+                        f"Solutions_{uid}.docx"
                     )
                     files_to_zip.append(("solutions/Solutions.docx", sol))
 
@@ -2250,61 +2266,71 @@ Worksheet:
             # ========= IMAGE =========
             # ---------- IMAGE FORMATS ----------
             if output_format in ["jpg", "png", "gif"]:
-                worksheet_path = create_image(
+                uid = uuid.uuid4().hex
+                ws = create_image(
                     worksheet_questions_text,
                     title,
                     info,
+                    filename=f"Worksheet_{uid}.{output_format}",
                     fmt=output_format
                 )
-                files_to_zip.append((f"worksheet/Worksheet.{output_format}", worksheet_path))
+                files_to_zip.append((f"worksheet/Worksheet.{output_format}", ws))
+
 
                 if include_answers and solution_answers_text:
-                    solution_path = create_image(
+                    uid = uuid.uuid4().hex
+                    sol = create_image(
                         solution_answers_text,
                         f"{title} - Solutions",
                         info,
+                        filename=f"Solutions_{uid}.{output_format}",
                         fmt=output_format
                     )
-                    files_to_zip.append((f"solutions/Solutions.{output_format}", solution_path))
+                    files_to_zip.append((f"solutions/Solutions.{output_format}", sol))
+
 
 
 
             # ---------- TXT ----------
             elif output_format == "txt":
+                uid = uuid.uuid4().hex
                 worksheet_path = create_txt(
                     worksheet_questions_text,
                     title,
                     info,
-                    filename="Worksheet.txt"
+                    filename=f"Worksheet_{uid}.txt"
                 )
                 files_to_zip.append(("worksheet/Worksheet.txt", worksheet_path))
 
                 if include_answers and solution_answers_text:
+                    uid = uuid.uuid4().hex
                     solution_path = create_txt(
                         solution_answers_text,
                         f"{title} - Solutions",
                         info,
-                        filename="Solutions.txt"
+                        filename=f"Solutions_{uid}.txt"
                     )
                     files_to_zip.append(("solutions/Solutions.txt", solution_path))
 
 
             # ---------- DOCX ----------
             elif output_format == "docx":
+                uid = uuid.uuid4().hex
                 worksheet_path = create_docx(
                     worksheet_questions_text,
                     title,
                     info,
-                    filename="Worksheet.docx"
+                    filename=f"Worksheet_{uid}.docx"
                 )
                 files_to_zip.append(("worksheet/Worksheet.docx", worksheet_path))
 
                 if include_answers and solution_answers_text:
+                    uid = uuid.uuid4().hex
                     solution_path = create_docx(
                         solution_answers_text,
                         f"{title} - Solutions",
                         info,
-                        filename="Solutions.docx"
+                        filename=f"Solutions_{uid}.docx"
                     )
                     files_to_zip.append(("solutions/Solutions.docx", solution_path))
 
@@ -2422,6 +2448,9 @@ Difficulty: {difficulty}
             )
 
             questions_json = extract_json_from_ai(q_response.text)
+            if not isinstance(questions_json, list):
+                raise ValueError("AI did not return a JSON list")
+
 
             if not questions_json or not isinstance(questions_json, list):
                 print("❌ RAW GEMINI RESPONSE ↓↓↓")
@@ -2486,42 +2515,49 @@ Questions:
             
             # ---------- IMAGE FORMATS ----------
             if output_format in ["jpg", "png", "gif"]:
-                worksheet_path = create_image(
+                uid = uuid.uuid4().hex
+                ws = create_image(
                     worksheet_questions_text,
                     title,
                     info,
+                    filename=f"Worksheet_{uid}.{output_format}",
                     fmt=output_format
                 )
-                files_to_zip.append((f"worksheet/Worksheet.{output_format}", worksheet_path))
+                files_to_zip.append((f"worksheet/Worksheet.{output_format}", ws))
+
 
                 if include_answers and solution_answers_text:
-                    solution_path = create_image(
+                    uid = uuid.uuid4().hex
+                    sol = create_image(
                         solution_answers_text,
                         f"{title} - Solutions",
                         info,
+                        filename=f"Solutions_{uid}.{output_format}",
                         fmt=output_format
                     )
-                    files_to_zip.append((f"solutions/Solutions.{output_format}", solution_path))
+                    files_to_zip.append((f"solutions/Solutions.{output_format}", sol))
 
 
 
             # ---------- TXT ----------
             elif output_format == "txt":
+                uid = uuid.uuid4().hex
                 worksheet_path = create_txt(
                     worksheet_questions_text,
                     title,
                     info,
-                    filename="Worksheet.txt"
+                    filename=f"Worksheet_{uid}.txt"
                 )
                 files_to_zip.append(("worksheet/Worksheet.txt", worksheet_path))
             
 
                 if include_answers and solution_answers_text:
+                    uid = uuid.uuid4().hex
                     solution_path = create_txt(
                         solution_answers_text,
                         f"{title} - Solutions",
                         info,
-                        filename="Solutions.txt"
+                        filename=f"Solutions_{uid}.txt"
                     )
                     files_to_zip.append(("solutions/Solutions.txt", solution_path))
                     
@@ -2529,21 +2565,23 @@ Questions:
 
             # ---------- DOCX ----------
             elif output_format == "docx":
+                uid = uuid.uuid4().hex
                 worksheet_path = create_docx(
                     worksheet_questions_text,
                     title,
                     info,
-                    filename="Worksheet.docx"
+                    filename=f"Worksheet_{uid}.docx"
                 )
                 files_to_zip.append(("worksheet/Worksheet.docx", worksheet_path))
             
 
                 if include_answers and solution_answers_text:
+                    uid = uuid.uuid4().hex
                     solution_path = create_docx(
                         solution_answers_text,
                         f"{title} - Solutions",
                         info,
-                        filename="Solutions.docx"
+                        filename=f"Solutions_{uid}.docx"
                     )
                     files_to_zip.append(("solutions/Solutions.docx", solution_path))
                 
@@ -2614,14 +2652,6 @@ Questions:
         "error": str(e),
         "type": str(type(e))
     }), 500
-
-def cleanup_files(paths):
-    for path in paths:
-        try:
-            if os.path.exists(path):
-                os.remove(path)
-        except Exception as e:
-            print("Cleanup error:", path, e)
 
 
 
