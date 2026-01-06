@@ -947,6 +947,13 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 });
 </script>
+{% if show_profile_popup %}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  openPopup("{{ url_for('profile') }}");
+});
+</script>
+{% endif %}
 
 </body>
 </html>
