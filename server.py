@@ -1169,10 +1169,11 @@ def google_callback():
 
         # ✅ SEND NEW USERS TO PROFILE COMPLETION
         if not user.profile_completed:
-            return redirect(url_for('profile'))
+            return redirect(url_for('landing_page', openProfile=1))
+
 
         # ✅ SEND EXISTING USERS TO GENERATOR
-        return redirect(url_for('serve_index'))
+        return redirect(url_for('serve_index', openProfile=1))
 
     except Exception as e:
         print("GOOGLE AUTH ERROR:", e)
