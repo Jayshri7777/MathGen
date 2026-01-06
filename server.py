@@ -1744,39 +1744,65 @@ def normalize_questions(questions_json):
         lines.append("")  # spacing between questions
     return "\n".join(lines)
 
-def normalize_answers(text):
+def strip_answers_from_worksheet(text):
+    """
+    HARD BLOCK for worksheet PDFs.
+    Removes ONLY solution-style lines, never questions.
+    """
     if not text:
         return ""
 
+    safe_lines = []
+
+    for line in text.splitlines():
+        raw = line.strip()
+        low = raw.lower()
+
+        # ❌ block solution headers
+        if low.startswith(("answer:", "answers:", "solution:", "solutions:")):
+            continue
+
+        # ❌ block typical answer-only lines (no verbs)
+        if re.match(r"^\d+[\)\.]\s*[-+]?\d+(\.\d+)?$", raw):
+            continue
+
+        safe_lines.append(line)
+
+    return "\n".join(safe_lines)
+
+
+def normalize_answers(text):
+    """
+    STRICT answer normalizer.
+    Guarantees:
+    - One answer per line
+    - Proper numbering
+    - No broken math
+    """
+
+    if not text:
+        raise ValueError("Empty answer response")
+
     text = clean_ai_text(text)
-
-    # ✅ FORCE new line before each numbered answer
-    # Converts: "1) Ans 2) Ans 3) Ans"
-    # Into:
-    # 1) Ans
-    # 2) Ans
-    # 3) Ans
-    text = re.sub(r"\s*(\d+[\)\.])", r"\n\1 ", text)
-
-    # Fix common LaTeX leftovers
-    text = text.replace("tan^{-1}", "tan⁻¹")
-    text = re.sub(r"√\{([^}]+)\}", r"√\1", text)
-    text = text.replace("f^{-1}", "f⁻¹")
-
-    # Break merged math expressions
-    text = re.sub(r";", "\n", text)
 
     lines = []
     for line in text.splitlines():
         line = line.strip()
-        if line:
-            lines.append(line)
-            
-    if not any(re.match(r"\d+[\)\.]", line) for line in lines):
-        raise ValueError("AI response does not contain numbered answers")
 
+        if not line:
+            continue
+
+        # Must start with 1) or 1.
+        if not re.match(r"^\d+[\)\.]\s+", line):
+            raise ValueError(f"Invalid answer format: {line}")
+
+        lines.append(line)
+
+    if not lines:
+        raise ValueError("No valid answers detected")
 
     return "\n".join(lines)
+
 
 
 
@@ -1830,7 +1856,9 @@ def create_pdf(content, title, sub_title_info, filename=None):
     pdf = CustomPDF(title, sub_title_info, header_text=GLOBAL_HEADER, footer_text=GLOBAL_FOOTER)
     pdf.add_page()
     pdf.set_font("DejaVu", "", 12)
-    pdf.multi_cell(0, 10, content)
+    for line in content.split("\n"):
+        pdf.multi_cell(0, 10, line)
+
     pdf.output(file_path)
 
     return file_path
@@ -1985,12 +2013,15 @@ Return STRICT JSON:
     }
 
     files = []
+    safe_text = strip_answers_from_worksheet(worksheet_text)
+
     ws = create_pdf(
-    worksheet_text,
-    title,
-    info,
-    filename="Worksheet.pdf"
-)
+        safe_text,
+        title,
+        info,
+        filename="Worksheet.pdf"
+    )
+
     files.append(("Worksheet.pdf", ws))
 
     if solution_text:
@@ -2243,13 +2274,16 @@ Questions:
 
             # ---------- PDF ----------
             elif output_format == "pdf":
+                safe_text = strip_answers_from_worksheet(worksheet_questions_text)
+
                 worksheet_path = create_pdf(
-                    worksheet_questions_text,
-                    title,
-                    info,
+                    safe_text,          # ✅ content (SAFE)
+                    title,              # ✅ title
+                    info,               # ✅ subtitle info
                     filename="Worksheet.pdf"
                 )
                 files_to_zip.append(("Worksheet.pdf", worksheet_path))
+
 
                 if include_answers and solution_answers_text:
                     solution_path = create_pdf(
@@ -2437,8 +2471,16 @@ Worksheet:
 
             # ---------- PDF ----------
             elif output_format == "pdf":
-                worksheet_path = create_pdf(worksheet_questions_text, title, info)
+                safe_text = strip_answers_from_worksheet(worksheet_questions_text)
+
+                worksheet_path = create_pdf(
+                    safe_text,          # ✅ content (SAFE)
+                    title,              # ✅ title
+                    info,               # ✅ subtitle info
+                    filename="Worksheet.pdf"
+                )
                 files_to_zip.append(("Worksheet.pdf", worksheet_path))
+
 
                 if include_answers and solution_answers_text:
                     solution_path = create_pdf(
@@ -2712,12 +2754,16 @@ Questions:
 
             # ---------- PDF ----------
             elif output_format == "pdf":
+                safe_text = strip_answers_from_worksheet(worksheet_questions_text)
+
                 worksheet_path = create_pdf(
-                    worksheet_questions_text,
-                    title,
-                    info
+                    safe_text,          # ✅ content (SAFE)
+                    title,              # ✅ title
+                    info,               # ✅ subtitle info
+                    filename="Worksheet.pdf"
                 )
                 files_to_zip.append(("Worksheet.pdf", worksheet_path))
+
 
                 if include_answers and solution_answers_text:
                     solution_path = create_pdf(
