@@ -322,7 +322,8 @@ body {
 
         <!-- LEFT: GENERATE NEW WORKSHEET -->
         <!-- LEFT: GENERATE NEW WORKSHEET -->
-<div class="left-panel">
+<div class="left-panel" id="generatorPanel">
+
     <div id="school-fields">
 
 
@@ -466,7 +467,14 @@ body {
 
         <label class="upload-btn">
             Choose File
-            <input type="file" name="worksheet_file" id="worksheetFile" hidden>
+            <input
+  type="file"
+  name="worksheet_file"
+  id="worksheetFile"
+  accept=".pdf,.docx,.jpg,.jpeg,.png,.gif"
+  hidden
+>
+
         </label>
         <p id="selectedFileName" style="
   font-size: 13px;
@@ -805,13 +813,47 @@ document.addEventListener("DOMContentLoaded", () => {
         "input, select, textarea"
     ).forEach(el => {
         el.addEventListener("change", () => {
-            generateBtn.disabled = false;
+            if (!worksheetFileInput.files.length) {
+    generateBtn.disabled = false;
+}
+
         });
         el.addEventListener("input", () => {
-            generateBtn.disabled = false;
+            if (!worksheetFileInput.files.length) {
+    generateBtn.disabled = false;
+}
+
         });
     });
 });
+</script>
+<script>
+const worksheetFileInput = document.getElementById("worksheetFile");
+const generatorPanel = document.getElementById("generatorPanel");
+
+function toggleGeneratorByUpload() {
+    const hasFile =
+        worksheetFileInput &&
+        worksheetFileInput.files &&
+        worksheetFileInput.files.length > 0;
+
+    if (!generatorPanel) return;
+
+    const inputs = generatorPanel.querySelectorAll(
+        "input, select, textarea, button"
+    );
+
+    inputs.forEach(el => {
+        el.disabled = hasFile;
+    });
+
+    // Visual feedback (optional but helpful)
+    generatorPanel.style.opacity = hasFile ? "0.5" : "1";
+    generatorPanel.style.pointerEvents = hasFile ? "none" : "auto";
+}
+
+// Run on file change
+worksheetFileInput?.addEventListener("change", toggleGeneratorByUpload);
 </script>
 
 {% endblock %}
