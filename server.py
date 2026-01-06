@@ -20,8 +20,6 @@ import fitz  # PyMuPDF
 from flask import Flask, request, render_template
 from twilio.twiml.messaging_response import MessagingResponse
 from flask import request, jsonify, send_file
-from flask_login import login_required, current_user
-from datetime import datetime
 from PIL import Image, ImageDraw, ImageFont
 import textwrap
 import uuid
@@ -31,6 +29,9 @@ import csv
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 db_path = os.path.join(BASE_DIR, "users.db")
+
+GLOBAL_HEADER = "MathGen • Practice Worksheets"
+GLOBAL_FOOTER = "© MathGen | For educational use only"
 
 
 TEMP_DIR = os.path.join(BASE_DIR, "temp_files")
@@ -709,9 +710,14 @@ oauth.register(
 def create_docx(content, title, sub_title_info, filename):
     file_path = os.path.join(TEMP_DIR, filename)
 
-    print("Generating DOCX...")
-
     doc = Document()
+    section = doc.sections[0]
+
+    # ---------- HEADER ----------
+    header = section.header
+    header_p = header.paragraphs[0]
+    header_p.text = GLOBAL_HEADER
+    header_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
 
     # ---------- TITLE ----------
     title_p = doc.add_heading(title, level=1)
@@ -734,23 +740,21 @@ def create_docx(content, title, sub_title_info, filename):
         p.paragraph_format.space_after = Pt(8)
 
     # ---------- FOOTER ----------
-    footer = doc.sections[0].footer
+    footer = section.footer
     footer_p = footer.paragraphs[0]
-    footer_p.text = "MathGen | Generated for learning purposes"
+    footer_p.text =  GLOBAL_FOOTER
     footer_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
 
-    file_path = os.path.join(TEMP_DIR, filename)
     doc.save(file_path)
     return file_path
 
 def create_txt(content, title, sub_title_info, filename):
-    print("Generating TXT...")
 
     file_path = os.path.join(TEMP_DIR, filename)
     with open(file_path, "w", encoding="utf-8") as f:
 
         # ---------- HEADER ----------
-        f.write("=" * 50 + "\n")
+        f.write(GLOBAL_HEADER + "\n")
         f.write(f"{title}\n")
         f.write("=" * 50 + "\n\n")
 
@@ -773,9 +777,9 @@ def create_txt(content, title, sub_title_info, filename):
         f.write("\n\n")
 
         # ---------- FOOTER ----------
-        f.write("-" * 50 + "\n")
-        f.write("End of Worksheet\n")
-        f.write("-" * 50 + "\n")
+        f.write("\n" + "=" * 50 + "\n")
+        f.write(GLOBAL_FOOTER + "\n")
+
 
     return file_path
 
@@ -808,6 +812,26 @@ def get_text_from_docx(file_storage):
         print(f"Error reading DOCX: {e}")
         return None
     
+import pytesseract
+
+def get_text_from_image(file_storage):
+    try:
+        file_storage.stream.seek(0)
+        image = Image.open(file_storage.stream)
+
+        # 🔥 FORCE RGB (CRITICAL FOR PNG/GIF)
+        if image.mode != "RGB":
+            image = image.convert("RGB")
+
+        text = pytesseract.image_to_string(image)
+        return text.strip()
+
+    except Exception as e:
+        print("OCR ERROR:", e)
+        return None
+
+
+    
 def create_image(content, title, sub_title_info, filename, fmt="png"):
     file_path = os.path.join(TEMP_DIR, filename)
 
@@ -823,6 +847,14 @@ def create_image(content, title, sub_title_info, filename, fmt="png"):
 
     font_title = ImageFont.truetype(FONT_PATH, 36)
     font_body = ImageFont.truetype(FONT_PATH, 22)
+    
+    draw.text(
+    (width // 2 - 220, 20),
+    GLOBAL_HEADER,
+    font=font_body,
+    fill="black"
+)
+
 
 
     y = margin_y
@@ -834,12 +866,20 @@ def create_image(content, title, sub_title_info, filename, fmt="png"):
     y += 40
 
     for line in content.split("\n"):
-        wrapped = textwrap.wrap(line, 80) or [""]
+        wrapped = textwrap.wrap(line, 60) or [""]
         for w in wrapped:
             if y > height - margin_y:
                 break
             draw.text((margin_x, y), w, font=font_body, fill="black")
             y += line_height
+            
+    draw.text(
+    (width // 2 - 260, height - 40),
+    GLOBAL_FOOTER,
+    font=font_body,
+    fill="black"
+)
+
 
     img.save(file_path)
     return file_path
@@ -863,16 +903,19 @@ def landing_page():
 @login_required
 def serve_index():
 
-    # 🔥 COMBO USERS → EXAM COMBO PAGE
+    if session.get("force_profile_popup"):
+        session.pop("force_profile_popup", None)
+        return redirect(url_for("profile"))
+
     if current_user.grade == "10-12" or current_user.board == "CBSE-ICSE":
         return redirect(url_for("exam_combo_page"))
 
-    # ✅ NORMAL USERS → WORKSHEET UI
     return render_template(
         'index.html',
         user_grade=current_user.grade,
         user_board=current_user.board
     )
+
 
 
 
@@ -1163,17 +1206,26 @@ def google_callback():
             )
             db.session.add(user)
             db.session.commit()
+        else:
+            # ✅ DO NOT overwrite existing user data
+            pass
+
 
         login_user(user, remember=False)
 
 
         # ✅ SEND NEW USERS TO PROFILE COMPLETION
-        if not user.profile_completed:
-            return redirect(url_for('landing_page', openProfile=1))
+        if not user.profile_completed and not user.grade:
+            # ✅ force popup after redirect
+            session["force_profile_popup"] = True
+            return redirect(url_for('serve_index'))
+
 
 
         # ✅ SEND EXISTING USERS TO GENERATOR
-        return redirect(url_for('serve_index', openProfile=1))
+        session["force_profile_popup"] = True
+        return redirect(url_for('serve_index'))
+
 
     except Exception as e:
         print("GOOGLE AUTH ERROR:", e)
@@ -1593,7 +1645,7 @@ def extract_json_from_ai(text):
     text = text.strip()
 
     # HARD FAIL if answers leaked
-    if "answer" in text.lower() and "question" not in text.lower():
+    if text.strip().lower().startswith(("answer:", "solution:")):
         return None
 
     # Extract first JSON array ONLY
@@ -1695,7 +1747,12 @@ def normalize_answers(text):
 
     text = clean_ai_text(text)
 
-    # Force new line before numbered answers
+    # ✅ FORCE new line before each numbered answer
+    # Converts: "1) Ans 2) Ans 3) Ans"
+    # Into:
+    # 1) Ans
+    # 2) Ans
+    # 3) Ans
     text = re.sub(r"\s*(\d+[\)\.])", r"\n\1 ", text)
 
     # Fix common LaTeX leftovers
@@ -1711,8 +1768,14 @@ def normalize_answers(text):
         line = line.strip()
         if line:
             lines.append(line)
+            
+    if not any(re.match(r"\d+[\)\.]", line) for line in lines):
+        raise ValueError("AI response does not contain numbered answers")
+
 
     return "\n".join(lines)
+
+
 
 
 # --- PDF Generation Class ---
@@ -1756,11 +1819,12 @@ class CustomPDF(FPDF):
 # --- File Creation Functions ---
 def create_pdf(content, title, sub_title_info, filename=None):
     if not filename:
-        filename = f"{uuid.uuid4()}.pdf"
+        filename = "Worksheet.pdf"
+
 
     file_path = os.path.join(TEMP_DIR, filename)
 
-    pdf = CustomPDF(title, sub_title_info)
+    pdf = CustomPDF(title, sub_title_info, header_text=GLOBAL_HEADER, footer_text=GLOBAL_FOOTER)
     pdf.add_page()
     pdf.set_font("DejaVu", "", 12)
     pdf.multi_cell(0, 10, content)
@@ -1900,14 +1964,15 @@ Return STRICT JSON:
             contents=answer_prompt
         )
 
-        solution_text = normalize_answers(clean_ai_text(a_response.text))
+        try:
+            solution_text = normalize_answers(clean_ai_text(a_response.text))
+        except ValueError as e:
+            return jsonify({"error": str(e)}), 500
+
 
         # 🚨 HARD SAFETY CHECKS (ADD HERE)
         if solution_text.strip() == worksheet_text.strip():
             raise ValueError("AI returned questions instead of answers")
-
-        if solution_text.count("\n") < 10:
-            raise ValueError("AI returned malformed / incomplete solutions")
 
 
     info = {
@@ -1917,24 +1982,23 @@ Return STRICT JSON:
     }
 
     files = []
-    uid = uuid.uuid4().hex
     ws = create_pdf(
     worksheet_text,
     title,
     info,
-    filename=f"Worksheet_{uid}.pdf"
+    filename="Worksheet.pdf"
 )
-    files.append(("worksheet/Worksheet.pdf", ws))
+    files.append(("Worksheet.pdf", ws))
 
     if solution_text:
-        uid = uuid.uuid4().hex
         sol = create_pdf(
             solution_text,
             f"{title} - Solutions",
             info,
-            filename=f"Solutions_{uid}.pdf"
+            filename="Answer_Sheet.pdf"
         )
-        files.append(("solutions/Solutions.pdf", sol))
+        files.append(("Answer_Sheet.pdf", sol))
+
 
 
     zip_buffer = io.BytesIO()
@@ -1951,12 +2015,21 @@ def clear_temp_dir():
             os.remove(os.path.join(TEMP_DIR, f))
         except:
             pass
+        
+# ✅ AUTO CLEAN TEMP FILES AFTER EVERY RESPONSE
+@app.after_request
+def cleanup_temp(response):
+    if response.direct_passthrough:
+        return response
+    clear_temp_dir()
+    return response
+
+
 
 
 @app.route('/generate-worksheet', methods=['GET', 'POST'])
 @login_required
 def generate_worksheet():
-    clear_temp_dir() 
     if request.form.get("grade") == "10-12" or request.form.get("board") == "CBSE-ICSE":
         return jsonify({
             "error": "Combo syllabus must be generated via Exam Papers section."
@@ -2047,15 +2120,21 @@ Return STRICT JSON ONLY:
 
             if include_answers:
                 answers_prompt = f"""
-Return ONLY the answers.
+You are generating ONLY an answer key.
 
-STRICT RULES:
-- DO NOT repeat questions
-- DO NOT explain
-- One answer per line
-- Format EXACTLY:
+STRICT RULES (MANDATORY):
+- ONLY answers
+- NO explanations
+- NO questions
+- ONE answer per line
+- Each answer MUST start on a new line
+- FORMAT MUST BE EXACTLY:
+
 1) Answer
 2) Answer
+3) Answer
+
+If you violate format, response is INVALID.
 
 Questions:
 {worksheet_questions_text}
@@ -2065,9 +2144,11 @@ Questions:
                     contents=answers_prompt
                 )
 
-                solution_answers_text = normalize_answers(
-                    clean_ai_text(a_response.text)
-                )
+                try:
+                    solution_answers_text = normalize_answers(clean_ai_text(a_response.text))
+                except ValueError as e:
+                    return jsonify({"error": str(e)}), 500
+
                 
                 # 🚨 HARD SAFETY CHECK — STOP ANSWERS LEAKING INTO WORKSHEET
                 # 🚨 HARD SAFETY CHECK — STOP ANSWERS LEAKING INTO WORKSHEET
@@ -2080,12 +2161,9 @@ Questions:
 
 
 
-            if solution_answers_text and (
-                worksheet_questions_text.strip() == solution_answers_text.strip()
-            ):
-                raise ValueError(
-                    "Worksheet and Solutions content are identical. Aborting ZIP generation."
-                )
+            if solution_answers_text.strip() == worksheet_questions_text.strip():
+                raise ValueError("AI returned questions instead of answers")
+
 
 
 
@@ -2094,71 +2172,68 @@ Questions:
 
             # ---------- IMAGE ----------
             if output_format in ["jpg", "png", "gif"]:
-                uid = uuid.uuid4().hex
                 ws = create_image(
                     worksheet_questions_text,
                     title,
                     info,
-                    filename=f"Worksheet_{uid}.{output_format}",
+                    filename=f"Worksheet.{output_format}"
+,
                     fmt=output_format
                 )
-                files_to_zip.append((f"worksheet/Worksheet.{output_format}", ws))
+                files_to_zip.append((f"Worksheet.{output_format}", ws))
 
-                uid = uuid.uuid4().hex
-                sol = create_image(
-                    solution_answers_text,
-                    f"{title} - Solutions",
-                    info,
-                    filename=f"Solutions_{uid}.{output_format}",
-                    fmt=output_format
-                )
-                files_to_zip.append((f"solutions/Solutions.{output_format}", sol))
+                if include_answers and solution_answers_text:
+                    sol = create_image(
+                        solution_answers_text,
+                        f"{title} - Solutions",
+                        info,
+                        filename=f"Solutions.{output_format}",
+                        fmt=output_format
+                    )
+                    files_to_zip.append((f"Solutions.{output_format}", sol))
+
 
 
 
             # ---------- TXT ----------
             elif output_format == "txt":
-                uid = uuid.uuid4().hex
                 ws = create_txt(
                     worksheet_questions_text,
                     title,
                     info,
-                    f"Worksheet_{uid}.txt"
+                    f"Worksheet.txt"
                 )
-                files_to_zip.append(("worksheet/Worksheet.txt", ws))
+                files_to_zip.append(("Worksheet.txt", ws))
 
                 if include_answers and solution_answers_text:
-                    uid = uuid.uuid4().hex
                     sol = create_txt(
                         solution_answers_text,
                         f"{title} - Solutions",
                         info,
-                        f"Solutions_{uid}.txt"
+                        f"Solutions.txt"
                     )
-                    files_to_zip.append(("solutions/Solutions.txt", sol))
+                    files_to_zip.append(("Solutions.txt", sol))
 
 
 
             # ---------- DOCX ----------
             elif output_format == "docx":
-                uid = uuid.uuid4().hex
                 ws = create_docx(
                     worksheet_questions_text,
                     title,
                     info,
-                    f"Worksheet_{uid}.docx"
+                    f"Worksheet.docx"
                 )
-                files_to_zip.append(("worksheet/Worksheet.docx", ws))
+                files_to_zip.append(("Worksheet.docx", ws))
 
                 if include_answers and solution_answers_text:
-                    uid = uuid.uuid4().hex
                     sol = create_docx(
                         solution_answers_text,
                         f"{title} - Solutions",
                         info,
-                        f"Solutions_{uid}.docx"
+                        f"Solutions.docx"
                     )
-                    files_to_zip.append(("solutions/Solutions.docx", sol))
+                    files_to_zip.append(("Solutions.docx", sol))
 
 
 
@@ -2168,25 +2243,20 @@ Questions:
                 worksheet_path = create_pdf(
                     worksheet_questions_text,
                     title,
-                    info
+                    info,
+                    filename="Worksheet.pdf"
                 )
-                files_to_zip.append(
-                    (f"worksheet/{os.path.basename(worksheet_path)}", worksheet_path)
-                )
+                files_to_zip.append(("Worksheet.pdf", worksheet_path))
 
                 if include_answers and solution_answers_text:
                     solution_path = create_pdf(
                         solution_answers_text,
                         f"{title} - Solutions",
-                        info
+                        info,
+                        filename="Answer_Sheet.pdf"
                     )
-                    files_to_zip.append(
-                        (f"solutions/{os.path.basename(solution_path)}", solution_path)
-                    )
+                    files_to_zip.append(("Answer_Sheet.pdf", solution_path))
 
-            
-            
-            
 
 
             else:
@@ -2227,22 +2297,41 @@ Questions:
 
             file = request.files['worksheet_file']
             filename = file.filename.lower()
-            output_format = get_output_format()
-            include_answers = request.form.get('answer_key') == '1'
+            file.stream.seek(0)  # 🔥 CRITICAL FIX
 
-
-            if filename.endswith('.pdf'):
+            # ---------- READ CONTENT FROM UPLOADED FILE ----------
+            if filename.endswith(".pdf"):
                 worksheet_questions_text = get_text_from_pdf(file)
 
-            elif filename.endswith('.docx'):
+            elif filename.endswith(".docx"):
                 worksheet_questions_text = get_text_from_docx(file)
 
-            elif filename.endswith('.txt'):
-                worksheet_questions_text = file.read().decode('utf-8', errors='ignore')
+            elif filename.endswith(".txt"):
+                worksheet_questions_text = file.read().decode("utf-8", errors="ignore")
 
+            elif filename.endswith((".png", ".jpg", ".jpeg", ".gif")):
+                worksheet_questions_text = get_text_from_image(file)
 
             else:
-                return jsonify({"error": "Unsupported file type"}), 400
+                return jsonify({"error": "Unsupported uploaded file format"}), 400
+
+            include_answers = request.form.get('answer_key') == '1'
+
+            # ✅ FORCE output format SAME AS uploaded file
+            if filename.endswith(".pdf"):
+                output_format = "pdf"
+            elif filename.endswith(".docx"):
+                output_format = "docx"
+            elif filename.endswith(".txt"):
+                output_format = "txt"
+            elif filename.endswith(".png"):
+                output_format = "png"
+            elif filename.endswith(".jpg") or filename.endswith(".jpeg"):
+                output_format = "jpg"
+            elif filename.endswith(".gif"):
+                output_format = "gif"
+            else:
+                return jsonify({"error": "Unsupported uploaded file format"}), 400
 
             if not worksheet_questions_text.strip():
                 return jsonify({"error": "Could not read worksheet"}), 400
@@ -2261,10 +2350,14 @@ Worksheet:
                 contents=prompt
             )
 
-            solution_answers_text = normalize_answers(
-    clean_ai_text(response.text)
-)
+            try:
+                solution_answers_text = normalize_answers(clean_ai_text(response.text))
+            except ValueError as e:
+                return jsonify({"error": str(e)}), 500
 
+            # 🚨 FINAL SAFETY CHECK — answers must NOT contain questions
+            if "?" in solution_answers_text:
+                raise ValueError("AI returned questions instead of answers")
 
 
             files_to_zip = []
@@ -2272,81 +2365,77 @@ Worksheet:
             # ========= IMAGE =========
             # ---------- IMAGE FORMATS ----------
             if output_format in ["jpg", "png", "gif"]:
-                uid = uuid.uuid4().hex
                 ws = create_image(
                     worksheet_questions_text,
                     title,
                     info,
-                    filename=f"Worksheet_{uid}.{output_format}",
+                    filename=f"Worksheet.{output_format}"
+,
                     fmt=output_format
                 )
-                files_to_zip.append((f"worksheet/Worksheet.{output_format}", ws))
+                files_to_zip.append((f"Worksheet.{output_format}", ws))
 
 
                 if include_answers and solution_answers_text:
-                    uid = uuid.uuid4().hex
                     sol = create_image(
                         solution_answers_text,
                         f"{title} - Solutions",
                         info,
-                        filename=f"Solutions_{uid}.{output_format}",
+                        filename=f"Solutions.{output_format}",
                         fmt=output_format
                     )
-                    files_to_zip.append((f"solutions/Solutions.{output_format}", sol))
+                    files_to_zip.append((f"Solutions.{output_format}", sol))
+
 
 
 
 
             # ---------- TXT ----------
             elif output_format == "txt":
-                uid = uuid.uuid4().hex
                 worksheet_path = create_txt(
                     worksheet_questions_text,
                     title,
                     info,
-                    filename=f"Worksheet_{uid}.txt"
+                    filename=f"Worksheet.txt"
                 )
-                files_to_zip.append(("worksheet/Worksheet.txt", worksheet_path))
+                files_to_zip.append(("Worksheet.txt", worksheet_path))
 
                 if include_answers and solution_answers_text:
-                    uid = uuid.uuid4().hex
                     solution_path = create_txt(
                         solution_answers_text,
                         f"{title} - Solutions",
                         info,
-                        filename=f"Solutions_{uid}.txt"
+                        filename=f"Solutions.txt"
                     )
-                    files_to_zip.append(("solutions/Solutions.txt", solution_path))
+                    files_to_zip.append(("Solutions.txt", solution_path))
 
 
             # ---------- DOCX ----------
             elif output_format == "docx":
-                uid = uuid.uuid4().hex
+
                 worksheet_path = create_docx(
                     worksheet_questions_text,
                     title,
                     info,
-                    filename=f"Worksheet_{uid}.docx"
+                    filename= "Worksheet.docx"
                 )
-                files_to_zip.append(("worksheet/Worksheet.docx", worksheet_path))
+                files_to_zip.append(("Worksheet.docx", worksheet_path))
 
                 if include_answers and solution_answers_text:
-                    uid = uuid.uuid4().hex
+
                     solution_path = create_docx(
                         solution_answers_text,
                         f"{title} - Solutions",
                         info,
-                        filename=f"Solutions_{uid}.docx"
+                        filename="Solutions.docx"
                     )
-                    files_to_zip.append(("solutions/Solutions.docx", solution_path))
+                    files_to_zip.append(("Solutions.docx", solution_path))
 
 
             # ---------- PDF ----------
             elif output_format == "pdf":
                 worksheet_path = create_pdf(worksheet_questions_text, title, info)
-                files_to_zip.append(
-                    (f"worksheet/{os.path.basename(worksheet_path)}", worksheet_path)
-                )
+                files_to_zip.append(("Worksheet.pdf", worksheet_path))
 
                 if include_answers and solution_answers_text:
                     solution_path = create_pdf(
@@ -2355,8 +2444,8 @@ Worksheet:
                         info
                     )
                     files_to_zip.append(
-                        (f"solutions/{os.path.basename(solution_path)}", solution_path)
-                    )
+                        ("Solutions.pdf", solution_path))
+                    
 
 
 
@@ -2420,32 +2509,49 @@ Worksheet:
 
 
             questions_prompt = f"""
-You are a school mathematics teacher.
+You are a STRICT academic question generator.
 
-Generate EXACTLY 15 questions.
+Your task is to generate questions ONLY from the given topic and subtopic.
 
-Return STRICT JSON ONLY in this format:
+🚨 ABSOLUTE RULES (NON-NEGOTIABLE):
+- Generate EXACTLY 15 questions
+- Questions MUST belong strictly to:
+  • Topic = "{topic}"
+  • Subtopic = "{subtopic}"
+- Questions MUST match:
+  • Grade = {grade}
+  • Board = {board}
+  • Difficulty = {difficulty}
+- DO NOT generate questions from any other topic or subtopic
+- DO NOT include concepts from earlier/lower classes
+- DO NOT include generic arithmetic unless explicitly part of the topic
+- DO NOT reuse or paraphrase previously generated questions
+- DO NOT include answers, hints, explanations, or examples
+- Use ONLY plain English (no LaTeX, no markdown)
+
+❌ INVALID EXAMPLES (DO NOT DO THIS):
+- Mixing topics (e.g., addition inside decimals)
+- Using easier-grade concepts
+- Reusing previously generated worksheet patterns
+- Generating unrelated arithmetic
+
+✅ VALID OUTPUT FORMAT (STRICT JSON ONLY):
 
 [
-{{
-    "question": "Plain English math question.",
+  {{
+    "question": "A clear, student-ready question strictly from the given topic and subtopic",
     "answer_space_lines": 3
-}}
+  }}
 ]
 
-Rules:
-- No markdown
-- No LaTeX
-- No answers
-- Student-ready worksheet questions
-{digit_rule}
-
-Context:
+CONTEXT (MUST BE FOLLOWED EXACTLY):
 Grade: {grade}
 Board: {board}
 Topic: {topic}
 Subtopic: {subtopic}
 Difficulty: {difficulty}
+
+If ANY rule is violated, the response is INVALID.
 """
 
             q_response = client.models.generate_content(
@@ -2466,6 +2572,11 @@ Difficulty: {difficulty}
                 }), 500
             
             worksheet_questions_text = normalize_questions(questions_json)
+            
+            # 🚨 HARD VALIDATION — STOP WRONG TOPIC GENERATION
+            if "addition" in worksheet_questions_text.lower() and "decimal" not in worksheet_questions_text.lower():
+                raise ValueError("AI generated questions outside the selected topic (Decimals)")
+
 
 
             solution_answers_text = None
@@ -2476,16 +2587,21 @@ Difficulty: {difficulty}
             # -------- ANSWERS ----------
             if include_answers:
                 answers_prompt = f"""
-Return ONLY the answers.
+You are generating ONLY an answer key.
 
-STRICT RULES:
-- DO NOT repeat questions
-- DO NOT explain
-- One answer per line
-- Format EXACTLY like:
+STRICT RULES (MANDATORY):
+- ONLY answers
+- NO explanations
+- NO questions
+- ONE answer per line
+- Each answer MUST start on a new line
+- FORMAT MUST BE EXACTLY:
+
 1) Answer
 2) Answer
 3) Answer
+
+If you violate format, response is INVALID.
 
 Questions:
 {worksheet_questions_text}
@@ -2494,9 +2610,11 @@ Questions:
                     model="models/gemini-flash-latest",
                     contents=answers_prompt
                 )
-                solution_answers_text = normalize_answers(
-                    clean_ai_text(a_response.text)
-                    )
+                try:
+                    solution_answers_text = normalize_answers(clean_ai_text(a_response.text))
+                except ValueError as e:
+                    return jsonify({"error": str(e)}), 500
+
                 if solution_answers_text and (
                     worksheet_questions_text.strip() == solution_answers_text.strip()
                     ):
@@ -2521,75 +2639,71 @@ Questions:
             
             # ---------- IMAGE FORMATS ----------
             if output_format in ["jpg", "png", "gif"]:
-                uid = uuid.uuid4().hex
                 ws = create_image(
                     worksheet_questions_text,
                     title,
                     info,
-                    filename=f"Worksheet_{uid}.{output_format}",
+                    filename=f"Worksheet.{output_format}"
+,
                     fmt=output_format
                 )
-                files_to_zip.append((f"worksheet/Worksheet.{output_format}", ws))
+                files_to_zip.append((f"Worksheet.{output_format}", ws))
 
 
                 if include_answers and solution_answers_text:
-                    uid = uuid.uuid4().hex
                     sol = create_image(
                         solution_answers_text,
                         f"{title} - Solutions",
                         info,
-                        filename=f"Solutions_{uid}.{output_format}",
+                        filename=f"Solutions.{output_format}",
                         fmt=output_format
                     )
-                    files_to_zip.append((f"solutions/Solutions.{output_format}", sol))
+                    files_to_zip.append((f"Solutions.{output_format}", sol))
+
 
 
 
             # ---------- TXT ----------
             elif output_format == "txt":
-                uid = uuid.uuid4().hex
                 worksheet_path = create_txt(
                     worksheet_questions_text,
                     title,
                     info,
-                    filename=f"Worksheet_{uid}.txt"
+                    filename=f"Worksheet.txt"
                 )
-                files_to_zip.append(("worksheet/Worksheet.txt", worksheet_path))
+                files_to_zip.append(("Worksheet.txt", worksheet_path))
             
 
                 if include_answers and solution_answers_text:
-                    uid = uuid.uuid4().hex
                     solution_path = create_txt(
                         solution_answers_text,
                         f"{title} - Solutions",
                         info,
-                        filename=f"Solutions_{uid}.txt"
+                        filename=f"Solutions.txt"
                     )
-                    files_to_zip.append(("solutions/Solutions.txt", solution_path))
+                    files_to_zip.append(("Solutions.txt", solution_path))
                     
 
 
             # ---------- DOCX ----------
             elif output_format == "docx":
-                uid = uuid.uuid4().hex
                 worksheet_path = create_docx(
                     worksheet_questions_text,
                     title,
                     info,
-                    filename=f"Worksheet_{uid}.docx"
+                    filename=f"Worksheet.docx"
                 )
-                files_to_zip.append(("worksheet/Worksheet.docx", worksheet_path))
+                files_to_zip.append(("Worksheet.docx", worksheet_path))
             
 
                 if include_answers and solution_answers_text:
-                    uid = uuid.uuid4().hex
                     solution_path = create_docx(
                         solution_answers_text,
                         f"{title} - Solutions",
                         info,
-                        filename=f"Solutions_{uid}.docx"
+                        filename=f"Solutions.docx"
                     )
-                    files_to_zip.append(("solutions/Solutions.docx", solution_path))
+                    files_to_zip.append(("Solutions.docx", solution_path))
                 
 
 
@@ -2600,10 +2714,7 @@ Questions:
                     title,
                     info
                 )
-                files_to_zip.append((
-                    f"worksheet/{os.path.basename(worksheet_path)}",
-                    worksheet_path
-                ))
+                files_to_zip.append(("Worksheet.pdf", worksheet_path))
 
                 if include_answers and solution_answers_text:
                     solution_path = create_pdf(
@@ -2611,10 +2722,7 @@ Questions:
                         f"{title} - Solutions",
                         info
                     )
-                    files_to_zip.append((
-                        f"solutions/{os.path.basename(solution_path)}",
-                        solution_path
-                    ))
+                    files_to_zip.append(("Solutions.pdf", solution_path))
 
 
             else:
