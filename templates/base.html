@@ -932,9 +932,16 @@ function togglePassword(inputId, btn) {
         </svg>`;
 }
 </script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const params = new URLSearchParams(window.location.search);
 
-
-
+  if (params.get("openProfile") === "1") {
+    openPopup("/profile");   // ✅ CORRECT
+    window.history.replaceState({}, document.title, window.location.pathname);
+  }
+});
+</script>
 
 </body>
 </html>
