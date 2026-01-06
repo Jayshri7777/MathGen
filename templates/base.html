@@ -609,6 +609,11 @@ label.required::after {
     accent-color: #c44536;  /* matches your theme */
     cursor: pointer;
 }
+/* 🔥 CRITICAL FIX: enable inner scrolling for popup content */
+#popupContent {
+    max-height: calc(85vh - 80px); /* subtract close button + padding */
+    overflow-y: auto;
+}
     </style>
 </head>
 
