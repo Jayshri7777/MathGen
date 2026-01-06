@@ -902,19 +902,22 @@ def landing_page():
 @app.route('/generator')
 @login_required
 def serve_index():
+    show_profile_popup = False
 
     if session.get("force_profile_popup"):
+        show_profile_popup = True
         session.pop("force_profile_popup", None)
-        return redirect(url_for("profile"))
 
     if current_user.grade == "10-12" or current_user.board == "CBSE-ICSE":
         return redirect(url_for("exam_combo_page"))
 
     return render_template(
-        'index.html',
+        "index.html",
+        show_profile_popup=show_profile_popup,
         user_grade=current_user.grade,
         user_board=current_user.board
     )
+
 
 
 
