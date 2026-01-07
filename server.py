@@ -12,6 +12,8 @@ from datetime import datetime
 from fpdf import FPDF
 from docx import Document
 from docx.shared import Pt
+from datetime import timedelta
+from functools import wraps
 import io
 import zipfile
 from docx.enum.text import WD_ALIGN_PARAGRAPH
@@ -64,10 +66,12 @@ CORS(app, supports_credentials=True)
 
 app.config.update(
     SESSION_COOKIE_HTTPONLY=True,
-    SESSION_COOKIE_SAMESITE="Lax",
-    SESSION_COOKIE_SECURE=False,
-    REMEMBER_COOKIE_DURATION=0 # IMPORTANT for localhost
+    SESSION_COOKIE_SAMESITE='Strict',  # ADD: Block cross-user leaks
+    SESSION_COOKIE_SECURE=False,       # localhost
+    REMEMBER_COOKIE_DURATION=0,
+    PERMANENT_SESSION_LIFETIME=timedelta(hours=3)  # ADD: Short sessions
 )
+
 
 
 app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY', 'default-super-secret-key-change-me-immediately')
@@ -116,6 +120,8 @@ class MockTest(db.Model):
     __tablename__ = "mock_test"
 
     id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True) # <--- ADD THIS
+    title = db.Column(db.String(255))
     title = db.Column(db.String(255))
     description = db.Column(db.Text)
     category = db.Column(db.String(50))
@@ -470,13 +476,15 @@ def start_test():
         return redirect(url_for("job_exams"))
 
     # ✅ Create Test
+    # Inside start_test:
     test = MockTest(
-        title=f"{final_topic} Test",                       # ✅ USE final_topic
+        title=f"{final_topic} Test",
+        user_id=current_user.id,  # <--- SECURE THIS TEST TO THE USER
         category=test_type,
         duration_minutes=10
     )
     db.session.add(test)
-    db.session.flush()
+    db.session.commit() # Commit here to get the ID safely
 
     # ✅ Save questions safely
     for idx, q in enumerate(questions, start=1):
@@ -1169,10 +1177,9 @@ def profile_fragment():
 @login_required
 def logout():
     logout_user()
-    session.pop('_flashes', None)
-
-    response = redirect(url_for('landing_page'))
-    return response
+    session.clear()  # Clear everything in the session
+    flash("You have been logged out.", "info")
+    return redirect(url_for('landing_page'))
 
 
 
@@ -1509,15 +1516,16 @@ def whatsapp_webhook():
 @login_required
 def take_test(attempt_id):
     attempt = MockAttempt.query.get_or_404(attempt_id)
+    
+    # 🔒 SECURITY CHECK: Does this attempt belong to the logged-in user?
+    if attempt.user_id != current_user.id:
+        flash("Unauthorized access!", "danger")
+        return redirect(url_for("serve_index"))
+
     test = MockTest.query.get_or_404(attempt.test_id)
     questions = MockQuestion.query.filter_by(test_id=test.id).all()
 
-    return render_template(
-        "test_page.html",
-        test=test,
-        attempt=attempt,
-        questions=questions
-    )
+    return render_template("test_page.html", test=test, attempt=attempt, questions=questions)
 
 @app.route("/review/<int:attempt_id>")
 @login_required
@@ -1850,18 +1858,38 @@ def create_pdf(content, title, sub_title_info, filename=None):
     if not filename:
         filename = "Worksheet.pdf"
 
-
     file_path = os.path.join(TEMP_DIR, filename)
 
-    pdf = CustomPDF(title, sub_title_info, header_text=GLOBAL_HEADER, footer_text=GLOBAL_FOOTER)
+    pdf = CustomPDF(
+        title,
+        sub_title_info,
+        header_text=GLOBAL_HEADER,
+        footer_text=GLOBAL_FOOTER
+    )
+
     pdf.add_page()
     pdf.set_font("DejaVu", "", 12)
+
+    # 🔥 FIX: define SAFE usable width
+    usable_width = pdf.w - pdf.l_margin - pdf.r_margin
+
     for line in content.split("\n"):
-        pdf.multi_cell(0, 10, line)
+        line = line.rstrip()
+
+        # ✅ avoid FPDF crash on long unbroken text
+        if not line:
+            pdf.ln(6)
+            continue
+
+        pdf.multi_cell(
+            usable_width,   # ❗ NEVER use 0
+            10,
+            line
+        )
 
     pdf.output(file_path)
-
     return file_path
+
 
 
 import io
