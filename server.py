@@ -1655,29 +1655,32 @@ from google import genai
 os.makedirs(TEMP_DIR, exist_ok=True)
 
 
-def extract_json_from_ai(text):
+def extract_json_from_ai(text, expect="question"):
     if not text:
         return None
 
     text = text.strip()
 
-    # HARD FAIL if answers leaked
-    if text.strip().lower().startswith(("answer:", "solution:")):
-        return None
-
-    # Extract first JSON array ONLY
     match = re.search(r"\[\s*\{[\s\S]*?\}\s*\]", text)
     if not match:
         return None
 
     try:
         data = json.loads(match.group())
-        if isinstance(data, list):
-            return data
+        if not isinstance(data, list):
+            return None
+
+        # 🔒 HARD VALIDATION
+        for item in data:
+            if expect == "question" and "question" not in item:
+                return None
+            if expect == "answer" and not any(k in item for k in ("answer", "solution")):
+                return None
+
+        return data
+
     except Exception:
         return None
-
-    return None
 
   
 def clean_ai_text(text):
@@ -1752,65 +1755,48 @@ def clean_ai_text(text):
   
 def normalize_questions(questions_json):
     lines = []
+
     for i, q in enumerate(questions_json, 1):
-        question = clean_ai_text(q["question"])
+        question = clean_ai_text(q.get("question", "")).strip()
+
+        # 🚨 BLOCK answers sneaking in
+        if re.match(r"^[-+]?\d|^\(.*\)$", question):
+            raise ValueError("Answer detected where question expected")
+
         lines.append(f"{i}) {question}")
-        lines.append("")  # spacing between questions
+        lines.append("")
+
     return "\n".join(lines)
 
-def strip_answers_from_worksheet(text):
-    """
-    HARD BLOCK for worksheet PDFs.
-    Removes ONLY solution-style lines, never questions.
-    """
-    if not text:
-        return ""
-
-    safe_lines = []
-
-    for line in text.splitlines():
-        raw = line.strip()
-        low = raw.lower()
-
-        # ❌ block solution headers
-        if low.startswith(("answer:", "answers:", "solution:", "solutions:")):
-            continue
-
-        # ❌ block typical answer-only lines (no verbs)
-        if re.match(r"^\d+[\)\.]\s*[-+]?\d+(\.\d+)?$", raw):
-            continue
-
-        safe_lines.append(line)
-
-    return "\n".join(safe_lines)
 
 
 def normalize_answers(text):
+    """
+    Strictly formats answers so that:
+    - Each answer is on ONE line
+    - Math expressions are NEVER broken
+    - No extra newlines inside brackets
+    """
     if not text:
         raise ValueError("Empty answer response")
 
     text = clean_ai_text(text)
-    
-    # 1. Clean up extra spaces
-    text = re.sub(r'\s+', ' ', text)
-    
-    # 2. Force a newline before every number that looks like an answer start (e.g., "1)" or "2.")
-    # This prevents the "horizontal alignment" issue
-    formatted_text = re.sub(r'(\d+[\)\.])', r'\n\1', text)
-    
+
+    # Split only on answer numbers (1), 2), 3) etc.)
+    parts = re.split(r'\s*(\d+[\)\.])\s*', text)
+
     lines = []
-    for line in formatted_text.splitlines():
-        line = line.strip()
-        if not line:
-            continue
-        # Ensure it actually starts with a number
-        if re.match(r"^\d+[\)\.]", line):
-            lines.append(line)
+    for i in range(1, len(parts), 2):
+        number = parts[i]
+        answer = parts[i + 1].strip().replace("\n", " ")
+        answer = re.sub(r"\s+", " ", answer)
+        lines.append(f"{number} {answer}")
 
     if not lines:
         raise ValueError("No valid answers detected")
 
     return "\n".join(lines)
+
 
 
 
@@ -1870,19 +1856,20 @@ def create_pdf(content, title, sub_title_info, filename=None):
 
     pdf.add_page()
     pdf.set_font("DejaVu", "", 12)
+    
+    # Calculate usable width (Page width - left margin - right margin)
     usable_width = pdf.w - pdf.l_margin - pdf.r_margin
 
-    # Split by actual newlines to ensure vertical stacking
-    for line in content.split("\n"):
+    # SPLIT ONLY BY NEWLINES: Do not strip all whitespace or you lose the math structure
+    for line in content.splitlines():
         line = line.strip()
         if not line:
-            pdf.ln(5) # Add a small vertical gap for empty lines
+            pdf.ln(5)  # Proper vertical space for empty lines
             continue
 
-        # Using multi_cell here ensures that if a single question/answer 
-        # is too long, it wraps WITHIN its own block before moving down.
-        pdf.multi_cell(usable_width, 8, line, border=0, align='L')
-        pdf.ln(2) # Gap between different questions/answers
+        # This ensures the question/answer stays on one line unless it truly exceeds page width
+        pdf.multi_cell(usable_width, 8, line, border=0, align="L")
+        pdf.ln(2) # Small gap between different answers
 
     pdf.output(file_path)
     return file_path
@@ -1995,6 +1982,10 @@ Return STRICT JSON:
             raise ValueError("AI returned answers instead of questions")
 
     worksheet_text = normalize_questions(questions_json)
+    # 🚨 HARD BLOCK — exam paper must NOT contain answers
+    if re.search(r"^\d+[\)\.]\s*[-+]?\d", worksheet_text, re.M):
+        raise ValueError("CRITICAL: Answers detected in EXAM worksheet")
+
 
 
     solution_text = None
@@ -2038,14 +2029,13 @@ Return STRICT JSON:
     }
 
     files = []
-    safe_text = strip_answers_from_worksheet(worksheet_text)
-
     ws = create_pdf(
-        safe_text,
+        worksheet_text,     # ✅ DIRECT QUESTIONS
         title,
         info,
         filename="Worksheet.pdf"
     )
+
 
     files.append(("Worksheet.pdf", ws))
 
@@ -2171,6 +2161,10 @@ Return STRICT JSON ONLY:
                 return jsonify({"error": "AI failed to generate job questions"}), 500
 
             worksheet_questions_text = normalize_job_questions(questions_json)
+            # 🚨 HARD BLOCK — worksheet must NOT contain answers
+            if re.search(r"^\d+[\)\.]\s*[-+]?\d", worksheet_questions_text, re.M):
+                raise ValueError("CRITICAL: Answers detected in JOB worksheet content")
+
 
             title = f"{job_type_upper} {exam_type.upper()} Worksheet"
             info["sub-title"] = exam_authority
@@ -2299,14 +2293,13 @@ Questions:
 
             # ---------- PDF ----------
             elif output_format == "pdf":
-                safe_text = strip_answers_from_worksheet(worksheet_questions_text)
-
                 worksheet_path = create_pdf(
-                    safe_text,          # ✅ content (SAFE)
-                    title,              # ✅ title
-                    info,               # ✅ subtitle info
+                    worksheet_questions_text,   # ✅ DIRECT QUESTIONS
+                    title,
+                    info,
                     filename="Worksheet.pdf"
                 )
+
                 files_to_zip.append(("Worksheet.pdf", worksheet_path))
 
 
@@ -2496,14 +2489,13 @@ Worksheet:
 
             # ---------- PDF ----------
             elif output_format == "pdf":
-                safe_text = strip_answers_from_worksheet(worksheet_questions_text)
-
                 worksheet_path = create_pdf(
-                    safe_text,          # ✅ content (SAFE)
-                    title,              # ✅ title
-                    info,               # ✅ subtitle info
+                    worksheet_questions_text,   # ✅ DIRECT QUESTIONS
+                    title,
+                    info,
                     filename="Worksheet.pdf"
                 )
+
                 files_to_zip.append(("Worksheet.pdf", worksheet_path))
 
 
@@ -2642,6 +2634,10 @@ If ANY rule is violated, the response is INVALID.
                 }), 500
             
             worksheet_questions_text = normalize_questions(questions_json)
+            # 🚨 HARD BLOCK — worksheet must NOT contain answers
+            if re.search(r"^\d+[\)\.]\s*[-+]?\d", worksheet_questions_text, re.M):
+                raise ValueError("CRITICAL: Answers detected in SCHOOL worksheet content")
+
             
             # 🚨 HARD VALIDATION — STOP WRONG TOPIC GENERATION
             if "addition" in worksheet_questions_text.lower() and "decimal" not in worksheet_questions_text.lower():
@@ -2681,7 +2677,7 @@ Questions:
                     contents=answers_prompt
                 )
                 try:
-                    solution_answers_text = normalize_answers(clean_ai_text(a_response.text))
+                    solution_answers_text = clean_ai_text(a_response.text)
                 except ValueError as e:
                     return jsonify({"error": str(e)}), 500
 
@@ -2779,14 +2775,13 @@ Questions:
 
             # ---------- PDF ----------
             elif output_format == "pdf":
-                safe_text = strip_answers_from_worksheet(worksheet_questions_text)
-
                 worksheet_path = create_pdf(
-                    safe_text,          # ✅ content (SAFE)
-                    title,              # ✅ title
-                    info,               # ✅ subtitle info
+                    worksheet_questions_text,   # ✅ DIRECT QUESTIONS
+                    title,
+                    info,
                     filename="Worksheet.pdf"
                 )
+
                 files_to_zip.append(("Worksheet.pdf", worksheet_path))
 
 
