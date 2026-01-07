@@ -1192,6 +1192,7 @@ def logout():
 # --- GOOGLE OAUTH LOGIN ROUTES ---
 @app.route('/login/google')
 def login_google():
+    session.clear()
     if not app.config.get('GOOGLE_CLIENT_ID') or not app.config.get('GOOGLE_CLIENT_SECRET'):
         return redirect(url_for('landing_page', show_login=1))
 
