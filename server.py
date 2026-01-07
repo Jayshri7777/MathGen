@@ -740,54 +740,62 @@ def create_docx(content, title, sub_title_info, filename):
     sub_p = doc.add_paragraph(sub)
     sub_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
 
-    doc.add_paragraph("")
+    doc.add_paragraph("") # Spacer
 
-    # ---------- CONTENT ----------
+    # ---------- CONTENT (The Fix) ----------
     for line in content.split("\n"):
+        line = line.strip()
+        if not line:
+            doc.add_paragraph("") # Vertical gap
+            continue
+        
         p = doc.add_paragraph(line)
-        p.paragraph_format.space_after = Pt(8)
+        # This prevents the "cramped" look and ensures vertical stacking
+        p.paragraph_format.space_after = Pt(12) 
+        p.paragraph_format.line_spacing = 1.5
 
     # ---------- FOOTER ----------
     footer = section.footer
     footer_p = footer.paragraphs[0]
-    footer_p.text =  GLOBAL_FOOTER
+    footer_p.text = GLOBAL_FOOTER
     footer_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
 
     doc.save(file_path)
     return file_path
 
 def create_txt(content, title, sub_title_info, filename):
-
     file_path = os.path.join(TEMP_DIR, filename)
+    
     with open(file_path, "w", encoding="utf-8") as f:
-
         # ---------- HEADER ----------
-        f.write(GLOBAL_HEADER + "\n")
+        f.write(f"{GLOBAL_HEADER}\n")
         f.write(f"{title}\n")
-        f.write("=" * 50 + "\n\n")
+        f.write("=" * 60 + "\n\n")
 
-        f.write(f"Date   : {sub_title_info.get('date', '')}\n")
-        f.write(f"Time   : {sub_title_info.get('time', '')}\n")
-        f.write(f"Marks  : {sub_title_info.get('marks', '')}\n")
-        f.write(f"Topic  : {sub_title_info.get('sub-title', '')}\n")
-        f.write("\n")
+        f.write(f"Date  : {sub_title_info.get('date', '')}\n")
+        f.write(f"Marks : {sub_title_info.get('marks', '')}\n")
+        f.write(f"Topic : {sub_title_info.get('sub-title', '')}\n\n")
 
-        # ---------- INSTRUCTIONS ----------
-        f.write("-" * 50 + "\n")
-        f.write("Instructions:\n")
-        f.write("• Read each question carefully.\n")
-        f.write("• Show your working clearly.\n")
-        f.write("• Write answers in the space provided.\n")
-        f.write("-" * 50 + "\n\n")
+        f.write("-" * 60 + "\n")
+        f.write("QUESTIONS / SOLUTIONS\n")
+        f.write("-" * 60 + "\n\n")
 
-        # ---------- QUESTIONS ----------
-        f.write(content.strip())
-        f.write("\n\n")
+        # ---------- CONTENT (The Fix) ----------
+        for line in content.split("\n"):
+            line = line.strip()
+            if not line:
+                f.write("\n")
+                continue
+            
+            # Manually wrap the text at 80 characters for TXT files
+            wrapped_lines = textwrap.wrap(line, width=80)
+            for wl in wrapped_lines:
+                f.write(wl + "\n")
+            f.write("\n") # Add a small gap between different items
 
         # ---------- FOOTER ----------
-        f.write("\n" + "=" * 50 + "\n")
+        f.write("\n" + "=" * 60 + "\n")
         f.write(GLOBAL_FOOTER + "\n")
-
 
     return file_path
 
@@ -843,51 +851,48 @@ def get_text_from_image(file_storage):
 def create_image(content, title, sub_title_info, filename, fmt="png"):
     file_path = os.path.join(TEMP_DIR, filename)
 
-
     width, height = 1240, 1754
     margin_x, margin_y = 60, 60
-    line_height = 30
+    line_height = 35 # Increased slightly for better readability
 
     img = Image.new("RGB", (width, height), "white")
     draw = ImageDraw.Draw(img)
 
     FONT_PATH = os.path.join(BASE_DIR, "fonts", "DejaVuSans.ttf")
-
     font_title = ImageFont.truetype(FONT_PATH, 36)
     font_body = ImageFont.truetype(FONT_PATH, 22)
     
-    draw.text(
-    (width // 2 - 220, 20),
-    GLOBAL_HEADER,
-    font=font_body,
-    fill="black"
-)
-
-
+    # --- GLOBAL HEADER ---
+    draw.text((width // 2 - 220, 20), GLOBAL_HEADER, font=font_body, fill="black")
 
     y = margin_y
     draw.text((margin_x, y), title, font=font_title, fill="black")
     y += 60
 
+    # --- SUBTITLE ---
     subtitle = f"Date: {sub_title_info['date']} | Marks: {sub_title_info['marks']} | Topic: {sub_title_info['sub-title']}"
     draw.text((margin_x, y), subtitle, font=font_body, fill="black")
-    y += 40
+    y += 50 # Extra space after subtitle
 
+    # --- CONTENT LOOP (STRICT VERTICAL ALIGNMENT) ---
     for line in content.split("\n"):
-        wrapped = textwrap.wrap(line, 60) or [""]
+        line = line.strip()
+        if not line:
+            y += 20 # Add vertical gap for empty lines
+            continue
+
+        # Wrap text to ensure it doesn't go off the right side
+        wrapped = textwrap.wrap(line, width=70) # Wrap at ~70 characters
         for w in wrapped:
-            if y > height - margin_y:
+            if y > height - 100: # Check for page bottom
                 break
             draw.text((margin_x, y), w, font=font_body, fill="black")
-            y += line_height
-            
-    draw.text(
-    (width // 2 - 260, height - 40),
-    GLOBAL_FOOTER,
-    font=font_body,
-    fill="black"
-)
+            y += line_height # FORCE vertical increment for every wrapped line
+        
+        y += 10 # Add a small vertical buffer between different questions/answers
 
+    # --- GLOBAL FOOTER ---
+    draw.text((width // 2 - 260, height - 60), GLOBAL_FOOTER, font=font_body, fill="black")
 
     img.save(file_path)
     return file_path
@@ -1780,31 +1785,26 @@ def strip_answers_from_worksheet(text):
 
 
 def normalize_answers(text):
-    """
-    STRICT answer normalizer.
-    Guarantees:
-    - One answer per line
-    - Proper numbering
-    - No broken math
-    """
-
     if not text:
         raise ValueError("Empty answer response")
 
     text = clean_ai_text(text)
-
+    
+    # 1. Clean up extra spaces
+    text = re.sub(r'\s+', ' ', text)
+    
+    # 2. Force a newline before every number that looks like an answer start (e.g., "1)" or "2.")
+    # This prevents the "horizontal alignment" issue
+    formatted_text = re.sub(r'(\d+[\)\.])', r'\n\1', text)
+    
     lines = []
-    for line in text.splitlines():
+    for line in formatted_text.splitlines():
         line = line.strip()
-
         if not line:
             continue
-
-        # Must start with 1) or 1.
-        if not re.match(r"^\d+[\)\.]\s+", line):
-            raise ValueError(f"Invalid answer format: {line}")
-
-        lines.append(line)
+        # Ensure it actually starts with a number
+        if re.match(r"^\d+[\)\.]", line):
+            lines.append(line)
 
     if not lines:
         raise ValueError("No valid answers detected")
@@ -1869,23 +1869,19 @@ def create_pdf(content, title, sub_title_info, filename=None):
 
     pdf.add_page()
     pdf.set_font("DejaVu", "", 12)
-
-    # 🔥 FIX: define SAFE usable width
     usable_width = pdf.w - pdf.l_margin - pdf.r_margin
 
+    # Split by actual newlines to ensure vertical stacking
     for line in content.split("\n"):
-        line = line.rstrip()
-
-        # ✅ avoid FPDF crash on long unbroken text
+        line = line.strip()
         if not line:
-            pdf.ln(6)
+            pdf.ln(5) # Add a small vertical gap for empty lines
             continue
 
-        pdf.multi_cell(
-            usable_width,   # ❗ NEVER use 0
-            10,
-            line
-        )
+        # Using multi_cell here ensures that if a single question/answer 
+        # is too long, it wraps WITHIN its own block before moving down.
+        pdf.multi_cell(usable_width, 8, line, border=0, align='L')
+        pdf.ln(2) # Gap between different questions/answers
 
     pdf.output(file_path)
     return file_path
