@@ -159,11 +159,6 @@
 
 </style>
 
-<div class="page-header">
-    <h1 class="page-title">Take a Test</h1>
-    <p class="page-tagline">Practice smarter. Improve faster.</p>
-</div>
-
 
     <!-- INFO -->
     <div class="info-card">
@@ -196,65 +191,19 @@
                 <label>Test Type</label>
                 <div class="radio-group">
                     <label>
-                        <input type="radio" name="test_type" value="job_daily" checked>
+<input type="radio" name="test_type" value="daily" checked>
 Daily Test
 
-<input type="radio" name="test_type" value="job_weekly">
+<input type="radio" name="test_type" value="weekly">
 Weekly Test
 
-<input type="radio" name="test_type" value="job">
+<input type="radio" name="test_type" value="monthly">
 Monthly Test
+
 
                     </label>
                 </div>
             </div>
-
-            <!-- TEST CATEGORY -->
-<div class="form-group">
-    <label>Test Category</label>
-    <div class="radio-group">
-        <label>
-            <input type="radio" name="test_category" value="school" checked>
-            School (Classes 1–12)
-        </label>
-        <label>
-            <input type="radio" name="test_category" value="job">
-            Job / Competitive Exam
-        </label>
-    </div>
-</div>
-
-            <!-- JOB TEST CONFIGURATION -->
-<div id="job-section" style="display:none;">
-
-    <div class="form-group">
-        <label>Job Type</label>
-        <select name="job_type" id="job_type" class="pretty-select">
-            <option value="">Select Job Type</option>
-            <option value="banking">Banking</option>
-            <option value="railway">Railway</option>
-            <option value="upsc">UPSC</option>
-            <option value="engineering">Engineering</option>
-            <option value="ssc">SSC</option>
-            <option value="defence">Defence</option>
-        </select>
-    </div>
-
-    <div class="form-group">
-        <label>Type of Exam</label>
-        <select name="exam_type" id="exam_type" class="pretty-select" disabled>
-            <option value="">Select job type first</option>
-        </select>
-    </div>
-
-    <div class="form-group">
-        <label>Exam Authority</label>
-        <select name="exam_authority" id="exam_authority" class="pretty-select" disabled>
-            <option value="">Select exam type first</option>
-        </select>
-    </div>
-
-</div>
 
             <!-- MAJOR TOPIC -->
             <!-- MAJOR TOPIC -->
@@ -356,22 +305,21 @@ function updateTestPeriod() {
     const selected = document.querySelector("input[name='test_type']:checked").value;
     const now = new Date();
 
-    if (selected === "job_daily") {
-        testPeriod.innerText =
-            `${formatDate(now)} | 7:00 PM – 8:00 PM`;
-    }
+    if (selected === "daily") {
+    testPeriod.innerText =
+        `${formatDate(now)} | 4:00 PM – 5:00 PM`;
+}
+else if (selected === "weekly") {
+    const sunday = getUpcomingSunday(now);
+    testPeriod.innerText =
+        `${formatDate(sunday)} | 10:00 AM – 12:00 PM`;
+}
+else if (selected === "monthly") {
+    const lastDay = getLastDayOfMonth(now);
+    testPeriod.innerText =
+        `${formatDate(lastDay)} | 10:00 AM – 1:00 PM`;
+}
 
-    else if (selected === "job_weekly") {
-        const sunday = getUpcomingSunday(now);
-        testPeriod.innerText =
-            `${formatDate(sunday)} | 6:00 PM – 8:00 PM`;
-    }
-
-    else if (selected === "job") {
-        const lastDay = getLastDayOfMonth(now);
-        testPeriod.innerText =
-            `${formatDate(lastDay)} | 5:00 PM – 8:00 PM`;
-    }
 }
 
 radios.forEach(radio =>
@@ -461,98 +409,6 @@ majorTopicSelect.addEventListener("change", async function () {
     } catch (err) {
         console.error("Failed to load minor topics", err);
     }
-});
-</script>
-<script>
-const jobExamMap = {
-    banking: {
-        clerical: ["IBPS", "SBI"],
-        po: ["SBI", "IBPS", "RBI"],
-        so: ["IBPS"]
-    },
-    railway: {
-        ntpc: ["RRB NTPC"],
-        group_d: ["RRB Group D"],
-        alp: ["RRB ALP / Technician"]
-    },
-    upsc: {
-        prelims: ["UPSC CSE"],
-        mains: ["UPSC CSE"]
-    },
-    engineering: {
-        gate: ["GATE"],
-        ese: ["ESE"]
-    },
-    ssc: {
-        cgl: ["SSC CGL"],
-        chsl: ["SSC CHSL"],
-        mts: ["SSC MTS"]
-    },
-    defence: {
-        nda: ["NDA"],
-        cds: ["CDS"]
-    }
-};
-
-const jobTypeSelect = document.getElementById("job_type");
-const examTypeSelect = document.getElementById("exam_type");
-const authoritySelect = document.getElementById("exam_authority");
-
-jobTypeSelect.addEventListener("change", () => {
-    const job = jobTypeSelect.value;
-
-    examTypeSelect.innerHTML = "<option value=''>Select exam type</option>";
-    authoritySelect.innerHTML = "<option value=''>Select exam type first</option>";
-    examTypeSelect.disabled = true;
-    authoritySelect.disabled = true;
-
-    if (!job) return;
-
-    Object.keys(jobExamMap[job]).forEach(exam => {
-        const opt = document.createElement("option");
-        opt.value = exam;
-        opt.textContent = exam.toUpperCase();
-        examTypeSelect.appendChild(opt);
-    });
-
-    examTypeSelect.disabled = false;
-});
-
-examTypeSelect.addEventListener("change", () => {
-    const job = jobTypeSelect.value;
-    const exam = examTypeSelect.value;
-
-    authoritySelect.innerHTML = "<option value=''>Select authority</option>";
-    authoritySelect.disabled = true;
-
-    if (!exam) return;
-
-    jobExamMap[job][exam].forEach(auth => {
-        const opt = document.createElement("option");
-        opt.value = auth;
-        opt.textContent = auth;
-        authoritySelect.appendChild(opt);
-    });
-
-    authoritySelect.disabled = false;
-});
-</script>
-<script>
-const categoryRadios = document.querySelectorAll("input[name='test_category']");
-const schoolSection = document.getElementById("school-section");
-const jobSection = document.getElementById("job-section");
-
-categoryRadios.forEach(radio => {
-    radio.addEventListener("change", () => {
-        if (radio.value === "school" && radio.checked) {
-            schoolSection.style.display = "block";
-            jobSection.style.display = "none";
-        }
-        if (radio.value === "job" && radio.checked) {
-            schoolSection.style.display = "none";
-            jobSection.style.display = "block";
-        }
-    });
 });
 </script>
 
