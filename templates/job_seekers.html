@@ -1,0 +1,402 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+/* ===== LAYOUT ===== */
+.job-container {
+    max-width: 1050px;
+    margin: 40px auto 70px;
+    padding: 0 16px;
+}
+
+.job-card {
+    background: rgba(255,255,255,0.65);
+    border-radius: 22px;
+    padding: 32px;
+    box-shadow: 0 14px 36px rgba(0,0,0,0.1);
+}
+
+.job-grid {
+    display: grid;
+    grid-template-columns: 1fr auto 0.9fr;
+    gap: 28px;
+    align-items: stretch;
+}
+
+@media (max-width: 900px) {
+    .job-grid {
+        grid-template-columns: 1fr;
+    }
+    .divider {
+        flex-direction: row;
+    }
+    .divider::before,
+    .divider::after {
+        width: 40px;
+        height: 1px;
+    }
+}
+
+/* ===== TITLES ===== */
+.page-title {
+    text-align: center;
+    font-size: 26px;
+    font-weight: 700;
+}
+
+.page-subtitle {
+    text-align: center;
+    font-size: 14px;
+    color: #7a4a4a;
+    margin-bottom: 30px;
+}
+
+.section-title {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 6px;
+}
+
+.section-desc {
+    font-size: 13px;
+    color: #7a4a4a;
+    margin-bottom: 18px;
+}
+
+/* ===== FORM ===== */
+.form-group {
+    margin-bottom: 18px;
+}
+
+.form-group label {
+    font-weight: 600;
+    display: block;
+    margin-bottom: 6px;
+}
+
+.pretty-select {
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: 1.5px solid #d8a79b;
+    background: #fffaf8;
+    font-size: 14px;
+}
+
+/* ===== DIVIDER ===== */
+.divider {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #8a4a4a;
+}
+
+.divider::before,
+.divider::after {
+    content: "";
+    flex: 1;
+    width: 1px;
+    background: #d8a79b;
+}
+
+/* ===== UPLOAD ===== */
+.upload-card {
+    background: rgba(255,255,255,0.7);
+    border: 2px dashed #d8a79b;
+    border-radius: 18px;
+    padding: 26px;
+    text-align: center;
+}
+
+.upload-icon {
+    font-size: 36px;
+    margin-bottom: 10px;
+}
+
+.upload-btn {
+    display: inline-block;
+    padding: 10px 20px;
+    border-radius: 999px;
+    background: linear-gradient(135deg,#7a1f2b,#a83246);
+    color: white;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.upload-hint {
+    font-size: 12px;
+    color: #8a5a5a;
+    margin-top: 12px;
+}
+
+/* ===== FOOTER ===== */
+.answer-key {
+    margin: 26px auto;
+    max-width: 420px;
+    background: rgba(255,255,255,0.65);
+    padding: 14px;
+    border-radius: 14px;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    font-weight: 600;
+}
+
+.generate-btn {
+    display: flex;
+    justify-content: center;
+    margin-top: 30px;
+}
+
+.generate-btn button {
+    background: linear-gradient(135deg,#7a1f2b,#a83246);
+    border: none;
+    padding: 14px 44px;
+    font-size: 16px;
+    font-weight: 600;
+    border-radius: 999px;
+    color: white;
+    cursor: pointer;
+    box-shadow: 0 10px 26px rgba(122,31,43,0.35);
+}
+.job-action-wrapper {
+    background: linear-gradient(180deg, #ffd8c9, #fbb6a5);
+    padding: 60px 20px;
+}
+body {
+    background-attachment: fixed;
+}
+.main-container {
+    min-height: 100vh;
+}
+.job-action-selector input[type="radio"] {
+    cursor: pointer;
+}
+/* ===== TOP QUESTION TEXT ===== */
+.job-action-selector h2 {
+    font-size: 34px;              /* Bigger */
+    font-weight: 800;             /* Bold but clean */
+    letter-spacing: -0.4px;
+    color: #4b1e1e;
+    margin-bottom: 22px;
+}
+
+/* ===== RADIO GROUP LAYOUT ===== */
+.job-action-selector {
+    text-align: center;
+    padding: 40px 0 30px;
+}
+
+/* ===== RADIO LABELS ===== */
+.job-action-selector label {
+    font-size: 18px;              /* Bigger text */
+    font-weight: 600;
+    color: #6b2a2a;
+    margin: 0 24px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* ===== RADIO BUTTON STYLE ===== */
+.job-action-selector input[type="radio"] {
+    transform: scale(1.2);        /* Bigger radio */
+    accent-color: #a83246;        /* Matches theme */
+    cursor: pointer;
+}
+
+
+</style>
+
+<div class="job-action-wrapper">
+  <div class="job-action-selector">
+  <h2 style="text-align:center;">What would you like to do today?</h2>
+
+  <div style="text-align:center; margin-top:20px;">
+    <label style="margin-right:30px;">
+<input type="radio" name="job_action" value="worksheet">
+Generate Practice Worksheet
+
+<input type="radio" name="job_action" value="test">
+Attempt a Mock Test
+
+    </label>
+  </div>
+</div>
+</div>
+
+
+<div class="job-container" id="job-worksheet-section" style="display:none;">
+
+
+
+
+<h1 class="page-title">Job / Competitive Worksheet</h1>
+<p class="page-subtitle">
+Generate worksheets for competitive exams and job preparation.
+</p>
+
+<form method="POST" action="{{ url_for('generate_worksheet') }}" enctype="multipart/form-data">
+<input type="hidden" name="worksheet_type" value="job">
+
+<div class="job-card">
+<div class="job-grid">
+
+<!-- LEFT -->
+<div>
+<h3 class="section-title">Create Worksheet</h3>
+<p class="section-desc">Choose exam and format.</p>
+
+<div class="form-group">
+<label>Job Category</label>
+<select class="pretty-select" name="job_type" required>
+    <option value="">Select Job Category</option>
+    <option value="banking">Banking</option>
+    <option value="railway">Railway</option>
+    <option value="ssc">SSC</option>
+    <option value="upsc">UPSC</option>
+    <option value="defence">Defence</option>
+    <option value="engineering">Engineering</option>
+</select>
+
+</div>
+
+<div class="form-group">
+<label>Exam Type</label>
+<select class="pretty-select" name="exam_type" id="exam_type" disabled></select>
+</div>
+
+<div class="form-group">
+<label>Exam Authority</label>
+<select class="pretty-select" name="exam_authority" id="exam_authority" disabled></select>
+</div>
+
+<div class="form-group">
+<label>Download As</label>
+<select class="pretty-select" name="job_format" required>
+<option value="">Select format</option>
+<option value="pdf">PDF</option>
+<option value="docx">DOCX</option>
+<option value="txt">TXT</option>
+<option value="png">PNG</option>
+<option value="jpg">JPG</option>
+<option value="gif">GIF</option>
+</select>
+</div>
+</div>
+
+
+<div class="divider">OR</div>
+
+<!-- RIGHT -->
+<div class="upload-card">
+<div class="upload-icon">📄</div>
+<h3 class="section-title">Upload Question Paper</h3>
+<p id="selectedFileName" class="upload-hint"></p>
+<p class="section-desc">Generate answers from an existing paper.</p>
+
+<label class="upload-btn">
+Choose File
+<input type="file" name="worksheet_file" id="worksheetFile" hidden>
+
+</label>
+
+<p class="upload-hint">
+Supported formats: PDF, DOCX, TXT, JPG, PNG, GIF
+</p>
+</div>
+
+</div>
+</div>
+
+<div class="answer-key">
+<input type="checkbox" name="answer_key"> Include Answer Key
+</div>
+
+<div class="generate-btn">
+<button type="submit">✨ Generate Worksheet</button>
+</div>
+
+</form>
+</div> <!-- end job-worksheet-section -->
+<div id="job-test-section" style="display:none;">
+    {% include "partials/job_mock_form.html" %}
+</div>
+
+<script>
+document.getElementById("worksheetFile")?.addEventListener("change", function () {
+    const fileName = this.files[0]?.name || "";
+    document.getElementById("selectedFileName").innerText =
+        fileName ? `Selected: ${fileName}` : "";
+});
+</script>
+<script>
+const worksheetFileInput = document.getElementById("worksheetFile");
+
+worksheetFileInput?.addEventListener("change", () => {
+    const form = worksheetFileInput.closest("form");
+const inputs = form.querySelectorAll(
+  "#job-worksheet-section select, #job-worksheet-section input:not([name='job_action'])"
+);
+
+
+
+
+    inputs.forEach(el => el.disabled = worksheetFileInput.files.length > 0);
+});
+</script>
+<script>
+const actionRadios = document.querySelectorAll("input[name='job_action']");
+const worksheetSection = document.getElementById("job-worksheet-section");
+const testSection = document.getElementById("job-test-section");
+
+actionRadios.forEach(radio => {
+  radio.addEventListener("change", () => {
+    if (radio.value === "worksheet" && radio.checked) {
+      worksheetSection.style.display = "block";
+      testSection.style.display = "none";
+    }
+
+    if (radio.value === "test" && radio.checked) {
+      worksheetSection.style.display = "none";
+      testSection.style.display = "block";
+    }
+  });
+});
+</script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const actionRadios = document.querySelectorAll("input[name='job_action']");
+  const worksheetSection = document.getElementById("job-worksheet-section");
+  const testSection = document.getElementById("job-test-section");
+
+  // ✅ Hide both on load
+  worksheetSection.style.display = "none";
+  testSection.style.display = "none";
+
+  actionRadios.forEach(radio => {
+    radio.addEventListener("change", () => {
+
+      if (radio.value === "worksheet" && radio.checked) {
+        worksheetSection.style.display = "block";
+        testSection.style.display = "none";
+      }
+
+      if (radio.value === "test" && radio.checked) {
+        worksheetSection.style.display = "none";
+        testSection.style.display = "block";
+      }
+
+    });
+  });
+});
+</script>
+
+
+{% endblock %}
