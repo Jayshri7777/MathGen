@@ -1,0 +1,229 @@
+<style>
+  .test-period-label {
+    font-size: 16px;
+    font-weight: 800;
+}
+
+.test-period-value {
+    font-size: 20px;
+    font-weight: 800;
+    color: #7a1f1f;
+    letter-spacing: 0.4px;
+    margin-top: 4px;
+}
+.radio-group {
+    display: flex;
+    gap: 24px;              /* spacing between radios */
+    align-items: center;
+}
+
+.radio-group label {
+    display: flex;
+    align-items: center;
+    gap: 6px;               /* space between circle & text */
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+</style>
+
+<div class="job-container">
+
+<h1 class="page-title">Job / Competitive Mock Test</h1>
+<p class="page-subtitle">
+Attempt a mock test based on job exam pattern.
+</p>
+
+<form method="POST" action="{{ url_for('start_test') }}">
+
+<div class="job-card">
+  <!-- TEST PERIOD -->
+<div class="form-group">
+  <label class="test-period-label">Test Period</label>
+  <div id="job-test-period" class="test-period-value"></div>
+</div>
+
+<!-- TEST TYPE -->
+<div class="form-group">
+  <label>Test Type</label>
+  <div class="radio-group">
+    <label>
+      <input type="radio" name="test_type" value="daily" checked>
+      Daily Test
+    </label>
+
+    <label>
+      <input type="radio" name="test_type" value="weekly">
+      Weekly Test
+    </label>
+
+    <label>
+      <input type="radio" name="test_type" value="monthly">
+      Monthly Test
+    </label>
+  </div>
+</div>
+
+
+<div class="form-group">
+  <label>Job Category</label>
+  <select name="job_type" id="mock_job_type" class="pretty-select" required>
+    <option value="">Select</option>
+    <option value="banking">Banking</option>
+    <option value="ssc">SSC</option>
+    <option value="railway">Railway</option>
+    <option value="upsc">UPSC</option>
+  </select>
+</div>
+
+<div class="form-group">
+  <label>Exam Type</label>
+  <select name="exam_type" class="pretty-select" id="mock_exam_type" required>
+    <option value="">Select exam type</option>
+  </select>
+</div>
+<div class="form-group">
+  <label>Exam Authority</label>
+  <select name="exam_authority" class="pretty-select" id="mock_exam_authority" required>
+    <option value="">Select exam authority</option>
+  </select>
+</div>
+
+
+
+<div class="form-group">
+  <label>Number of Questions</label>
+  <select name="question_count" class="pretty-select">
+    <option value="20">20</option>
+    <option value="40">40</option>
+    <option value="60">60</option>
+  </select>
+</div>
+
+<div class="generate-btn">
+  <button type="submit">🚀 Start Mock Test</button>
+</div>
+
+</div>
+</form>
+
+</div>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+  const jobExamMap = {
+    banking: {
+      clerk: ["SBI Clerk", "IBPS Clerk"],
+      po: ["SBI PO", "IBPS PO", "RBI Grade B"],
+      so: ["IBPS SO"]
+    },
+    ssc: {
+      cgl: ["SSC CGL"],
+      chsl: ["SSC CHSL"],
+      mts: ["SSC MTS"]
+    },
+    railway: {
+      ntpc: ["RRB NTPC"],
+      group_d: ["RRB Group D"],
+      alp: ["RRB ALP / Technician"]
+    },
+    upsc: {
+      prelims: ["UPSC CSE Prelims"],
+      mains: ["UPSC CSE Mains"]
+    }
+  };
+
+  const jobTypeSelect = document.getElementById("mock_job_type");
+  const examTypeSelect = document.getElementById("mock_exam_type");
+  const authoritySelect = document.getElementById("mock_exam_authority");
+
+  // -------- JOB → EXAM TYPE --------
+  jobTypeSelect.addEventListener("change", () => {
+    const job = jobTypeSelect.value;
+
+    examTypeSelect.innerHTML = "<option value=''>Select exam type</option>";
+    authoritySelect.innerHTML = "<option value=''>Select exam type first</option>";
+    authoritySelect.disabled = true;
+
+    if (!job) return;
+
+    Object.keys(jobExamMap[job]).forEach(type => {
+      const opt = document.createElement("option");
+      opt.value = type;
+      opt.textContent = type.toUpperCase();
+      examTypeSelect.appendChild(opt);
+    });
+
+    examTypeSelect.disabled = false;
+  });
+
+  // -------- EXAM TYPE → AUTHORITY --------
+  examTypeSelect.addEventListener("change", () => {
+    const job = jobTypeSelect.value;
+    const examType = examTypeSelect.value;
+
+    authoritySelect.innerHTML = "<option value=''>Select exam authority</option>";
+    authoritySelect.disabled = true;
+
+    if (!examType) return;
+
+    jobExamMap[job][examType].forEach(auth => {
+      const opt = document.createElement("option");
+      opt.value = auth;
+      opt.textContent = auth;
+      authoritySelect.appendChild(opt);
+    });
+
+    authoritySelect.disabled = false;
+  });
+
+});
+</script>
+<script>
+const radios = document.querySelectorAll("input[name='test_type']");
+const testPeriod = document.getElementById("job-test-period");
+
+function formatDate(date) {
+  return date.toLocaleDateString('en-GB', {
+    weekday: 'long',
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric'
+  });
+}
+
+function getUpcomingSunday(date) {
+  const sunday = new Date(date);
+  const day = sunday.getDay();
+  const diff = day === 0 ? 0 : 7 - day;
+  sunday.setDate(sunday.getDate() + diff);
+  return sunday;
+}
+
+function getLastDayOfMonth(date) {
+  return new Date(date.getFullYear(), date.getMonth() + 1, 0);
+}
+
+function updateTestPeriod() {
+  const selected = document.querySelector("input[name='test_type']:checked").value;
+  const now = new Date();
+
+  if (selected === "daily") {
+    testPeriod.innerText = `${formatDate(now)} | 4:00 PM – 5:00 PM`;
+  }
+
+  if (selected === "weekly") {
+    const sunday = getUpcomingSunday(now);
+    testPeriod.innerText = `${formatDate(sunday)} | 10:00 AM – 12:00 PM`;
+  }
+
+  if (selected === "monthly") {
+    const lastDay = getLastDayOfMonth(now);
+    testPeriod.innerText = `${formatDate(lastDay)} | 10:00 AM – 1:00 PM`;
+  }
+}
+
+radios.forEach(r => r.addEventListener("change", updateTestPeriod));
+updateTestPeriod(); // INITIAL LOAD
+</script>
