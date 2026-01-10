@@ -303,19 +303,7 @@ body {
 <div class="ws-container">
 
 <div class="ws-card">
-    <div class="form-group">
-  <label class="required">Worksheet Type</label>
 
-  <label>
-    <input type="radio" name="worksheet_type" value="school" checked onchange="toggleWorksheetType()">
-    Classes 1–12
-  </label>
-
-  <label>
-    <input type="radio" name="worksheet_type" value="job" onchange="toggleWorksheetType()">
-    Job / Competitive Exams
-  </label>
-</div>
 
     <div class="ws-grid">
 
@@ -388,63 +376,7 @@ body {
                 </select>
             </div>
 </div> <!-- END school-fields -->
-
-<div id="job-fields" style="display:none;">
-
-
-
-    <h3 class="section-title">Job / Competitive Worksheet</h3>
-    <p class="section-desc">
-        Generate worksheets for competitive exams and job preparation.
-    </p>
-
-    <div class="form-group">
-        <label class="required">Job Category</label>
-        <select class="pretty-select" name="job_type" required>
-            <option value="">Select Job Category</option>
-            <option value="banking">Banking</option>
-            <option value="railway">Railway</option>
-            <option value="ssc">SSC</option>
-            <option value="upsc">UPSC</option>
-            <option value="defence">Defence</option>
-            <option value="teaching">Teaching</option>
-            <option value="engineering">Engineering</option>
-        </select>
-    </div>
-    <div class="form-group">
-    <label class="required">Exam Type</label>
-    <select class="pretty-select" name="exam_type" id="exam_type" disabled required>
-        <option value="">Select job category first</option>
-    </select>
-</div>
-
-<div class="form-group">
-    <label class="required">Exam Authority</label>
-    <select class="pretty-select" name="exam_authority" id="exam_authority" disabled required>
-        <option value="">Select exam type first</option>
-    </select>
-</div>
-
-<div class="form-group">
-    <label class="required">Download As</label>
-    <select class="pretty-select" name="job_format" id="job-format" required>
-
-        <option value="">Select format</option>
-        <option value="pdf">PDF</option>
-        <option value="docx">DOCX</option>
-        <option value="txt">TXT</option>
-        <option value="jpg">JPG</option>
-        <option value="png">PNG</option>
-<option value="gif">GIF</option>
-
-    </select>
-</div>
-
-
-</div>
 </div> <!-- END left-panel -->
-
-
 
         <div class="vertical-or">OR</div>
 
@@ -487,6 +419,8 @@ body {
         <p class="upload-hint">
             We’ll analyze your worksheet and generate an accurate answer sheet.
         </p>
+        </div> <!-- END ws-grid -->
+
     </div>
 </div>
 
@@ -528,32 +462,21 @@ function checkFormValidity() {
     if (!worksheetFile || !generateBtn) return;
 
     // ✅ UPLOAD MODE ALWAYS WINS
-    if (worksheetFile.files.length > 0) {
-        return;
-    }
+if (worksheetFile.files.length > 0) {
+    generateBtn.disabled = false;
+    return;
+}
 
-    const worksheetType =
-        document.querySelector("input[name='worksheet_type']:checked")?.value;
 
-    const format =
-        worksheetType === "school"
-            ? document.getElementById("school-format")
-            : document.getElementById("job-format");
+const schoolValid =
+    grade.value &&
+    board.value &&
+    difficulty.value &&
+    document.getElementById("school-format").value &&
+    topic.value;
 
-    const schoolValid =
-        worksheetType === "school" &&
-        grade.value &&
-        board.value &&
-        difficulty.value &&
-        format?.value &&
-        topic.value;
+generateBtn.disabled = !schoolValid;
 
-    const jobValid =
-        worksheetType === "job" &&
-        document.querySelector("select[name='job_type']")?.value &&
-        document.querySelector("select[name='exam_type']")?.value &&
-        document.querySelector("select[name='exam_authority']")?.value &&
-        format?.value;
 
 }
 
@@ -565,27 +488,12 @@ function checkFormValidity() {
     topic,
     difficulty,
     document.getElementById("school-format"),
-    document.getElementById("job-format"),
     worksheetFile,
-    document.querySelector("select[name='job_type']"),
-    document.querySelector("select[name='exam_type']"),
-    document.querySelector("select[name='exam_authority']")
 ].filter(Boolean).forEach(el => {
     el.addEventListener("change", checkFormValidity);
 });
 
-// ✅ worksheet type radios
-document
-  .querySelectorAll("input[name='worksheet_type']")
-  .forEach(r => r.addEventListener("change", checkFormValidity));
-
 </script>
-<script>
-worksheetFile.addEventListener("change", () => {
-});
-
-</script>
-
 <script>
 const topicSelect = document.getElementById("topic");
 const subTopicSelect = document.getElementById("subtopic");
@@ -637,14 +545,11 @@ async function loadSubTopics() {
 }
 
 topicSelect.addEventListener("change", loadSubTopics);
+topicSelect.addEventListener("change", checkFormValidity);
+
 </script>
 <script>
 async function loadTopics() {
-    const worksheetType =
-        document.querySelector("input[name='worksheet_type']:checked").value;
-
-    // 🚫 Do NOT load school topics in Job mode
-    if (worksheetType !== "school") return;
 
     const grade = document.querySelector("input[name='grade']").value;
     const board = document.querySelector("input[name='board']").value;
@@ -688,114 +593,10 @@ async function loadTopics() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-    toggleWorksheetType();
     loadTopics();
+    checkFormValidity();
     
 });
-</script>
-<script>
-function toggleWorksheetType() {
-    const type = document.querySelector(
-        "input[name='worksheet_type']:checked"
-    ).value;
-
-    const school = document.getElementById("school-fields");
-    const job = document.getElementById("job-fields");
-
-    school.style.display = type === "school" ? "block" : "none";
-    job.style.display = type === "job" ? "block" : "none";
-
-if (type === "job") {
-    topic.disabled = true;
-    topic.removeAttribute("name");   // ✅ ADD THIS
-    subTopicSelect.removeAttribute("name"); // ✅ ADD THIS
-} else {
-    topic.disabled = false;
-    topic.setAttribute("name", "topic"); // ✅ ADD THIS
-    subTopicSelect.setAttribute("name", "subtopic"); // ✅ ADD THIS
-    loadTopics();
-}
-
-
-    checkFormValidity();
-}
-
-</script>
-<script>
-const jobExamMap = {
-    banking: {
-        clerk: ["IBPS Clerk", "SBI Clerk"],
-        po: ["SBI PO", "IBPS PO", "RBI Grade B"],
-        so: ["IBPS SO"]
-    },
-    railway: {
-        ntpc: ["RRB NTPC"],
-        group_d: ["RRB Group D"],
-        alp: ["RRB ALP / Technician"]
-    },
-    ssc: {
-        cgl: ["SSC CGL"],
-        chsl: ["SSC CHSL"],
-        mts: ["SSC MTS"]
-    },
-    upsc: {
-        prelims: ["UPSC CSE"],
-        mains: ["UPSC CSE"]
-    },
-    defence: {
-        nda: ["UPSC NDA"],
-        cds: ["UPSC CDS"]
-    },
-    engineering: {
-        gate: ["GATE"],
-        ese: ["UPSC ESE"]
-    }
-};
-
-const jobTypeSelect = document.querySelector("select[name='job_type']");
-const examTypeSelect = document.getElementById("exam_type");
-const authoritySelect = document.getElementById("exam_authority");
-
-jobTypeSelect.addEventListener("change", () => {
-    const job = jobTypeSelect.value;
-
-    examTypeSelect.innerHTML = "<option value=''>Select exam type</option>";
-    authoritySelect.innerHTML = "<option value=''>Select exam type first</option>";
-    examTypeSelect.disabled = true;
-    authoritySelect.disabled = true;
-
-    if (!job) return;
-
-    Object.keys(jobExamMap[job]).forEach(exam => {
-        const opt = document.createElement("option");
-        opt.value = exam;
-        opt.textContent = exam.replace("_", " ").toUpperCase();
-        examTypeSelect.appendChild(opt);
-    });
-
-    examTypeSelect.disabled = false;
-});
-
-examTypeSelect.addEventListener("change", () => {
-    const job = jobTypeSelect.value;
-    const exam = examTypeSelect.value;
-
-    authoritySelect.innerHTML = "<option value=''>Select authority</option>";
-    authoritySelect.disabled = true;
-
-    if (!exam) return;
-
-    jobExamMap[job][exam].forEach(auth => {
-        const opt = document.createElement("option");
-        opt.value = auth;
-        opt.textContent = auth;
-        authoritySelect.appendChild(opt);
-    });
-
-    authoritySelect.disabled = false;
-});
-worksheetFile.addEventListener("change", checkFormValidity);
-
 </script>
 <script>
 document.getElementById("worksheetFile")?.addEventListener("change", function () {
@@ -804,29 +605,7 @@ document.getElementById("worksheetFile")?.addEventListener("change", function ()
     fileName ? `Selected: ${fileName}` : "";
 });
 </script>
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-    const generateBtn = document.getElementById("generateBtn");
 
-    // Enable button on ANY user interaction inside the form
-    document.querySelectorAll(
-        "input, select, textarea"
-    ).forEach(el => {
-        el.addEventListener("change", () => {
-            if (!worksheetFileInput.files.length) {
-    generateBtn.disabled = false;
-}
-
-        });
-        el.addEventListener("input", () => {
-            if (!worksheetFileInput.files.length) {
-    generateBtn.disabled = false;
-}
-
-        });
-    });
-});
-</script>
 <script>
 const worksheetFileInput = document.getElementById("worksheetFile");
 const generatorPanel = document.getElementById("generatorPanel");
@@ -839,9 +618,10 @@ function toggleGeneratorByUpload() {
 
     if (!generatorPanel) return;
 
-    const inputs = generatorPanel.querySelectorAll(
-        "input, select, textarea, button"
-    );
+const inputs = generatorPanel.querySelectorAll(
+    "input, select, textarea"
+);
+
 
     inputs.forEach(el => {
         el.disabled = hasFile;
