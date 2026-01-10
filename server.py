@@ -29,6 +29,46 @@ import PyPDF2
 import docx as docx_reader 
 import csv
 
+
+EXAM_STRUCTURES = {
+    "SSC CGL": {
+        "Quantitative Aptitude": 25,
+        "Logical Reasoning": 25,
+        "English Language": 25,
+        "General Awareness": 25
+    },
+    "IBPS PO": {
+        "Quantitative Aptitude": 35,
+        "Reasoning Ability": 35,
+        "English Language": 30
+    },
+    "SBI PO": {
+        "Quantitative Aptitude": 35,
+        "Reasoning Ability": 35,
+        "English Language": 30
+    },
+    "RRB NTPC": {
+        "Mathematics": 30,
+        "General Intelligence & Reasoning": 30,
+        "General Awareness": 40
+    },
+    "UPSC NDA": {
+        "Mathematics": 120,
+        "General Ability Test": 150
+    },
+    "GATE": {
+        "Engineering Mathematics": 15,
+        "General Aptitude": 15,
+        "Core Subject": 70
+    },
+    "IBPS SO": {
+    "Professional Knowledge": 50,
+    "Reasoning Ability": 50
+}
+
+}
+
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 db_path = os.path.join(BASE_DIR, "users.db")
 
@@ -121,7 +161,6 @@ class MockTest(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True) # <--- ADD THIS
-    title = db.Column(db.String(255))
     title = db.Column(db.String(255))
     description = db.Column(db.Text)
     category = db.Column(db.String(50))
@@ -397,16 +436,21 @@ Rules:
 
     return redirect(url_for("take_test", attempt_id=attempt.id))
 
+@app.route("/jobseekers", methods=["GET"])
+@login_required   # optional but recommended
+def jobseekers():
+    return render_template("job_seekers.html")
+
 
 @app.route("/start-test", methods=["POST"])
 @login_required
 def start_test():
-    uploaded_file = request.files.get("past_paper_file")
+    uploaded_file = request.files.get("worksheet_file")
     past_paper_text = request.form.get("past_paper", "").strip()
     job_type = request.form.get("job_type")
     exam_type = request.form.get("exam_type")
     exam_authority = request.form.get("exam_authority")
-    test_type = request.form.get("test_type", "job_daily")
+    test_type = request.form.get("test_type", "daily")
     topic = request.form.get("topic")                     # MAJOR topic
     minor_topic = request.form.get("minor_topic")         # ✅ ADD (OPTIONAL)
     count = int(request.form.get("question_count", 5))
@@ -452,7 +496,7 @@ def start_test():
 
 
     # 🚨 HARD VALIDATION (MUST)
-    if not job_type and not topic:
+    if not topic:
         flash("Please select a topic/job type before starting the test.", "warning")
         return redirect(url_for("job_exams"))
 
@@ -894,7 +938,11 @@ def create_image(content, title, sub_title_info, filename, fmt="png"):
     # --- GLOBAL FOOTER ---
     draw.text((width // 2 - 260, height - 60), GLOBAL_FOOTER, font=font_body, fill="black")
 
-    img.save(file_path)
+    if fmt == "gif":
+        img.convert("P", palette=Image.ADAPTIVE).save(file_path, format="GIF")
+    else:
+        img.save(file_path)
+
     return file_path
 
 
@@ -1607,15 +1655,29 @@ def format_questions_for_exam(text):
     return "".join(lines)
 
 def normalize_job_questions(questions_json):
-    lines = []
-    for i, q in enumerate(questions_json, 1):
-        question = clean_ai_text(q["question"])
-        lines.append(f"{i}) {question}")
-        lines.append("")  # space after question
-        lines.append("_" * 40)
-        lines.append("_" * 40)
-        lines.append("")
-    return "\n".join(lines)
+    output = []
+    current_section = None
+    qno = 1
+
+    for q in questions_json:
+        section = q.get("section", "General")
+        year = q.get("year", "Previous Year")
+        question = clean_ai_text(q.get("question", ""))
+        options = q.get("options", [])
+
+        if section != current_section:
+            output.append(f"\n=== {section.upper()} ===\n")
+            current_section = section
+
+        output.append(f"{qno}. {question} ({year})")
+        for idx, opt in enumerate(options):
+            output.append(f"   {chr(65+idx)}. {clean_ai_text(opt)}")
+
+        output.append("")  # blank line
+        qno += 1
+
+    return "\n".join(output)
+
 
 
 def get_output_format():
@@ -1772,35 +1834,27 @@ def normalize_questions(questions_json):
 
 def normalize_answers(text):
     """
-    Strictly formats answers so that:
-    - Each answer is on ONE line
-    - Math expressions are NEVER broken
-    - No extra newlines inside brackets
+    Forces STRICT competitive-exam answer format:
+    1. (a) Option text
     """
+
     if not text:
         raise ValueError("Empty answer response")
 
     text = clean_ai_text(text)
 
-    # Split only on answer numbers (1), 2), 3) etc.)
-    parts = re.split(r'\s*(\d+[\)\.])\s*', text)
-
     lines = []
-    for i in range(1, len(parts), 2):
-        number = parts[i]
-        answer = parts[i + 1].strip().replace("\n", " ")
-        answer = re.sub(r"\s+", " ", answer)
-        lines.append(f"{number} {answer}")
+    for line in text.splitlines():
+        line = line.strip()
+
+        # Accept only formats like: 1. (a) XYZ
+        if re.match(r"^\d+\.\s*\([a-d]\)\s+.+", line, re.I):
+            lines.append(line)
 
     if not lines:
         raise ValueError("No valid answers detected")
 
     return "\n".join(lines)
-
-
-
-
-
 
 # --- PDF Generation Class ---
 class CustomPDF(FPDF):
@@ -2073,6 +2127,21 @@ def cleanup_temp(response):
     clear_temp_dir()
     return response
 
+def normalize_exam_key(authority):
+    authority = authority.upper()
+    if "SSC" in authority:
+        return "SSC CGL"
+    if "IBPS PO" in authority:
+        return "IBPS PO"
+    if "SBI PO" in authority:
+        return "SBI PO"
+    if "RRB" in authority:
+        return "RRB NTPC"
+    if "NDA" in authority:
+        return "UPSC NDA"
+    if "GATE" in authority:
+        return "GATE"
+    return authority
 
 
 
@@ -2113,37 +2182,105 @@ def generate_worksheet():
         # =====================================================
         if worksheet_type == "job":
             if not job_type or not exam_type or not exam_authority:
-                return jsonify({"error": "Job type, exam type and authority required"}), 400
+                flash("Please select job category, exam type and authority.", "warning")
+                return redirect(url_for("jobseekers"))
+
         
             output_format = get_output_format()
-            include_answers = request.form.get('answer_key') == '1'
+            include_answers = 'answer_key' in request.form
             job_type_upper = job_type.upper() if job_type else "JOB"
+            
+            exam_key = normalize_exam_key(exam_authority)
+            exam_structure = EXAM_STRUCTURES.get(exam_key)
+
+            if not exam_structure:
+                return jsonify({
+                    "error": f"No predefined structure found for {exam_key}"
+                }), 400
+
+
+            sections_text = ""
+            total_questions = 0
+
+            for section, count in exam_structure.items():
+                sections_text += f"- {section}: {count} questions\n"
+                total_questions += count
 
 
             job_prompt = f"""
-You are an expert exam paper setter.
+You are a REAL competitive exam paper setter.
 
-Generate EXACTLY 15 questions for a {job_type_upper} exam.
+Your task is to generate a paper that is INDISTINGUISHABLE from an actual official competitive exam paper.
 
-Exam Type: {exam_type}
-Authority: {exam_authority}
+🚨 ABSOLUTE NON-NEGOTIABLE RULES 🚨
+If ANY rule is violated, the response is INVALID.
 
-Rules:
-- Questions must be exam-level (MCQ or short answer)
-- NO answers in questions
-- Plain text only
-- No markdown
-- No LaTeX
+1️⃣ EXAM AUTHENTICITY (MANDATORY)
+- Questions MUST match REAL past competitive exam papers
+- Style, depth, framing, and difficulty must be IDENTICAL to official exams
+- Questions must feel like they came from an actual exam hall
 
-Return STRICT JSON ONLY:
+2️⃣ STRICT SYLLABUS BOUNDARY
+- Generate questions ONLY from the OFFICIAL SYLLABUS of the selected exam
+- DO NOT include:
+  ❌ college/university theory questions
+  ❌ GATE-style academic questions (unless the exam IS GATE)
+  ❌ school-level or generic CS questions
+  ❌ definition-only or textbook recall questions
 
+3️⃣ QUESTION STYLE CONTROL
+- Questions MUST be:
+  ✔ scenario-based
+  ✔ application-oriented
+  ✔ decision-based
+  ✔ exam-contextual (banking / government / engineering context as applicable)
+
+- Questions MUST NOT be:
+  ❌ “What is X?”
+  ❌ “Which data structure is used for Y?”
+  ❌ pure theory recall
+  ❌ memorization-only MCQs
+
+4️⃣ EXAM-SPECIFIC INTELLIGENCE (CRITICAL)
+- Understand that EACH competitive exam has a UNIQUE nature
+- DO NOT reuse question styles from other exams
+  (e.g., DO NOT mix GATE-style questions into IBPS/SSC)
+- Adapt question framing EXACTLY to the selected exam
+
+5️⃣ YEAR HANDLING (IMPORTANT)
+- You may reference ANY year (2010–Present)
+- Do NOT fixate on a single year
+- Year is for realism ONLY, not restriction
+
+6️⃣ CONTENT SAFETY
+- NO answers inside questions
+- NO explanations
+- NO hints
+- NO formatting tricks
+- NO markdown
+- NO LaTeX
+
+7️⃣ FORMAT CONTROL (STRICT)
+Return ONLY valid JSON.
+NO extra text.
+NO commentary.
+NO markdown.
+
+FORMAT:
 [
-{{
-"question": "Question text",
-"answer_space_lines": 3
-}}
+  {
+    "section": "Exact exam section name",
+    "year": "Previous Year",
+    "question": "Realistic competitive exam question",
+    "options": ["A", "B", "C", "D"]
+  }
 ]
+
+If you are unsure whether a question truly belongs to the exam,
+DO NOT generate it.
 """
+
+
 
             job_response = client.models.generate_content(
                 model="models/gemini-flash-latest",
@@ -2173,25 +2310,27 @@ Return STRICT JSON ONLY:
 
             if include_answers:
                 answers_prompt = f"""
-You are generating ONLY an answer key.
+You are generating ONLY the final answer key for a competitive exam.
 
-STRICT RULES (MANDATORY):
-- ONLY answers
-- NO explanations
-- NO questions
-- ONE answer per line
-- Each answer MUST start on a new line
-- FORMAT MUST BE EXACTLY:
+STRICT RULES (NON-NEGOTIABLE):
+- DO NOT repeat questions
+- DO NOT explain
+- DO NOT add extra text
+- EACH answer must be in THIS EXACT FORMAT:
 
-1) Answer
-2) Answer
-3) Answer
+1. (a) Option text
+2. (c) Option text
+3. (b) Option text
 
-If you violate format, response is INVALID.
+Rules:
+- Use a, b, c, or d ONLY
+- Option text must match the correct option
+- One answer per line ONLY
 
 Questions:
 {worksheet_questions_text}
 """
+
                 a_response = client.models.generate_content(
                     model="models/gemini-flash-latest",
                     contents=answers_prompt
@@ -2214,8 +2353,11 @@ Questions:
 
 
 
-            if solution_answers_text.strip() == worksheet_questions_text.strip():
+            if solution_answers_text and (
+                solution_answers_text.strip() == worksheet_questions_text.strip()
+            ):
                 raise ValueError("AI returned questions instead of answers")
+
 
 
 
@@ -2370,7 +2512,8 @@ Questions:
             else:
                 return jsonify({"error": "Unsupported uploaded file format"}), 400
 
-            include_answers = request.form.get('answer_key') == '1'
+            include_answers = 'answer_key' in request.form
+
 
             # ✅ FORCE output format SAME AS uploaded file
             if filename.endswith(".pdf"):
@@ -2388,17 +2531,30 @@ Questions:
             else:
                 return jsonify({"error": "Unsupported uploaded file format"}), 400
 
-            if not worksheet_questions_text.strip():
+            if not worksheet_questions_text or not worksheet_questions_text.strip():
                 return jsonify({"error": "Could not read worksheet"}), 400
 
+
             prompt = f"""
-You are a math teacher.
-Provide ONLY the answer key.
-Number answers properly.
+You are generating ONLY the final answer key.
+
+STRICT RULES:
+- NO questions
+- NO explanations
+- EXACT format ONLY:
+
+1. (a) Option text
+2. (b) Option text
+3. (c) Option text
+
+Rules:
+- Use a, b, c, or d ONLY
+- One answer per line
 
 Worksheet:
 {worksheet_questions_text}
 """
+
 
             response = client.models.generate_content(
                 model="models/gemini-flash-latest",
@@ -2547,7 +2703,7 @@ Worksheet:
             subtopic = request.form.get('subtopic') or "General"
             difficulty = request.form.get('difficulty', 'Easy')
             output_format = get_output_format()
-            include_answers = request.form.get('answer_key') == '1'
+            include_answers = 'answer_key' in request.form
 
 
             # 🔒 Subtraction digit control
