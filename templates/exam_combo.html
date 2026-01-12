@@ -58,13 +58,12 @@
     flex: 1;
 }
 
-.checkbox-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
+.checkbox-group label {
+    display: block;
     margin-top: 10px;
     font-weight: 600;
     color: #5a1f1f;
+    cursor: pointer;
 }
 
 .generate-btn {
@@ -84,23 +83,6 @@
     cursor: pointer;
     box-shadow: 0 8px 20px rgba(122, 31, 43, 0.35);
 }
-
-.generate-btn button:hover {
-    opacity: 0.95;
-}
-.pretty-select.locked {
-    background-color: #f3e1dd;
-    cursor: not-allowed;
-    opacity: 0.85;
-}
-.checkbox-group label {
-    cursor: pointer;
-}
-
-.checkbox-group input {
-    transform: scale(1.1);
-}
-
 </style>
 
 <div class="exam-container">
@@ -113,32 +95,20 @@
 
         <form method="POST" action="/generate-exam-combo">
             <input type="hidden" name="grade" value="{{ user_grade }}">
-<input type="hidden" name="board" value="{{ user_board }}">
-
+            <input type="hidden" name="board" value="{{ user_board }}">
 
             <!-- Grade + Board -->
             <div class="inline-group">
-    <div class="form-group">
-        <label>Grade</label>
-        <input
-            type="text"
-            class="pretty-select"
-            value="{{ user_grade }}"
-            disabled
-        >
-    </div>
+                <div class="form-group">
+                    <label>Grade</label>
+                    <input type="text" class="pretty-select" value="{{ user_grade }}" disabled>
+                </div>
 
-    <div class="form-group">
-        <label>Board</label>
-        <input
-            type="text"
-            class="pretty-select"
-            value="{{ user_board }}"
-            disabled
-        >
-    </div>
-</div>
-
+                <div class="form-group">
+                    <label>Board</label>
+                    <input type="text" class="pretty-select" value="{{ user_board }}" disabled>
+                </div>
+            </div>
 
             <!-- Paper Type -->
             <div class="form-group">
@@ -156,10 +126,11 @@
                 </select>
             </div>
 
-            <!-- Year -->
+            <!-- Year (ONLY for Past Paper) -->
             <div class="form-group" id="yearBlock" style="display:none;">
                 <label>Year</label>
                 <select name="year" class="pretty-select">
+                    <option value="">Select Year</option>
                     <option value="2019">2019</option>
                     <option value="2020">2020</option>
                     <option value="2021">2021</option>
@@ -169,20 +140,23 @@
             </div>
 
             <!-- Solutions -->
-<div class="checkbox-group" style="margin-top: 18px; flex-direction: column; align-items: flex-start; gap: 10px;">
+            <div class="checkbox-group">
+                <label>
+                    <input type="checkbox" id="includeSolutions" name="include_solutions" value="1">
+                    Include Solutions
+                </label>
 
-  <label>
-    <input type="checkbox" id="includeSolutions" name="include_solutions" value="1">
-    Include Solutions
-  </label>
+                <label style="margin-left: 22px;">
+<input
+  type="checkbox"
+  id="includeDetailedSolutions"
+  name="include_detailed_solutions"
+  value="1"
+>
 
-  <label style="margin-left: 22px;">
-    <input type="checkbox" id="includeDetailedSolutions" name="include_detailed_solutions" value="1" disabled>
-    Include Detailed Solutions (step-by-step explanation)
-  </label>
-
-</div>
-
+                    Include Detailed Solutions (step-by-step explanation)
+                </label>
+            </div>
 
             <div class="generate-btn">
                 <button type="submit">✨ Generate Exam Paper</button>
@@ -191,24 +165,19 @@
         </form>
     </div>
 </div>
-function toggleYear() {
+
 <script>
-const includeSolutions = document.getElementById("includeSolutions");
-const includeDetailed = document.getElementById("includeDetailedSolutions");
+document.addEventListener("DOMContentLoaded", function () {
 
-includeSolutions.addEventListener("change", () => {
-  if (includeSolutions.checked) {
-    includeDetailed.disabled = false;
-  } else {
-    includeDetailed.checked = false;
-    includeDetailed.disabled = true;
-  }
-});
+    const includeSolutions = document.getElementById("includeSolutions");
+    const includeDetailed = document.getElementById("includeDetailedSolutions");
 
-includeDetailed.addEventListener("change", () => {
-  if (includeDetailed.checked) {
-    includeSolutions.checked = true;
-  }
+    includeSolutions.addEventListener("change", function () {
+        if (!this.checked) {
+            includeDetailed.checked = false;
+        }
+    });
+
 });
 </script>
 
