@@ -1290,17 +1290,14 @@ def google_callback():
             )
             db.session.add(user)
             db.session.commit()
-        else:
-            # ✅ DO NOT overwrite existing user data
-            pass
 
 
         login_user(user, remember=False)
 
         # 🔒 If profile incomplete → force profile popup
-        if not user.profile_completed or not user.grade:
-            session["force_profile_popup"] = True
-            return redirect(url_for("serve_index"))
+        if not user.profile_completed or not user.grade or not user.board:
+            flash("Please complete your profile details to continue.", "info")
+            return redirect(url_for('profile'))
 
         # 🔥 HARD RULE: combo users ALWAYS go to exam combo
         if is_combo_user(user):
@@ -1314,7 +1311,7 @@ def google_callback():
     except Exception as e:
         print("GOOGLE AUTH ERROR:", e)
         flash("Google login failed", "danger")
-        return redirect(url_for('login'))
+        return redirect(url_for('landing_page', show_login=1))
 
 
 
