@@ -29,6 +29,12 @@ import PyPDF2
 import docx as docx_reader 
 import csv
 
+def is_combo_user(user):
+    return (
+        user.grade == "10-12"
+        or user.board == "CBSE-ICSE"
+    )
+
 
 EXAM_STRUCTURES = {
     "SSC CGL": {
@@ -963,14 +969,14 @@ def landing_page():
 @app.route('/generator')
 @login_required
 def serve_index():
-    show_profile_popup = False
+    # 🔒 ABSOLUTE RULE: combo users NEVER see worksheet UI
+    if is_combo_user(current_user):
+        return redirect(url_for("exam_combo_page"))
 
+    show_profile_popup = False
     if session.get("force_profile_popup"):
         show_profile_popup = True
         session.pop("force_profile_popup", None)
-
-    if current_user.grade == "10-12" or current_user.board == "CBSE-ICSE":
-        return redirect(url_for("exam_combo_page"))
 
     return render_template(
         "index.html",
@@ -1202,7 +1208,18 @@ def login():
         })
 
     login_user(user, remember=False)
-    return jsonify({"success": True})
+
+    redirect_url = (
+        url_for("exam_combo_page")
+        if is_combo_user(user)
+        else url_for("serve_index")
+    )
+
+    return jsonify({
+        "success": True,
+        "redirect": redirect_url
+    })
+
 
 
 @login_manager.unauthorized_handler
@@ -1277,18 +1294,18 @@ def google_callback():
 
         login_user(user, remember=False)
 
-
-        # ✅ SEND NEW USERS TO PROFILE COMPLETION
-        if not user.profile_completed and not user.grade:
-            # ✅ force popup after redirect
+        # 🔒 If profile incomplete → force profile popup
+        if not user.profile_completed or not user.grade:
             session["force_profile_popup"] = True
-            return redirect(url_for('serve_index'))
+            return redirect(url_for("serve_index"))
 
+        # 🔥 HARD RULE: combo users ALWAYS go to exam combo
+        if is_combo_user(user):
+            return redirect(url_for("exam_combo_page"))
 
+        # ✅ Normal users → worksheet generator
+        return redirect(url_for("serve_index"))
 
-        # ✅ SEND EXISTING USERS TO GENERATOR
-        session["force_profile_popup"] = True
-        return redirect(url_for('serve_index'))
 
 
     except Exception as e:
@@ -1967,7 +1984,11 @@ def handle_exam_combo(request):
     board = request.form.get("board")
     paper_type = request.form.get("paper_type")
     year = request.form.get("year")
-    include_answers = request.form.get("include_answers") == "1"
+    include_solutions = request.form.get("include_solutions") == "1"
+    include_detailed = request.form.get("include_detailed_solutions") == "1"
+    if include_detailed:
+        include_solutions = True
+
 
     if not grade or not board or not paper_type:
         raise ValueError("Missing required fields")
@@ -2043,23 +2064,61 @@ Return STRICT JSON:
 
 
     solution_text = None
-    if include_answers:
+    detailed_solution_text = None
+
+    if include_solutions and not include_detailed:
         answer_prompt = f"""
-    Return ONLY the answers.
+Return ONLY the final answers.
 
-    STRICT RULES:
-    - DO NOT repeat questions
-    - DO NOT explain
-    - One answer per line ONLY
-    - Format EXACTLY like this:
+STRICT RULES:
+- NO questions
+- NO explanations
+- One answer per line
+- Format EXACTLY:
 
-    1) Answer
-    2) Answer
-    3) Answer
+1. (a) Option text
+2. (b) Option text
 
-    Questions:
-    {worksheet_text}
-    """
+Questions:
+{worksheet_text}
+"""
+        resp = client.models.generate_content(
+            model="models/gemini-flash-latest",
+            contents=answer_prompt
+        )
+        solution_text = normalize_answers(clean_ai_text(resp.text))
+
+    elif include_detailed:
+        detailed_prompt = f"""
+You are an expert examiner.
+
+Generate DETAILED solutions.
+
+RULES:
+- Question by question
+- Step-by-step explanation
+- Simple student language
+- Plain text only
+- NO markdown
+
+FORMAT:
+
+Q1.
+Final Answer: (a) Option
+Explanation:
+Step 1: ...
+Step 2: ...
+Conclusion: ...
+
+Questions:
+{worksheet_text}
+"""
+        resp = client.models.generate_content(
+            model="models/gemini-flash-latest",
+            contents=detailed_prompt
+        )
+        detailed_solution_text = clean_ai_text(resp.text)
+
         a_response = client.models.generate_content(
             model="models/gemini-flash-latest",
             contents=answer_prompt
@@ -2101,6 +2160,16 @@ Return STRICT JSON:
             filename="Answer_Sheet.pdf"
         )
         files.append(("Answer_Sheet.pdf", sol))
+        
+    if detailed_solution_text:
+        detailed_path = create_pdf(
+            detailed_solution_text,
+            f"{title} - Detailed Solutions",
+            info,
+            filename="Detailed_Solutions.pdf"
+        )
+        files.append(("Detailed_Solutions.pdf", detailed_path))
+
 
 
 
@@ -2122,10 +2191,10 @@ def clear_temp_dir():
 # ✅ AUTO CLEAN TEMP FILES AFTER EVERY RESPONSE
 @app.after_request
 def cleanup_temp(response):
-    if response.direct_passthrough:
-        return response
-    clear_temp_dir()
+    if response.mimetype == "application/zip":
+        clear_temp_dir()
     return response
+
 
 def normalize_exam_key(authority):
     authority = authority.upper()
