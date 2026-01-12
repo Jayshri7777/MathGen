@@ -969,16 +969,16 @@ def landing_page():
 @app.route('/generator')
 @login_required
 def serve_index():
-    # 🔒 Absolute rule: combo users NEVER see worksheet UI
+    # 🔒 Combo users never see worksheet UI
     if is_combo_user(current_user):
         return redirect(url_for("exam_combo_page"))
 
-    # POP THE FLAG FROM SESSION
+    # 🔥 PICK UP THE TRIGGER FROM SESSION
     show_profile_popup = session.pop("force_profile_popup", False)
 
     return render_template(
         "index.html",
-        show_profile_popup=show_profile_popup, # This triggers the script in your base.html
+        show_profile_popup=show_profile_popup,  # Passes 'True' to base.html
         user_grade=current_user.grade,
         user_board=current_user.board
     )
@@ -1277,25 +1277,27 @@ def google_callback():
 
         user = User.query.filter_by(email=email).first()
 
+        # NEW USER LOGIC
         if not user:
-            # First time user - create account with empty fields
             user = User(
                 email=email,
                 name=name,
-                profile_completed=False
+                profile_completed=False  # Mark as incomplete to trigger popup
             )
             db.session.add(user)
             db.session.commit()
-        
-        login_user(user, remember=True)
+            login_user(user, remember=True)
+            session["force_profile_popup"] = True  # <--- THIS IS THE TRIGGER
+            return redirect(url_for("serve_index"))
 
-        # TRIGGER FOR POPUP:
-        # If the user hasn't finished their profile (Grade/Board is empty)
+        # EXISTING USER LOGIC
+        login_user(user, remember=True)
+        
+        # If they registered before but never filled details, still trigger popup
         if not user.profile_completed or not user.grade:
             session["force_profile_popup"] = True
             return redirect(url_for("serve_index"))
 
-        # If they are an old user who already has a grade, check for combo or just go home
         if is_combo_user(user):
             return redirect(url_for("exam_combo_page"))
 
@@ -1303,7 +1305,6 @@ def google_callback():
 
     except Exception as e:
         print("GOOGLE AUTH ERROR:", e)
-        flash("Google login failed", "danger")
         return redirect(url_for('landing_page', show_login=1))
 
 
