@@ -969,16 +969,17 @@ def landing_page():
 @app.route('/generator')
 @login_required
 def serve_index():
-    # 🔒 Combo users never see worksheet UI
+    # 🔒 Absolute rule for combo users
     if is_combo_user(current_user):
         return redirect(url_for("exam_combo_page"))
 
-    # 🔥 PICK UP THE TRIGGER FROM SESSION
+    # 🔥 POP THE TRIGGER FROM SESSION
+    # This is what your base.html script is looking for
     show_profile_popup = session.pop("force_profile_popup", False)
 
     return render_template(
         "index.html",
-        show_profile_popup=show_profile_popup,  # Passes 'True' to base.html
+        show_profile_popup=show_profile_popup,
         user_grade=current_user.grade,
         user_board=current_user.board
     )
@@ -1224,7 +1225,8 @@ def login():
 def unauthorized():
     if request.headers.get("X-Requested-With") == "XMLHttpRequest":
         return jsonify({"unauthorized": True}), 401
-
+    
+    # If the user is NOT registered/logged in, show the login popup on landing
     return redirect(url_for("landing_page", show_login=1))
 
 @app.route("/login-popup")
@@ -1277,27 +1279,30 @@ def google_callback():
 
         user = User.query.filter_by(email=email).first()
 
-        # NEW USER LOGIC
+        # CASE: FIRST TIME USER (NOT IN DB)
         if not user:
             user = User(
                 email=email,
                 name=name,
-                profile_completed=False  # Mark as incomplete to trigger popup
+                profile_completed=False  # Key flag for logic
             )
             db.session.add(user)
             db.session.commit()
+            
             login_user(user, remember=True)
-            session["force_profile_popup"] = True  # <--- THIS IS THE TRIGGER
+            # SET THE TRIGGER: Tells the Home Page to open PROFILE instead of nothing
+            session["force_profile_popup"] = True 
             return redirect(url_for("serve_index"))
 
-        # EXISTING USER LOGIC
+        # CASE: ALREADY REGISTERED
         login_user(user, remember=True)
         
-        # If they registered before but never filled details, still trigger popup
+        # If they registered before but have missing fields (Grade/Board)
         if not user.profile_completed or not user.grade:
             session["force_profile_popup"] = True
             return redirect(url_for("serve_index"))
 
+        # Combo user logic
         if is_combo_user(user):
             return redirect(url_for("exam_combo_page"))
 
