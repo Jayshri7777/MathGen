@@ -960,11 +960,12 @@ def create_image(content, title, sub_title_info, filename, fmt="png"):
 
 @app.route('/')
 def landing_page():
-    """
-    Serves the new marketing landing page.
-    This page is public, so @login_required is removed.
-    """
-    return render_template('landing.html')
+    show_profile_popup = session.pop("show_profile_popup", False)
+    return render_template(
+        'landing.html',
+        show_profile_popup=show_profile_popup
+    )
+
 
 @app.route('/generator')
 @login_required
@@ -973,16 +974,12 @@ def serve_index():
     if is_combo_user(current_user):
         return redirect(url_for("exam_combo_page"))
 
-    # 🔥 POP THE TRIGGER FROM SESSION
-    # This is what your base.html script is looking for
-    show_profile_popup = session.pop("force_profile_popup", False)
-
     return render_template(
         "index.html",
-        show_profile_popup=show_profile_popup,
         user_grade=current_user.grade,
         user_board=current_user.board
     )
+
 
 
 
@@ -1279,30 +1276,37 @@ def google_callback():
 
         user = User.query.filter_by(email=email).first()
 
-        # CASE: FIRST TIME USER (NOT IN DB)
+        # =========================
+        # CASE 1: NEW GOOGLE USER
+        # =========================
         if not user:
             user = User(
                 email=email,
                 name=name,
-                profile_completed=False  # Key flag for logic
+                profile_completed=False
             )
             db.session.add(user)
             db.session.commit()
-            
-            login_user(user, remember=True)
-            # SET THE TRIGGER: Tells the Home Page to open PROFILE instead of nothing
-            session["force_profile_popup"] = True 
-            return redirect(url_for("serve_index"))
 
-        # CASE: ALREADY REGISTERED
-        login_user(user, remember=True)
-        
-        # If they registered before but have missing fields (Grade/Board)
-        if not user.profile_completed or not user.grade:
-            session["force_profile_popup"] = True
-            return redirect(url_for("serve_index"))
+            login_user(user)
 
-        # Combo user logic
+            # 🔥 CRITICAL FLAGS
+            session["show_profile_popup"] = True
+            session["google_new_user"] = True
+
+            # 🔥 GO TO LANDING PAGE
+            return redirect(url_for("landing_page"))
+
+        # =========================
+        # CASE 2: EXISTING USER
+        # =========================
+        login_user(user)
+
+        # 🚫 DO NOT SHOW POPUP
+        session.pop("show_profile_popup", None)
+        session.pop("google_new_user", None)
+
+        # Combo logic
         if is_combo_user(user):
             return redirect(url_for("exam_combo_page"))
 
