@@ -969,18 +969,16 @@ def landing_page():
 @app.route('/generator')
 @login_required
 def serve_index():
-    # 🔒 ABSOLUTE RULE: combo users NEVER see worksheet UI
+    # 🔒 Absolute rule: combo users NEVER see worksheet UI
     if is_combo_user(current_user):
         return redirect(url_for("exam_combo_page"))
 
-    show_profile_popup = False
-    if session.get("force_profile_popup"):
-        show_profile_popup = True
-        session.pop("force_profile_popup", None)
+    # POP THE FLAG FROM SESSION
+    show_profile_popup = session.pop("force_profile_popup", False)
 
     return render_template(
         "index.html",
-        show_profile_popup=show_profile_popup,
+        show_profile_popup=show_profile_popup, # This triggers the script in your base.html
         user_grade=current_user.grade,
         user_board=current_user.board
     )
@@ -1280,33 +1278,28 @@ def google_callback():
         user = User.query.filter_by(email=email).first()
 
         if not user:
+            # First time user - create account with empty fields
             user = User(
                 email=email,
                 name=name,
-                phone_number=None,  
-                grade=None,
-                board=None,
                 profile_completed=False
             )
             db.session.add(user)
             db.session.commit()
+        
+        login_user(user, remember=True)
 
+        # TRIGGER FOR POPUP:
+        # If the user hasn't finished their profile (Grade/Board is empty)
+        if not user.profile_completed or not user.grade:
+            session["force_profile_popup"] = True
+            return redirect(url_for("serve_index"))
 
-        login_user(user, remember=False)
-
-        # 🔒 If profile incomplete → force profile popup
-        if not user.profile_completed or not user.grade or not user.board:
-            flash("Please complete your profile details to continue.", "info")
-            return redirect(url_for('profile'))
-
-        # 🔥 HARD RULE: combo users ALWAYS go to exam combo
+        # If they are an old user who already has a grade, check for combo or just go home
         if is_combo_user(user):
             return redirect(url_for("exam_combo_page"))
 
-        # ✅ Normal users → worksheet generator
         return redirect(url_for("serve_index"))
-
-
 
     except Exception as e:
         print("GOOGLE AUTH ERROR:", e)
