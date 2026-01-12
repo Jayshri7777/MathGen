@@ -93,6 +93,13 @@
     cursor: not-allowed;
     opacity: 0.85;
 }
+.checkbox-group label {
+    cursor: pointer;
+}
+
+.checkbox-group input {
+    transform: scale(1.1);
+}
 
 </style>
 
@@ -162,10 +169,20 @@
             </div>
 
             <!-- Solutions -->
-            <div class="checkbox-row">
-                <input type="checkbox" name="include_answers" value="1">
-                Include Solutions
-            </div>
+<div class="checkbox-group" style="margin-top: 18px; flex-direction: column; align-items: flex-start; gap: 10px;">
+
+  <label>
+    <input type="checkbox" id="includeSolutions" name="include_solutions" value="1">
+    Include Solutions
+  </label>
+
+  <label style="margin-left: 22px;">
+    <input type="checkbox" id="includeDetailedSolutions" name="include_detailed_solutions" value="1" disabled>
+    Include Detailed Solutions (step-by-step explanation)
+  </label>
+
+</div>
+
 
             <div class="generate-btn">
                 <button type="submit">✨ Generate Exam Paper</button>
@@ -174,12 +191,25 @@
         </form>
     </div>
 </div>
-<script>
 function toggleYear() {
-    const type = document.getElementById("paperType").value;
-    document.getElementById("yearBlock").style.display =
-        type === "past" ? "block" : "none";
-}
+<script>
+const includeSolutions = document.getElementById("includeSolutions");
+const includeDetailed = document.getElementById("includeDetailedSolutions");
+
+includeSolutions.addEventListener("change", () => {
+  if (includeSolutions.checked) {
+    includeDetailed.disabled = false;
+  } else {
+    includeDetailed.checked = false;
+    includeDetailed.disabled = true;
+  }
+});
+
+includeDetailed.addEventListener("change", () => {
+  if (includeDetailed.checked) {
+    includeSolutions.checked = true;
+  }
+});
 </script>
 
 
