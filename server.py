@@ -1186,7 +1186,7 @@ def login():
     login_identifier = request.form.get("login_identifier", "").strip()
     password = request.form.get("password")
 
-    if not login_identifier or not password:
+    if login_method != "google" and (not login_identifier or not password):
         return jsonify({
             "success": False,
             "error": "Please enter both email/phone and password."
@@ -1283,6 +1283,9 @@ def google_callback():
             user = User(
                 email=email,
                 name=name,
+                phone_number=None,  
+                grade=None,
+                board=None,
                 profile_completed=False
             )
             db.session.add(user)
@@ -1317,39 +1320,6 @@ def google_callback():
 
 
 from datetime import datetime
-@app.route('/complete-profile', methods=['GET', 'POST'])
-@login_required
-def complete_profile():
-    if current_user.profile_completed:
-        return redirect(url_for('serve_index'))
-
-    if request.method == 'POST':
-        current_user.name = request.form.get('name')
-
-        # phone (optional but safe)
-        phone = request.form.get('phone')
-        if phone:
-            current_user.phone_number = phone
-
-        # grade
-        grade = request.form.get('grade')
-        if grade:
-            current_user.grade = grade  # keep as string
-
-        current_user.board = request.form.get('board')
-
-        # 🔴 DOB FIX (THIS WAS MISSING)
-        dob_str = request.form.get('dob')
-        if dob_str:
-            current_user.dob = datetime.strptime(dob_str, "%Y-%m-%d").date()
-
-        # ✅ mark profile complete ONLY after saving all
-        current_user.profile_completed = True
-        db.session.commit()
-
-        return redirect(url_for('serve_index'))
-
-    return render_template('complete_profile.html')
 
 
 
@@ -1373,6 +1343,14 @@ def profile():
         postal_code = request.form.get("postal_code", "").strip()
         timezone = request.form.get("timezone", "").strip()
         dob_str = request.form.get("dob", "").strip()
+        phone = request.form.get("phone", "").strip()
+        
+        if phone:
+            phone_digits = re.sub(r"\D", "", phone)
+            if not is_valid_indian_mobile(phone_digits):
+                return jsonify(success=False, error="Invalid phone number.")
+            current_user.phone_number = "+91" + phone_digits
+
 
         whatsapp_consent = bool(request.form.get("whatsapp_consent"))
         newsletter_consent = bool(request.form.get("newsletter_consent"))
@@ -1434,6 +1412,7 @@ def profile():
         current_user.timezone = timezone or None
         current_user.whatsapp_consent = 'whatsapp_consent' in request.form
         current_user.newsletter_consent = 'newsletter_consent' in request.form
+        current_user.profile_completed = True 
 
         try:
             db.session.commit()
