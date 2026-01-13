@@ -914,10 +914,14 @@ document.addEventListener("DOMContentLoaded", function () {
   const params = new URLSearchParams(window.location.search);
 
   // ✅ only open popup if user is logged out
-  if (params.get("show_login") === "1" && "{{ current_user.is_authenticated }}" === "False") {
-    openPopup("/login-popup");
-  }
-});
+if (
+  params.get("show_login") === "1" &&
+  "{{ current_user.is_authenticated }}" === "False" &&
+  "{{ show_profile_popup|default(false) }}" !== "True"
+) {
+  openPopup("/login-popup");
+}
+
 </script>
 <script>
 function togglePassword(inputId, btn) {
