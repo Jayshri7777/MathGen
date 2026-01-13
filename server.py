@@ -1348,13 +1348,6 @@ def profile():
         postal_code = request.form.get("postal_code", "").strip()
         timezone = request.form.get("timezone", "").strip()
         dob_str = request.form.get("dob", "").strip()
-        phone = request.form.get("phone", "").strip()
-        
-        if phone:
-            phone_digits = re.sub(r"\D", "", phone)
-            if not is_valid_indian_mobile(phone_digits):
-                return jsonify(success=False, error="Invalid phone number.")
-            current_user.phone_number = "+91" + phone_digits
 
 
         whatsapp_consent = bool(request.form.get("whatsapp_consent"))
