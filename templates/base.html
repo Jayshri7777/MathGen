@@ -876,15 +876,13 @@ document.addEventListener("submit", async function (e) {
   if (form.id === "loginForm") return;
 
   // ✅ ONLY profile / settings forms
-if (!form.classList.contains("auth-form") || form.action.includes("/profile")) return;
+if (!form.classList.contains("auth-form")) return;
 
   // ✅ RUN HTML VALIDATION FIRST
 if (!form.checkValidity()) {
   form.reportValidity(); // shows "Please fill out this field"
   return;
 }
-
-
   e.preventDefault();
 
   const res = await fetch(form.action, {
