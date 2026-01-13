@@ -112,7 +112,9 @@ CORS(app, supports_credentials=True)
 
 app.config.update(
     SESSION_COOKIE_HTTPONLY=True,
-    SESSION_COOKIE_SAMESITE='Strict',  # ADD: Block cross-user leaks
+    SESSION_COOKIE_SAMESITE='Lax',
+    SESSION_COOKIE_SECURE=True,
+    # ADD: Block cross-user leaks
     SESSION_COOKIE_SECURE=False,       # localhost
     REMEMBER_COOKIE_DURATION=0,
     PERMANENT_SESSION_LIFETIME=timedelta(hours=3)  # ADD: Short sessions
@@ -1222,9 +1224,9 @@ def login():
 def unauthorized():
     if request.headers.get("X-Requested-With") == "XMLHttpRequest":
         return jsonify({"unauthorized": True}), 401
-    
-    # If the user is NOT registered/logged in, show the login popup on landing
-    return redirect(url_for("landing_page", show_login=1))
+
+    return redirect(url_for("landing_page"))
+
 
 @app.route("/login-popup")
 def login_popup():
@@ -1254,7 +1256,9 @@ def logout():
 # --- GOOGLE OAUTH LOGIN ROUTES ---
 @app.route('/login/google')
 def login_google():
-    session.clear()
+    session.pop("show_profile_popup", None)
+    session.pop("google_new_user", None)
+
     if not app.config.get('GOOGLE_CLIENT_ID') or not app.config.get('GOOGLE_CLIENT_SECRET'):
         return redirect(url_for('landing_page', show_login=1))
 
