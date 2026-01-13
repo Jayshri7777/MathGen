@@ -112,15 +112,16 @@ CORS(app, supports_credentials=True)
 
 app.config.update(
     SESSION_COOKIE_HTTPONLY=True,
-    SESSION_COOKIE_SAMESITE='Lax',
-    SESSION_COOKIE_SECURE=True,
-    # ADD: Block cross-user leaks
-    SESSION_COOKIE_SECURE=False,       # localhost
+    SESSION_COOKIE_SAMESITE='Lax',   # ✅ SAFE default
+    SESSION_COOKIE_SECURE=False,     # ✅ local dev
     REMEMBER_COOKIE_DURATION=0,
-    PERMANENT_SESSION_LIFETIME=timedelta(hours=3)  # ADD: Short sessions
+    PERMANENT_SESSION_LIFETIME=timedelta(hours=3)
 )
-
-
+# 🔐 Production-only cookie fix (Render)
+if os.environ.get("RENDER"):
+    app.config.update(
+        SESSION_COOKIE_SECURE=True   # ✅ HTTPS on Render
+    )
 
 app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY', 'default-super-secret-key-change-me-immediately')
 app.config['GOOGLE_CLIENT_ID'] = os.environ.get('GOOGLE_CLIENT_ID')
