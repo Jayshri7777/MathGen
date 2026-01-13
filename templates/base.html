@@ -876,7 +876,8 @@ document.addEventListener("submit", async function (e) {
   if (form.id === "loginForm") return;
 
   // ✅ ONLY profile / settings forms
-  if (!form.classList.contains("auth-form")) return;
+if (!form.classList.contains("auth-form") || form.action.includes("/profile")) return;
+
   // ✅ RUN HTML VALIDATION FIRST
 if (!form.checkValidity()) {
   form.reportValidity(); // shows "Please fill out this field"
