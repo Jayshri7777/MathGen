@@ -628,10 +628,11 @@ label.required::after {
         Home
     </a>
 
-    <a href="{{ url_for('generate_worksheet') }}"
-   class="nav-link {% if request.endpoint == 'generate_worksheet' %}active{% endif %}">
+<a href="{{ url_for('serve_index') }}"
+   class="nav-link {% if request.endpoint in ['serve_index', 'generate_worksheet'] %}active{% endif %}">
     Generator
 </a>
+
 <a href="{{ url_for('jobseekers') }}"
    class="{% if request.endpoint == 'jobseekers' %}active{% endif %}">
     Jobseekers
