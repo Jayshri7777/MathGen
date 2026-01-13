@@ -1422,8 +1422,7 @@ def profile():
         try:
             db.session.commit()
 
-            # 🔥 NEW LOGIC: redirect to exam combo if user switches to combo
-            # ✅ decide redirect target
+            # decide redirect target
             if current_user.grade == "10-12" or current_user.board == "CBSE-ICSE":
                 redirect_url = url_for("exam_combo_page")
             else:
@@ -1432,18 +1431,16 @@ def profile():
             if is_ajax:
                 return jsonify(success=True, redirect=redirect_url)
 
-
-            # normal users stay on profile
-            if is_ajax:
-                return jsonify(success=True)
             flash("Profile updated successfully!", "success")
-            return redirect(url_for("profile"))
+            return redirect(redirect_url)
 
         except Exception as e:
             db.session.rollback()
             print("Profile update error:", e)
+
             if is_ajax:
                 return jsonify(success=False, error="Server error.")
+
             flash("Something went wrong.", "danger")
             return redirect(url_for("profile"))
 
