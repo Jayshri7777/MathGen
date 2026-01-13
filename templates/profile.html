@@ -35,12 +35,11 @@
                 <small>Email cannot be changed.</small>
             </div>
 
-            <!-- --- MODIFIED PHONE NUMBER FIELD --- -->
-           <div class="form-group">
+            <div class="form-group">
     <label class="required">Mobile Number</label>
 
     {% if current_user.phone_number %}
-        <!-- SPLIT PHONE NUMBER -->
+        <!-- EXISTING PHONE → LOCKED -->
         <div class="phone-display">
             <input type="text"
                    class="country-code"
@@ -53,20 +52,20 @@
                    disabled>
         </div>
 
-        <small>Mobile number cannot be changed. Contact support if needed.</small>
+        <small>Mobile number cannot be changed.</small>
 
     {% else %}
+        <!-- NO PHONE (Google login) → ENABLE INPUT -->
         <input type="tel"
-               value=""
-               placeholder="Not provided via Google login"
-               disabled>
-        <small>
-            Mobile number not available.
-            Please contact support if you want to add one.
-        </small>
+               name="phone"
+               placeholder="Enter 10-digit mobile number"
+               pattern="[6-9][0-9]{9}"
+               maxlength="10"
+               required>
+
+        <small>Please add your mobile number.</small>
     {% endif %}
 </div>
-
 
             <div class="form-group">
                 <label class="required">Board</label>
