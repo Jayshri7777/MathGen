@@ -963,7 +963,11 @@ def create_image(content, title, sub_title_info, filename, fmt="png"):
 
 @app.route('/')
 def landing_page():
-    show_profile_popup = session.pop("show_profile_popup", False)
+    show_profile_popup = (
+    session.pop("show_profile_popup", False)
+    and not current_user.profile_completed
+)
+
     return render_template(
         'landing.html',
         show_profile_popup=show_profile_popup
@@ -1307,15 +1311,20 @@ def google_callback():
         # =========================
         login_user(user)
 
-        # 🚫 DO NOT SHOW POPUP
+        if not user.profile_completed:
+            # 🔥 SHOW PROFILE POPUP AGAIN
+            session["show_profile_popup"] = True
+            return redirect(url_for("landing_page"))
+
+        # ✅ PROFILE ALREADY COMPLETED
         session.pop("show_profile_popup", None)
         session.pop("google_new_user", None)
 
-        # Combo logic
         if is_combo_user(user):
             return redirect(url_for("exam_combo_page"))
 
         return redirect(url_for("serve_index"))
+
 
     except Exception as e:
         print("GOOGLE AUTH ERROR:", e)
