@@ -727,18 +727,28 @@ function openPopup(url) {
   fetch(url, {
     headers: {
       "X-Requested-With": "XMLHttpRequest"
-    }
+    },
+    credentials: "same-origin"
   })
-  .then(res => res.text())
+  .then(res => {
+    if (res.status === 401) {
+      // 🔥 Session expired or unauthorized
+      window.location.href = "/";
+      return null;
+    }
+    return res.text();
+  })
   .then(html => {
+    if (!html) return;
     popupContent.innerHTML = html;
     popupOverlay.style.display = "block";
     popupBox.style.display = "block";
-    initLoginToggle(); // 🔥 your radio fix
+    initLoginToggle();
+  })
+  .catch(() => {
+    window.location.href = "/";
   });
 }
-
-
 function closePopup() {
   document.getElementById("popupOverlay").style.display = "none";
   document.getElementById("popupBox").style.display = "none";
@@ -873,18 +883,18 @@ document.addEventListener("submit", async function (e) {
 document.addEventListener("submit", async function (e) {
   const form = e.target;
 
-  // ❌ DO NOT touch login form
+  // ❌ ignore login form
   if (form.id === "loginForm") return;
 
-  // ✅ ONLY profile / settings forms
-if (!form.classList.contains("auth-form")) return;
+  // ✅ only popup forms
+  if (!form.classList.contains("auth-form")) return;
 
-  // ✅ RUN HTML VALIDATION FIRST
-if (!form.checkValidity()) {
-  form.reportValidity(); // shows "Please fill out this field"
-  return;
-}
   e.preventDefault();
+
+  if (!form.checkValidity()) {
+    form.reportValidity();
+    return;
+  }
 
   const res = await fetch(form.action, {
     method: "POST",
@@ -895,18 +905,24 @@ if (!form.checkValidity()) {
     credentials: "same-origin"
   });
 
+  if (res.status === 401) {
+    window.location.href = "/";
+    return;
+  }
+
   const data = await res.json();
 
 if (data.redirect) {
   window.location.href = data.redirect;
-  return;
-}
-
-if (data.success) {
-  closePopup();
+} else {
   location.reload();
 }
 
+
+  if (data.success) {
+    closePopup();
+    location.reload();
+  }
 });
 </script>
 <script>
