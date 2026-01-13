@@ -118,7 +118,8 @@ app.config.update(
     PERMANENT_SESSION_LIFETIME=timedelta(hours=3)
 )
 # 🔐 Production-only cookie fix (Render)
-if os.environ.get("RENDER"):
+if os.environ.get("RENDER") == "true":
+
     app.config.update(
         SESSION_COOKIE_SECURE=True   # ✅ HTTPS on Render
     )
@@ -964,14 +965,16 @@ def create_image(content, title, sub_title_info, filename, fmt="png"):
 @app.route('/')
 def landing_page():
     show_profile_popup = (
-    session.pop("show_profile_popup", False)
+    current_user.is_authenticated
     and not current_user.profile_completed
 )
+
 
     return render_template(
         'landing.html',
         show_profile_popup=show_profile_popup
     )
+
 
 
 @app.route('/generator')
@@ -1183,7 +1186,11 @@ from flask import jsonify
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
-        return jsonify({"success": True})
+        return jsonify({
+            "success": True,
+            "redirect": url_for("serve_index")
+        })
+
 
     login_method = request.form.get("login_method")
     login_identifier = request.form.get("login_identifier", "").strip()
@@ -1229,8 +1236,8 @@ def login():
 def unauthorized():
     if request.headers.get("X-Requested-With") == "XMLHttpRequest":
         return jsonify({"unauthorized": True}), 401
-
     return redirect(url_for("landing_page"))
+
 
 
 @app.route("/login-popup")
@@ -1239,6 +1246,14 @@ def login_popup():
         return ""
 
     return render_template("login.html")
+
+@app.before_request
+def fix_google_users():
+    if current_user.is_authenticated:
+        if current_user.password_hash is None and not current_user.profile_completed:
+            # Google user who hasn’t completed profile
+            pass
+
 
 
 @app.route('/profile-fragment')
@@ -1297,11 +1312,13 @@ def google_callback():
             db.session.add(user)
             db.session.commit()
 
-            login_user(user)
+        login_user(user)
 
-            # 🔥 CRITICAL FLAGS
+        # 🔥 ONLY show popup if profile NOT completed
+        if not user.profile_completed:
             session["show_profile_popup"] = True
-            session["google_new_user"] = True
+        else:
+            session.pop("show_profile_popup", None)
 
             # 🔥 GO TO LANDING PAGE
             return redirect(url_for("landing_page"))
@@ -1309,7 +1326,6 @@ def google_callback():
         # =========================
         # CASE 2: EXISTING USER
         # =========================
-        login_user(user)
 
         if not user.profile_completed:
             # 🔥 SHOW PROFILE POPUP AGAIN
@@ -3043,9 +3059,6 @@ Questions:
         "error": str(e),
         "type": str(type(e))
     }), 500
-
-
-
 
 def extract_images_from_pdf(file_storage):
     images = []
