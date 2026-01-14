@@ -832,19 +832,20 @@ function initLoginToggle() {
   update(); // 🔥 RUN ON LOAD
 }
 </script>
-
 <script>
 document.addEventListener("DOMContentLoaded", function () {
-  const loginBtn = document.getElementById("loginBtn");
+  const params = new URLSearchParams(window.location.search);
 
-  if (loginBtn) {
-    loginBtn.addEventListener("click", function (e) {
-      e.preventDefault();            // stop navigation
-      openPopup("/login-popup");     // ✅ correct function
-    });
+  if (
+    params.get("show_login") === "1" &&
+    {{ "true" if not current_user.is_authenticated else "false" }} &&
+    {{ "true" if not show_profile_popup else "false" }}
+  ) {
+    openPopup("/login-popup");
   }
 });
 </script>
+
 <script>
 document.addEventListener("submit", async function (e) {
   const form = e.target;
@@ -886,7 +887,7 @@ document.addEventListener("submit", async function (e) {
   // ❌ ignore login form
   if (form.id === "loginForm") return;
 
-  // ✅ only popup forms
+  // ✅ only popup forms (profile, settings)
   if (!form.classList.contains("auth-form")) return;
 
   e.preventDefault();
@@ -912,19 +913,22 @@ document.addEventListener("submit", async function (e) {
 
   const data = await res.json();
 
-if (data.redirect) {
-  window.location.href = data.redirect;
-} else {
-window.location.href = "/generator";
-
-}
-
-
-  if (data.success) {
-    closePopup();
+  if (!data.success) {
+    alert(data.error || "Something went wrong");
+    return;
   }
+
+  // ✅ mark profile updated (for navbar refresh)
+  localStorage.setItem("profile_updated", "1");
+
+  // ✅ close popup FIRST
+  closePopup();
+
+  // ✅ then redirect
+  window.location.href = data.redirect || "/generator";
 });
 </script>
+
 <script>
 document.addEventListener("DOMContentLoaded", function () {
   const params = new URLSearchParams(window.location.search);
@@ -937,8 +941,7 @@ if (
 ) {
   openPopup("/login-popup");
 }
-
-
+}
 </script>
 <script>
 function togglePassword(inputId, btn) {
@@ -974,6 +977,16 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 </script>
 {% endif %}
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  if (localStorage.getItem("profile_updated")) {
+    localStorage.removeItem("profile_updated");
+    window.location.reload();
+  }
+});
+</script>
+
 
 </body>
 </html>
