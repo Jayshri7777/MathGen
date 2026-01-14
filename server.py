@@ -1314,7 +1314,7 @@ def google_callback():
 
         # ✅ PROFILE NOT COMPLETED → LANDING PAGE (POPUP WILL SHOW)
         if not user.profile_completed:
-            return redirect(url_for("profile"))
+            return redirect(url_for("landing_page"))
 
 
         # ✅ PROFILE COMPLETED → NORMAL FLOW
@@ -1343,7 +1343,7 @@ from datetime import datetime
 
 # --- PROFILE AND SETTINGS ROUTES ---
 
-@app.route('/profile', methods=['GET', 'POST'])
+@app.route('/profile', methods=['POST'])
 @login_required
 def profile():
     from datetime import datetime
