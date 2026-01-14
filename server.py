@@ -1305,6 +1305,7 @@ def google_callback():
             user = User(
                 email=email,
                 name=name,
+                country_code="+91",
                 profile_completed=False
             )
             db.session.add(user)
@@ -1405,6 +1406,7 @@ def profile():
             flash("Please enter a valid age.", "danger")
             return redirect(url_for("profile"))
 
+        # ---------- DOB ----------
         dob = None
         if dob_str:
             try:
@@ -1416,29 +1418,29 @@ def profile():
                     return jsonify(success=False, error="Invalid Date of Birth.")
                 flash("Invalid Date of Birth.", "danger")
                 return redirect(url_for("profile"))
-            
-            # ---------- PHONE VALIDATION (CRITICAL FIX) ----------
-            digits = re.sub(r"\D", "", phone_number)
 
-            if not is_valid_indian_mobile(digits):
-                if is_ajax:
-                    return jsonify(success=False, error="Invalid mobile number.")
-                flash("Enter a valid 10-digit Indian mobile number.", "danger")
-                return redirect(url_for("profile"))
+        # ---------- PHONE VALIDATION (ALWAYS RUN) ----------
+        digits = re.sub(r"\D", "", phone_number)
 
-            full_phone = current_user.country_code + digits
+        if not is_valid_indian_mobile(digits):
+            if is_ajax:
+                return jsonify(success=False, error="Invalid mobile number.")
+            flash("Enter a valid 10-digit Indian mobile number.", "danger")
+            return redirect(url_for("profile"))
 
-            # ❗ Ensure phone number is unique (important for Google users)
-            existing_user = User.query.filter(
-                User.phone_number == full_phone,
-                User.id != current_user.id
-            ).first()
+        full_phone = current_user.country_code + digits
 
-            if existing_user:
-                if is_ajax:
-                    return jsonify(success=False, error="Mobile number already in use.")
-                flash("Mobile number already in use.", "danger")
-                return redirect(url_for("profile"))
+        existing_user = User.query.filter(
+            User.phone_number == full_phone,
+            User.id != current_user.id
+        ).first()
+
+        if existing_user:
+            if is_ajax:
+                return jsonify(success=False, error="Mobile number already in use.")
+            flash("Mobile number already in use.", "danger")
+            return redirect(url_for("profile"))
+
 
         # ---------- SAVE ----------
         current_user.name = name
