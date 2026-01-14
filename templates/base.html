@@ -915,13 +915,13 @@ document.addEventListener("submit", async function (e) {
 if (data.redirect) {
   window.location.href = data.redirect;
 } else {
-  location.reload();
+window.location.href = "/generator";
+
 }
 
 
   if (data.success) {
     closePopup();
-    location.reload();
   }
 });
 </script>
@@ -963,11 +963,10 @@ function togglePassword(inputId, btn) {
 </script>
 <script>
 document.addEventListener("DOMContentLoaded", function () {
-  const params = new URLSearchParams(window.location.search);
-    window.history.replaceState({}, document.title, window.location.pathname);
-  }
+  window.history.replaceState({}, document.title, window.location.pathname);
 });
 </script>
+
 {% if show_profile_popup %}
 <script>
 document.addEventListener("DOMContentLoaded", function () {
