@@ -686,6 +686,8 @@ AUTH={{ current_user.is_authenticated }}
 
 </div>
 
+</div>
+
 {% block content %}{% endblock %}
 <!-- ===== POPUP OVERLAY ===== -->
 <div id="popupOverlay" style="
@@ -925,6 +927,21 @@ document.addEventListener("submit", async function (e) {
   // ✅ then redirect
   window.location.href = data.redirect || "/generator";
 });
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const params = new URLSearchParams(window.location.search);
+
+  // ✅ only open popup if user is logged out
+if (
+  params.get("show_login") === "1" &&
+  {{ "true" if not current_user.is_authenticated else "false" }} &&
+  {{ "true" if not show_profile_popup else "false" }}
+) {
+  openPopup("/login-popup");
+}
+}
 </script>
 <script>
 function togglePassword(inputId, btn) {
