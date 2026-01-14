@@ -1314,11 +1314,18 @@ def google_callback():
 
         # ✅ PROFILE NOT COMPLETED → LANDING PAGE (POPUP WILL SHOW)
         if not user.profile_completed:
-            return redirect(url_for("landing_page"))
+            return redirect(url_for("profile"))
+
 
         # ✅ PROFILE COMPLETED → NORMAL FLOW
         if is_combo_user(user):
             return redirect(url_for("exam_combo_page"))
+        
+        # EXISTING GOOGLE USER WITH COMPLETE PROFILE
+        if user and user.profile_completed:
+            login_user(user)
+            return redirect(url_for("serve_index"))
+
 
         return redirect(url_for("serve_index"))
 
@@ -1354,6 +1361,11 @@ def profile():
         postal_code = request.form.get("postal_code", "").strip()
         timezone = request.form.get("timezone", "").strip()
         dob_str = request.form.get("dob", "").strip()
+        phone_number = request.form.get("phone_number_main", "").strip()
+
+        if not phone_number:
+            return jsonify(success=False, error="Mobile number is required.")
+
 
 
         whatsapp_consent = bool(request.form.get("whatsapp_consent"))
@@ -1404,10 +1416,33 @@ def profile():
                     return jsonify(success=False, error="Invalid Date of Birth.")
                 flash("Invalid Date of Birth.", "danger")
                 return redirect(url_for("profile"))
+            
+            # ---------- PHONE VALIDATION (CRITICAL FIX) ----------
+            digits = re.sub(r"\D", "", phone_number)
+
+            if not is_valid_indian_mobile(digits):
+                if is_ajax:
+                    return jsonify(success=False, error="Invalid mobile number.")
+                flash("Enter a valid 10-digit Indian mobile number.", "danger")
+                return redirect(url_for("profile"))
+
+            full_phone = current_user.country_code + digits
+
+            # ❗ Ensure phone number is unique (important for Google users)
+            existing_user = User.query.filter(
+                User.phone_number == full_phone,
+                User.id != current_user.id
+            ).first()
+
+            if existing_user:
+                if is_ajax:
+                    return jsonify(success=False, error="Mobile number already in use.")
+                flash("Mobile number already in use.", "danger")
+                return redirect(url_for("profile"))
 
         # ---------- SAVE ----------
         current_user.name = name
-        current_user.grade = grade  # keep as string
+        current_user.grade = grade
         current_user.board = board
         current_user.age = int(age)
         current_user.dob = dob
@@ -1416,10 +1451,12 @@ def profile():
         current_user.timezone = timezone or None
         current_user.whatsapp_consent = 'whatsapp_consent' in request.form
         current_user.newsletter_consent = 'newsletter_consent' in request.form
-        current_user.profile_completed = True 
+        current_user.phone_number = full_phone   # ✅ use validated phone
+        current_user.profile_completed = True
 
         try:
             db.session.commit()
+
 
             # decide redirect target
             if current_user.grade == "10-12" or current_user.board == "CBSE-ICSE":
