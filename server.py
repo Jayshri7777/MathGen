@@ -1300,9 +1300,7 @@ def google_callback():
 
         user = User.query.filter_by(email=email).first()
 
-        # =========================
-        # CASE 1: NEW GOOGLE USER
-        # =========================
+        # ✅ FIRST-TIME GOOGLE USER
         if not user:
             user = User(
                 email=email,
@@ -1314,37 +1312,20 @@ def google_callback():
 
         login_user(user)
 
-        # 🔥 ONLY show popup if profile NOT completed
+        # ✅ PROFILE NOT COMPLETED → LANDING PAGE (POPUP WILL SHOW)
         if not user.profile_completed:
-            session["show_profile_popup"] = True
-        else:
-            session.pop("show_profile_popup", None)
-
-            # 🔥 GO TO LANDING PAGE
             return redirect(url_for("landing_page"))
 
-        # =========================
-        # CASE 2: EXISTING USER
-        # =========================
-
-        if not user.profile_completed:
-            # 🔥 SHOW PROFILE POPUP AGAIN
-            session["show_profile_popup"] = True
-            return redirect(url_for("landing_page"))
-
-        # ✅ PROFILE ALREADY COMPLETED
-        session.pop("show_profile_popup", None)
-        session.pop("google_new_user", None)
-
+        # ✅ PROFILE COMPLETED → NORMAL FLOW
         if is_combo_user(user):
             return redirect(url_for("exam_combo_page"))
 
         return redirect(url_for("serve_index"))
 
-
     except Exception as e:
         print("GOOGLE AUTH ERROR:", e)
         return redirect(url_for('landing_page', show_login=1))
+
 
 
 
