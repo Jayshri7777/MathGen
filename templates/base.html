@@ -932,11 +932,12 @@ document.addEventListener("DOMContentLoaded", function () {
   // ✅ only open popup if user is logged out
 if (
   params.get("show_login") === "1" &&
-  "{{ current_user.is_authenticated }}" === "False" &&
-  "{{ show_profile_popup|default(false) }}" !== "True"
+  {{ "true" if not current_user.is_authenticated else "false" }} &&
+  {{ "true" if not show_profile_popup else "false" }}
 ) {
   openPopup("/login-popup");
 }
+
 
 </script>
 <script>
@@ -963,9 +964,6 @@ function togglePassword(inputId, btn) {
 <script>
 document.addEventListener("DOMContentLoaded", function () {
   const params = new URLSearchParams(window.location.search);
-
-  if (params.get("openProfile") === "1") {
-    openPopup("/profile");   // ✅ CORRECT
     window.history.replaceState({}, document.title, window.location.pathname);
   }
 });
