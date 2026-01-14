@@ -1343,7 +1343,7 @@ from datetime import datetime
 
 # --- PROFILE AND SETTINGS ROUTES ---
 
-@app.route('/profile', methods=['POST'])
+@app.route('/profile', methods=['GET','POST'])
 @login_required
 def profile():
     from datetime import datetime
