@@ -29,6 +29,7 @@ import PyPDF2
 import docx as docx_reader 
 import csv
 
+
 def is_combo_user(user):
     return (
         user.grade == "10-12"
@@ -1262,7 +1263,6 @@ def profile_fragment():
 def logout():
     logout_user()
     session.clear()  # Clear everything in the session
-    flash("You have been logged out.", "info")
     return redirect(url_for('landing_page'))
 
 
@@ -1327,6 +1327,7 @@ def google_callback():
 
     except Exception as e:
         print("GOOGLE AUTH ERROR:", e)
+        session.pop("_flashes", None)  # 🔥 KILL OLD FLASHES
         return redirect(url_for('landing_page', show_login=1))
 
 
@@ -1381,13 +1382,11 @@ def profile():
         if not name or not grade or not age:
             if is_ajax:
                 return jsonify(success=False, error="Please fill all required fields.")
-            flash("Please fill all required fields marked with *", "danger")
             return redirect(url_for("profile"))
 
         if len(name) < 2:
             if is_ajax:
                 return jsonify(success=False, error="Name too short.")
-            flash("Name must be at least 2 characters long.", "danger")
             return redirect(url_for("profile"))
 
         if grade == "10-12":
@@ -1395,20 +1394,17 @@ def profile():
         elif grade.isdigit() and 1 <= int(grade) <= 12:
             pass
         else:
-            flash("Invalid grade.", "danger")
             return redirect(url_for("profile"))
 
         
         if not board:
             if is_ajax:
                 return jsonify(success=False, error="Board is required.")
-            flash("Board is required.", "danger")
             return redirect(url_for("profile"))
 
         if not age.isdigit() or int(age) < 1:
             if is_ajax:
                 return jsonify(success=False, error="Invalid age.")
-            flash("Please enter a valid age.", "danger")
             return redirect(url_for("profile"))
 
         # ---------- DOB ----------
@@ -1421,7 +1417,6 @@ def profile():
             except ValueError:
                 if is_ajax:
                     return jsonify(success=False, error="Invalid Date of Birth.")
-                flash("Invalid Date of Birth.", "danger")
                 return redirect(url_for("profile"))
 
         # ---------- PHONE VALIDATION (ALWAYS RUN) ----------
@@ -1434,7 +1429,6 @@ def profile():
         if existing_user:
             if is_ajax:
                 return jsonify(success=False, error="Mobile number already in use.")
-            flash("Mobile number already in use.", "danger")
             return redirect(url_for("profile"))
 
 
@@ -1464,8 +1458,7 @@ def profile():
 
             if is_ajax:
                 return jsonify(success=True, redirect=redirect_url)
-
-            flash("Profile updated successfully!", "success")
+            
             return redirect(redirect_url)
 
         except Exception as e:
@@ -1475,7 +1468,6 @@ def profile():
             if is_ajax:
                 return jsonify(success=False, error="Server error.")
 
-            flash("Something went wrong.", "danger")
             return redirect(url_for("profile"))
 
     # ---------- GET ----------
@@ -1746,8 +1738,6 @@ import zipfile
 from flask import send_file
 from google import genai
 
-os.makedirs(TEMP_DIR, exist_ok=True)
-
 
 def extract_json_from_ai(text, expect="question"):
     if not text:
@@ -1755,26 +1745,30 @@ def extract_json_from_ai(text, expect="question"):
 
     text = text.strip()
 
-    match = re.search(r"\[\s*\{[\s\S]*?\}\s*\]", text)
-    if not match:
-        return None
-
     try:
-        data = json.loads(match.group())
-        if not isinstance(data, list):
-            return None
-
-        # 🔒 HARD VALIDATION
-        for item in data:
-            if expect == "question" and "question" not in item:
-                return None
-            if expect == "answer" and not any(k in item for k in ("answer", "solution")):
-                return None
-
-        return data
-
+        data = json.loads(text)
     except Exception:
         return None
+
+    if not isinstance(data, list):
+        return None
+
+    for item in data:
+        if not isinstance(item, dict):
+            return None
+
+        if expect == "question":
+            if "question" not in item:
+                return None
+            if contains_answer_like_math(item.get("question", "")):
+                return None
+
+        if expect == "answer":
+            if not any(k in item for k in ("answer", "solution")):
+                return None
+
+    return data
+
 
   
 def clean_ai_text(text):
@@ -1892,8 +1886,12 @@ def normalize_answers(text):
 class CustomPDF(FPDF):
     def __init__(self, title, sub_info, header_text="", footer_text=""):
         super().__init__()
+        self.page = 0
+        self.pages = {}
+
         FONT_PATH = os.path.join(BASE_DIR, "fonts", "DejaVuSans.ttf")
         self.add_font("DejaVu", "", FONT_PATH, uni=True)
+
         self.worksheet_title = title
         self.sub_info = sub_info
         self.header_text = header_text
@@ -1927,10 +1925,7 @@ class CustomPDF(FPDF):
         self.cell(0, 8, f"Page {self.page_no()}", 0, 0, "R")
 
 # --- File Creation Functions ---
-def create_pdf(content, title, sub_title_info, filename=None):
-    if not filename:
-        filename = "Worksheet.pdf"
-
+def create_pdf(content, title, sub_title_info, filename):
     file_path = os.path.join(TEMP_DIR, filename)
 
     pdf = CustomPDF(
@@ -1940,27 +1935,25 @@ def create_pdf(content, title, sub_title_info, filename=None):
         footer_text=GLOBAL_FOOTER
     )
 
+    pdf.set_auto_page_break(auto=True, margin=15)
+    pdf.set_margins(15, 15, 15)
+    pdf.alias_nb_pages()
+
     pdf.add_page()
     pdf.set_font("DejaVu", "", 12)
-    
-    # Calculate usable width (Page width - left margin - right margin)
+
     usable_width = pdf.w - pdf.l_margin - pdf.r_margin
 
-    # SPLIT ONLY BY NEWLINES: Do not strip all whitespace or you lose the math structure
     for line in content.splitlines():
         line = line.strip()
         if not line:
-            pdf.ln(5)  # Proper vertical space for empty lines
+            pdf.ln(6)
             continue
-
-        # This ensures the question/answer stays on one line unless it truly exceeds page width
-        pdf.multi_cell(usable_width, 8, line, border=0, align="L")
-        pdf.ln(2) # Small gap between different answers
+        pdf.multi_cell(usable_width, 8, line)
+        pdf.ln(2)
 
     pdf.output(file_path)
     return file_path
-
-
 
 import io
 import zipfile
@@ -2202,13 +2195,7 @@ def clear_temp_dir():
             os.remove(os.path.join(TEMP_DIR, f))
         except:
             pass
-        
-# ✅ AUTO CLEAN TEMP FILES AFTER EVERY RESPONSE
-@app.after_request
-def cleanup_temp(response):
-    if response.mimetype == "application/zip":
-        clear_temp_dir()
-    return response
+
 
 
 def normalize_exam_key(authority):
@@ -2227,11 +2214,33 @@ def normalize_exam_key(authority):
         return "GATE"
     return authority
 
+def contains_answer_like_math(text):
+    for line in text.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+
+        line = re.sub(r"^\d+[\)\.]\s*", "", line)
+
+        # Allow instructional questions
+        if re.search(
+            r"\b(find|evaluate|differentiate|calculate|determine|solve)\b",
+            line, re.I
+        ):
+            continue
+
+        # Pure math expression ONLY
+        if re.fullmatch(r"[+\-]?[0-9a-zA-Z^\*/\.\s]+", line):
+            return True
+
+    return False
+
 
 
 @app.route('/generate-worksheet', methods=['GET', 'POST'])
 @login_required
 def generate_worksheet():
+    clear_temp_dir() 
     if request.form.get("grade") == "10-12" or request.form.get("board") == "CBSE-ICSE":
         return jsonify({
             "error": "Combo syllabus must be generated via Exam Papers section."
@@ -2253,8 +2262,12 @@ def generate_worksheet():
         client = genai.Client(api_key=os.environ.get("GENAI_API_KEY"))
 
         worksheet_type = request.form.get("worksheet_type")
+        if not worksheet_type:
+            worksheet_type = "school"
+
+        # 🔒 FINAL HARDENING
         if worksheet_type not in ("school", "job"):
-            return jsonify({"error": "Invalid worksheet type"}), 400
+            worksheet_type = "school"
 
 
         job_type = request.form.get("job_type") or None
@@ -2743,7 +2756,8 @@ Worksheet:
                     solution_path = create_pdf(
                         solution_answers_text,
                         f"{title} - Solutions",
-                        info
+                        info,
+                        filename="Solutions.pdf"
                     )
                     files_to_zip.append(
                         ("Solutions.pdf", solution_path))
@@ -2784,7 +2798,12 @@ Worksheet:
 
             grade = request.form.get('grade') or current_user.grade
             board = request.form.get('board')
-            subtopic = request.form.get('subtopic') or "General"
+            subtopic = (
+    request.form.get('subtopic')
+    or request.form.get('minor_topic')
+    or "General"
+)
+
             difficulty = request.form.get('difficulty', 'Easy')
             output_format = get_output_format()
             include_answers = 'answer_key' in request.form
@@ -2816,6 +2835,10 @@ You are a STRICT academic question generator.
 Your task is to generate questions ONLY from the given topic and subtopic.
 
 🚨 ABSOLUTE RULES (NON-NEGOTIABLE):
+🚨 CRITICAL:
+- EVERY question MUST contain an instruction word:
+  "Find", "Evaluate", "Differentiate", "Solve", or "Determine"
+- If you output a standalone mathematical expression, the response is INVALID
 - Generate EXACTLY 15 questions
 - Questions MUST belong strictly to:
   • Topic = "{topic}"
@@ -2874,9 +2897,11 @@ If ANY rule is violated, the response is INVALID.
                 }), 500
             
             worksheet_questions_text = normalize_questions(questions_json)
-            # 🚨 HARD BLOCK — worksheet must NOT contain answers
-            if re.search(r"^\d+[\)\.]\s*[-+]?\d", worksheet_questions_text, re.M):
-                raise ValueError("CRITICAL: Answers detected in SCHOOL worksheet content")
+            # 🚨 ABSOLUTE BLOCK — worksheet MUST NOT contain answers
+            if contains_answer_like_math(worksheet_questions_text):
+                raise ValueError(
+                    "CRITICAL: AI returned answers instead of questions. Regenerate."
+                )
 
             
             # 🚨 HARD VALIDATION — STOP WRONG TOPIC GENERATION
@@ -3029,7 +3054,8 @@ Questions:
                     solution_path = create_pdf(
                         solution_answers_text,
                         f"{title} - Solutions",
-                        info
+                        info,
+                        filename="Solutions.pdf"
                     )
                     files_to_zip.append(("Solutions.pdf", solution_path))
 
@@ -3096,7 +3122,7 @@ def extract_images_from_pdf(file_storage):
 
 def extract_images_from_docx(file_storage):
     images = []
-    doc = Document(file_storage)
+    doc = Document(file_storage.stream)
 
     for rel in doc.part.rels.values():
         if "image" in rel.target_ref:
