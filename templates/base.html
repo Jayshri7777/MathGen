@@ -629,9 +629,14 @@ label.required::after {
     </a>
 
 <a href="{{ url_for('serve_index') }}"
-   class="nav-link {% if request.endpoint in ['serve_index', 'generate_worksheet'] %}active{% endif %}">
+   class="nav-link {% if request.endpoint in [
+       'serve_index',
+       'generate_worksheet',
+       'exam_combo_page'
+   ] %}active{% endif %}">
     Generator
 </a>
+
 
 <a href="{{ url_for('jobseekers') }}"
    class="{% if request.endpoint == 'jobseekers' %}active{% endif %}">
