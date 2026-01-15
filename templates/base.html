@@ -834,8 +834,18 @@ function initLoginToggle() {
 </script>
 <script>
 document.addEventListener("DOMContentLoaded", function () {
-  const params = new URLSearchParams(window.location.search);
 
+  // Login button
+  const loginBtn = document.getElementById("loginBtn");
+  if (loginBtn) {
+    loginBtn.addEventListener("click", e => {
+      e.preventDefault();
+      openPopup("/login-popup");
+    });
+  }
+
+  // Auto login popup
+  const params = new URLSearchParams(window.location.search);
   if (
     params.get("show_login") === "1" &&
     {{ "true" if not current_user.is_authenticated else "false" }} &&
@@ -843,8 +853,23 @@ document.addEventListener("DOMContentLoaded", function () {
   ) {
     openPopup("/login-popup");
   }
+
+  // Dark mode
+  if (localStorage.getItem("darkMode") === "true") {
+    document.body.classList.add("dark");
+  }
+
+  // Profile updated refresh
+  if (localStorage.getItem("profile_updated")) {
+    localStorage.removeItem("profile_updated");
+    window.location.reload();
+  }
+
+  // Clean URL
+  window.history.replaceState({}, document.title, window.location.pathname);
 });
 </script>
+
 
 <script>
 document.addEventListener("submit", async function (e) {
@@ -930,20 +955,6 @@ document.addEventListener("submit", async function (e) {
 </script>
 
 <script>
-document.addEventListener("DOMContentLoaded", function () {
-  const params = new URLSearchParams(window.location.search);
-
-  // ✅ only open popup if user is logged out
-if (
-  params.get("show_login") === "1" &&
-  {{ "true" if not current_user.is_authenticated else "false" }} &&
-  {{ "true" if not show_profile_popup else "false" }}
-) {
-  openPopup("/login-popup");
-}
-}
-</script>
-<script>
 function togglePassword(inputId, btn) {
     const input = document.getElementById(inputId);
     if (!input) return;
@@ -964,11 +975,6 @@ function togglePassword(inputId, btn) {
         </svg>`;
 }
 </script>
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-  window.history.replaceState({}, document.title, window.location.pathname);
-});
-</script>
 
 {% if show_profile_popup %}
 <script>
@@ -977,15 +983,6 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 </script>
 {% endif %}
-
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-  if (localStorage.getItem("profile_updated")) {
-    localStorage.removeItem("profile_updated");
-    window.location.reload();
-  }
-});
-</script>
 
 
 </body>
