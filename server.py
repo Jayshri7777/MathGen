@@ -1211,13 +1211,15 @@ def login():
         phone = re.sub(r"\D", "", login_identifier)
         user = User.query.filter_by(phone_number="+91" + phone).first()
 
-    if not user or not user.check_password(password):
+    if not user or not user.password_hash or not user.check_password(password):
         return jsonify({
             "success": False,
             "error": "Invalid email/phone or password."
         })
 
     login_user(user, remember=False)
+    
+    session.permanent = True
 
     redirect_url = (
         url_for("exam_combo_page")
@@ -1246,13 +1248,6 @@ def login_popup():
         return ""
 
     return render_template("login.html")
-
-@app.before_request
-def fix_google_users():
-    if current_user.is_authenticated:
-        if current_user.password_hash is None and not current_user.profile_completed:
-            # Google user who hasn’t completed profile
-            pass
 
 
 
@@ -1365,7 +1360,17 @@ def profile():
         phone_number = request.form.get("phone_number_main", "").strip()
 
         if not phone_number:
-            return jsonify(success=False, error="Mobile number is required.")
+            if current_user.phone_number:
+                full_phone = current_user.phone_number
+            else:
+                return jsonify(success=False, error="Mobile number is required.")
+        else:
+            digits = re.sub(r"\D", "", phone_number)[-10:]
+            if not is_valid_indian_mobile(digits):
+                return jsonify(success=False, error="Invalid mobile number.")
+            full_phone = current_user.country_code + digits
+
+
 
 
 
@@ -1420,15 +1425,6 @@ def profile():
                 return redirect(url_for("profile"))
 
         # ---------- PHONE VALIDATION (ALWAYS RUN) ----------
-        digits = re.sub(r"\D", "", phone_number)
-
-        if not is_valid_indian_mobile(digits):
-            if is_ajax:
-                return jsonify(success=False, error="Invalid mobile number.")
-            flash("Enter a valid 10-digit Indian mobile number.", "danger")
-            return redirect(url_for("profile"))
-
-        full_phone = current_user.country_code + digits
 
         existing_user = User.query.filter(
             User.phone_number == full_phone,
