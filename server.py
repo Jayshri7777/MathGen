@@ -1253,6 +1253,12 @@ def unauthorized():
         return jsonify({"unauthorized": True}), 401
     return redirect(url_for("landing_page"))
 
+@app.route("/logout")
+@login_required
+def logout():
+    logout_user()
+    session.clear()
+    return redirect(url_for("landing_page"))
 
 
 @app.route("/login-popup")
