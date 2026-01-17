@@ -1871,6 +1871,34 @@ def normalize_answers(text):
 
     return "\n".join(lines)
 
+def normalize_school_answers(text):
+    """
+    Normalizes SCHOOL answers (NO options, NO a/b/c).
+    Expected output:
+    1) Answer
+    2) Answer
+    """
+    if not text:
+        raise ValueError("Empty school answer response")
+
+    text = clean_ai_text(text)
+
+    lines = []
+    for line in text.splitlines():
+        line = line.strip()
+
+        # Accept: 1) Answer OR 1. Answer
+        if re.match(r"^\d+[\)\.]\s+.+", line):
+            # Force consistent format: 1) Answer
+            line = re.sub(r"^(\d+)[\.]", r"\1)", line)
+            lines.append(line)
+
+    if not lines:
+        raise ValueError("No valid school answers detected")
+
+    return "\n".join(lines)
+
+
 # --- PDF Generation Class ---
 class CustomPDF(FPDF):
     def __init__(self, title, sub_info, header_text="", footer_text=""):
@@ -2916,8 +2944,13 @@ STRICT RULES (MANDATORY):
 - NO questions
 - ONE answer per line
 - Each answer MUST start on a new line
-- FORMAT MUST BE EXACTLY:
+FORMAT (MANDATORY):
+- ONLY final answers
+- NO options
+- NO (a), (b), (c)
+- NO explanations
 
+FORMAT:
 1) Answer
 2) Answer
 3) Answer
@@ -2932,7 +2965,7 @@ Questions:
                     contents=answers_prompt
                 )
                 try:
-                    solution_answers_text = clean_ai_text(a_response.text)
+                    solution_answers_text = normalize_school_answers(a_response.text)
                 except ValueError as e:
                     return jsonify({"error": str(e)}), 500
 
