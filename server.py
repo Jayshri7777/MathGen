@@ -30,6 +30,7 @@ import docx as docx_reader
 import csv
 
 
+
 def is_combo_user(user):
     return (
         user.grade == "10-12"
@@ -138,6 +139,12 @@ db = SQLAlchemy(app)
 @app.context_processor
 def inject_now():
     return {'now': datetime.now}
+
+@app.context_processor
+def inject_auth_flags():
+    return {
+        "is_google_login": session.get("google_login", False)
+    }
 
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -967,13 +974,15 @@ def create_image(content, title, sub_title_info, filename, fmt="png"):
 
 @app.route('/')
 def landing_page():
-    show_profile_popup = session.pop("show_profile_popup", False)
-
+    # 🔥 CLEAR ALL LOGIN POPUP TRIGGERS
+    session.pop("show_login", None)
+    session.pop("show_profile_popup", None)
 
     return render_template(
-        'landing.html',
-        show_profile_popup=show_profile_popup
+        "landing.html",
+        show_profile_popup=False
     )
+
 
 
 
@@ -1186,10 +1195,13 @@ from flask import jsonify
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
+        logout_user()
+        session.clear()
         return jsonify({
-            "success": True,
-            "redirect": url_for("serve_index")
-        })
+            "success": False,
+            "error": "Session reset. Please login again."
+        }),400
+
 
 
     login_method = request.form.get("login_method")
@@ -1220,6 +1232,9 @@ def login():
     login_user(user, remember=False)
     
     session.permanent = True
+    # 🔥 ENSURE GOOGLE FLAG IS CLEARED
+    session.pop("google_login", None)
+
 
     redirect_url = (
         url_for("exam_combo_page")
@@ -1257,14 +1272,13 @@ def profile_fragment():
     return render_template('partials/profile_fragment.html')
 
 
-@app.route('/logout')
-@login_required
-def logout():
-    logout_user()
-    session.clear()
-    return redirect(url_for('landing_page'))
-
-
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if current_user.is_authenticated:
+        return jsonify({
+            "success": False,
+            "error": "You are already logged in."
+        }), 400
 
 
 @app.route('/login/google')
@@ -1284,8 +1298,6 @@ def login_google():
 @app.route('/auth/google/callback')
 def google_callback():
     try:
-        logout_user()
-        session.clear()
         
         token = oauth.google.authorize_access_token()
         resp = oauth.google.get('https://openidconnect.googleapis.com/v1/userinfo')
@@ -1455,6 +1467,8 @@ def profile():
         current_user.newsletter_consent = 'newsletter_consent' in request.form
         current_user.phone_number = full_phone   # ✅ use validated phone
         current_user.profile_completed = True
+        session.pop("show_profile_popup", None)
+
 
         try:
             db.session.commit()
