@@ -974,12 +974,18 @@ def create_image(content, title, sub_title_info, filename, fmt="png"):
 
 @app.route('/')
 def landing_page():
-    show_popup = session.get("show_profile_popup", False)
+    show_popup = (
+        current_user.is_authenticated
+        and session.get("google_login") is True
+        and current_user.profile_completed is False
+        and session.get("show_profile_popup") is True
+    )
 
     return render_template(
         "landing.html",
         show_profile_popup=show_popup
     )
+
 
 @app.route('/generator')
 @login_required
@@ -1187,14 +1193,10 @@ def register():
 
 from flask import jsonify
 
-@app.route('/login', methods=['GET', 'POST'])
+@app.route('/login', methods=['POST'])
 def login():
     if current_user.is_authenticated:
-        logout_user()
-        return jsonify({
-            "success": False,
-            "error": "Session reset. Please login again."
-        }),400
+        return jsonify({"success": True}), 200
 
     login_method = request.form.get("login_method")
     login_identifier = request.form.get("login_identifier", "").strip()
@@ -1251,7 +1253,6 @@ def unauthorized():
 @login_required
 def logout():
     logout_user()
-    session.clear()
     return redirect(url_for("landing_page"))
 
 
@@ -1272,9 +1273,6 @@ def profile_fragment():
 
 @app.route('/login/google')
 def login_google():
-    # 🔥 HARD RESET SESSION & USER
-    logout_user()
-    session.clear()
 
     if not app.config.get('GOOGLE_CLIENT_ID') or not app.config.get('GOOGLE_CLIENT_SECRET'):
         return redirect(url_for('landing_page', show_login=1))
@@ -1451,8 +1449,8 @@ def profile():
 
         try:
             db.session.commit()
-
-
+            session.pop("google_login", None)
+            session.pop("show_profile_popup", None)
             # decide redirect target
             if current_user.grade == "10-12" or current_user.board == "CBSE-ICSE":
                 redirect_url = url_for("exam_combo_page")
