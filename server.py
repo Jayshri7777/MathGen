@@ -974,17 +974,12 @@ def create_image(content, title, sub_title_info, filename, fmt="png"):
 
 @app.route('/')
 def landing_page():
-    # 🔥 CLEAR ALL LOGIN POPUP TRIGGERS
-    session.pop("show_login", None)
-    session.pop("show_profile_popup", None)
+    show_popup = session.get("show_profile_popup", False)
 
     return render_template(
         "landing.html",
-        show_profile_popup=False
+        show_profile_popup=show_popup
     )
-
-
-
 
 @app.route('/generator')
 @login_required
@@ -1196,7 +1191,6 @@ from flask import jsonify
 def login():
     if current_user.is_authenticated:
         logout_user()
-        session.clear()
         return jsonify({
             "success": False,
             "error": "Session reset. Please login again."
@@ -1293,7 +1287,6 @@ def login_google():
 @app.route('/auth/google/callback')
 def google_callback():
     try:
-        
         token = oauth.google.authorize_access_token()
         resp = oauth.google.get('https://openidconnect.googleapis.com/v1/userinfo')
         resp.raise_for_status()
@@ -1314,33 +1307,24 @@ def google_callback():
             )
             db.session.add(user)
             db.session.commit()
-            session["show_profile_popup"] = True 
 
-        login_user(user, remember=False)
-        session.permanent = True
-        
-        session["google_login"] = True
-
-
-        # ✅ PROFILE NOT COMPLETED → LANDING PAGE (POPUP WILL SHOW)
-        if not user.profile_completed:
-            session["show_profile_popup"] = True
+            login_user(user)
+            session["google_login"] = True
+            session["show_profile_popup"] = True   # ✅ ONLY HERE
             return redirect(url_for("landing_page"))
-        
+
+        # 🔥 EXISTING GOOGLE USER (NO POPUP EVER)
+        # 🔥 EXISTING GOOGLE USER (NO POPUP EVER)
+        login_user(user)
+        session["google_login"] = True
         session.pop("show_profile_popup", None)
 
+        return redirect(
+            url_for("exam_combo_page")
+            if is_combo_user(user)
+            else url_for("serve_index")
+)
 
-
-        # ✅ PROFILE COMPLETED → NORMAL FLOW
-        if is_combo_user(user):
-            return redirect(url_for("exam_combo_page"))
-        
-        # EXISTING GOOGLE USER WITH COMPLETE PROFILE
-        if user and user.profile_completed:
-            return redirect(url_for("serve_index"))
-
-
-        return redirect(url_for("serve_index"))
 
     except Exception as e:
         print("GOOGLE AUTH ERROR:", e)
