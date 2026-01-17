@@ -747,6 +747,7 @@ def my_scores():
 # --- LOGIN MANAGER SETUP ---
 login_manager = LoginManager()
 login_manager.init_app(app)
+login_manager.session_protection = "strong"
 login_manager.login_view = None
 login_manager.refresh_view = None
 
@@ -755,7 +756,8 @@ login_manager.refresh_view = None
 
 @login_manager.user_loader
 def load_user(user_id):
-    return User.query.get(int(user_id))
+    return db.session.get(User, int(user_id))
+
 
 # --- OAuth Setup ---
 oauth = OAuth(app)
@@ -965,10 +967,7 @@ def create_image(content, title, sub_title_info, filename, fmt="png"):
 
 @app.route('/')
 def landing_page():
-    show_profile_popup = (
-    current_user.is_authenticated
-    and not current_user.profile_completed
-)
+    show_profile_popup = session.pop("show_profile_popup", False)
 
 
     return render_template(
@@ -1262,17 +1261,17 @@ def profile_fragment():
 @login_required
 def logout():
     logout_user()
-    session.clear()  # Clear everything in the session
+    session.clear()
     return redirect(url_for('landing_page'))
 
 
 
 
-# --- GOOGLE OAUTH LOGIN ROUTES ---
 @app.route('/login/google')
 def login_google():
-    session.pop("show_profile_popup", None)
-    session.pop("google_new_user", None)
+    # 🔥 HARD RESET SESSION & USER
+    logout_user()
+    session.clear()
 
     if not app.config.get('GOOGLE_CLIENT_ID') or not app.config.get('GOOGLE_CLIENT_SECRET'):
         return redirect(url_for('landing_page', show_login=1))
@@ -1285,6 +1284,9 @@ def login_google():
 @app.route('/auth/google/callback')
 def google_callback():
     try:
+        logout_user()
+        session.clear()
+        
         token = oauth.google.authorize_access_token()
         resp = oauth.google.get('https://openidconnect.googleapis.com/v1/userinfo')
         resp.raise_for_status()
@@ -1305,12 +1307,19 @@ def google_callback():
             )
             db.session.add(user)
             db.session.commit()
+            session["show_profile_popup"] = True 
 
-        login_user(user)
+        login_user(user, remember=False)
+        session.permanent = True
+
 
         # ✅ PROFILE NOT COMPLETED → LANDING PAGE (POPUP WILL SHOW)
         if not user.profile_completed:
+            session["show_profile_popup"] = True
             return redirect(url_for("landing_page"))
+        
+        session.pop("show_profile_popup", None)
+
 
 
         # ✅ PROFILE COMPLETED → NORMAL FLOW
@@ -1319,7 +1328,6 @@ def google_callback():
         
         # EXISTING GOOGLE USER WITH COMPLETE PROFILE
         if user and user.profile_completed:
-            login_user(user)
             return redirect(url_for("serve_index"))
 
 
