@@ -851,13 +851,14 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Auto login popup
   const params = new URLSearchParams(window.location.search);
-  if (
-    params.get("show_login") === "1" &&
-    {{ "true" if not current_user.is_authenticated else "false" }} &&
-    {{ "true" if not show_profile_popup else "false" }}
-  ) {
-    openPopup("/login-popup");
-  }
+if (
+  params.get("show_login") === "1" &&
+  {{ "true" if not current_user.is_authenticated else "false" }} &&
+  {{ "true" if not show_profile_popup else "false" }} &&
+  {{ "true" if not session.get("google_login") else "false" }}
+) {
+  openPopup("/login-popup");
+}
 
   // Dark mode
   if (localStorage.getItem("darkMode") === "true") {
