@@ -899,16 +899,19 @@ def get_text_from_image(file_storage):
         file_storage.stream.seek(0)
         image = Image.open(file_storage.stream)
 
-        # 🔥 FORCE RGB (CRITICAL FOR PNG/GIF)
         if image.mode != "RGB":
             image = image.convert("RGB")
 
         text = pytesseract.image_to_string(image)
-        return text.strip()
+
+        print("OCR OUTPUT:", repr(text))  # 🔥 DEBUG
+
+        return text.strip() if text else None
 
     except Exception as e:
         print("OCR ERROR:", e)
         return None
+
 
 
     
