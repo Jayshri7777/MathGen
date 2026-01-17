@@ -851,14 +851,15 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Auto login popup
   const params = new URLSearchParams(window.location.search);
+  // ✅ ONLY after MANUAL registration
 if (
   params.get("show_login") === "1" &&
-  {{ "true" if not current_user.is_authenticated else "false" }} &&
-  {{ "true" if not show_profile_popup else "false" }} &&
-  {{ "true" if not session.get("google_login") else "false" }}
+  {{ "true" if not current_user.is_authenticated else "false" }}
 ) {
   openPopup("/login-popup");
 }
+
+
 
   // Dark mode
   if (localStorage.getItem("darkMode") === "true") {
