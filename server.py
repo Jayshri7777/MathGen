@@ -2605,6 +2605,7 @@ Questions:
                 worksheet_questions_text = file.read().decode("utf-8", errors="ignore")
 
             elif filename.endswith((".png", ".jpg", ".jpeg", ".gif")):
+                file.stream.seek(0)  # 🔥 REQUIRED
                 worksheet_questions_text = get_text_from_image(file)
 
             else:
