@@ -895,22 +895,7 @@ def get_text_from_docx(file_storage):
 import pytesseract
 
 def get_text_from_image(file_storage):
-    try:
-        file_storage.stream.seek(0)
-        image = Image.open(file_storage.stream)
-
-        if image.mode != "RGB":
-            image = image.convert("RGB")
-
-        text = pytesseract.image_to_string(image)
-
-        print("OCR OUTPUT:", repr(text))  # 🔥 DEBUG
-
-        return text.strip() if text else None
-
-    except Exception as e:
-        print("OCR ERROR:", e)
-        return None
+    return None
 
 
 
