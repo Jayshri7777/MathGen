@@ -1202,8 +1202,6 @@ def login():
             "error": "Session reset. Please login again."
         }),400
 
-
-
     login_method = request.form.get("login_method")
     login_identifier = request.form.get("login_identifier", "").strip()
     password = request.form.get("password")
@@ -1270,15 +1268,6 @@ def login_popup():
 @login_required
 def profile_fragment():
     return render_template('partials/profile_fragment.html')
-
-
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if current_user.is_authenticated:
-        return jsonify({
-            "success": False,
-            "error": "You are already logged in."
-        }), 400
 
 
 @app.route('/login/google')
