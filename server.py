@@ -1311,6 +1311,8 @@ def google_callback():
 
         login_user(user, remember=False)
         session.permanent = True
+        
+        session["google_login"] = True
 
 
         # ✅ PROFILE NOT COMPLETED → LANDING PAGE (POPUP WILL SHOW)
