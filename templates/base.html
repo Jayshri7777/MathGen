@@ -648,6 +648,9 @@ label.required::after {
         Take a Test
     </a>
 
+<a href="#" onclick="event.preventDefault(); showMockTest()">Mock Test</a>
+
+
     <a href="{{ url_for('my_scores') }}"
        class="{% if request.endpoint == 'my_scores' %}active{% endif %}">
         My Scores
@@ -990,6 +993,19 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 </script>
 {% endif %}
+
+<script>
+function showMockTest() {
+    const texts = [
+        "Mock Test feature coming soon",
+        "Preparing mock test engine 🧠",
+        "Mock tests will be enabled shortly ⏳",
+    ];
+
+    const randomText = texts[Math.floor(Math.random() * texts.length)];
+    alert(randomText);
+}
+</script>
 
 
 </body>
