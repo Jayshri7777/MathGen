@@ -239,6 +239,21 @@ def load_topics():
             topics.append(row)
     return topics
 
+def generate_with_retry(client, prompt, normalize_fn, retries=3):
+    for attempt in range(retries):
+        response = client.models.generate_content(
+            model="models/gemini-flash-latest",
+            contents=prompt
+        )
+
+        try:
+            return normalize_fn(response.text)
+        except Exception as e:
+            print(f"⚠️ Retry {attempt+1} failed:", e)
+            print("RAW ↓↓↓")
+            print(response.text)
+
+    raise ValueError("AI failed after multiple attempts")
 
 
 # ---- MOCK TEST DATA MODEL ----
@@ -1008,7 +1023,6 @@ def about():
 def features():
     return render_template('features.html')
 # --- END NEW ROUTES ---
-
 
 # --- AUTHENTICATION ROUTES ---
 from datetime import datetime
@@ -2451,7 +2465,13 @@ Questions:
                 )
 
                 try:
-                    solution_answers_text = normalize_answers(clean_ai_text(a_response.text))
+                    solution_answers_text = generate_with_retry(
+    client,
+    answers_prompt,
+    lambda t: normalize_answers(clean_ai_text(t)),
+    retries=3
+)
+
                 except ValueError as e:
                     return jsonify({"error": str(e)}), 500
 
@@ -2965,7 +2985,13 @@ Questions:
                     contents=answers_prompt
                 )
                 try:
-                    solution_answers_text = normalize_school_answers(a_response.text)
+                    solution_answers_text = generate_with_retry(
+    client,
+    answers_prompt,
+    normalize_school_answers,
+    retries=3
+)
+
                 except ValueError as e:
                     return jsonify({"error": str(e)}), 500
 
