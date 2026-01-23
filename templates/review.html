@@ -52,7 +52,7 @@
 
             <!-- Q NO -->
             <div style="font-weight:700; font-size:17px;">
-                {{ r.q_no }}
+                {{ r.qno }}
             </div>
 
             <!-- QUESTION -->
@@ -62,12 +62,18 @@
 
             <!-- USER'S ANSWER -->
             <div style="font-weight:600;">
-                {{ r.your_answer }}
+            {% if r.selected is not none %}
+                ({{ ['a','b','c','d','e'][r.selected] }})
+                {{ r.options[r.selected] }}
+            {% else %}
+                —
+            {% endif %}
             </div>
 
             <!-- CORRECT ANSWER -->
             <div style="font-weight:600;">
-                {{ r.correct_answer }}
+            {{ r.correct }}
+
             </div>
 
             <!-- RESULT -->
