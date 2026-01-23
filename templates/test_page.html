@@ -6,6 +6,10 @@
     text-align: center;
     margin-top: 40px;
 }
+label {
+  font-size: 16px;
+  line-height: 1.6;
+}
 
 .submit-btn {
     background: linear-gradient(135deg, #e56b6f, #ff8fa3);
@@ -43,13 +47,24 @@
   <p><strong>Q{{ q.qno }}.</strong> {{ q.question_text }}</p>
 
   {% for opt in q.options() %}
-    <label>
-      <input type="radio" name="q_{{ q.id }}" value="{{ loop.index0 }}">
-      {{ opt }}
-    </label><br>
-  {% endfor %}
+  <label style="display:block; margin-bottom:10px; cursor:pointer;">
+    <input type="radio"
+           name="q_{{ q.id }}"
+           value="{{ loop.index0 }}"
+           style="margin-right:8px;">
+
+    <strong>{{ loop.index0 | int | string | replace('0','a') 
+                         | replace('1','b') 
+                         | replace('2','c') 
+                         | replace('3','d') 
+                         | replace('4','e') }}.</strong>
+
+    {{ opt }}
+  </label>
 {% endfor %}
 
+
+{% endfor %}
 
 <div class="submit-wrapper">
     <button type="submit" class="submit-btn">
