@@ -10,13 +10,10 @@ from authlib.integrations.flask_client import OAuth
 from flask import Flask, request, jsonify, send_file, send_from_directory
 from datetime import datetime
 from fpdf import FPDF
-from docx import Document
 from docx.shared import Pt
 from datetime import timedelta
 from functools import wraps
 import io
-import zipfile
-from docx.enum.text import WD_ALIGN_PARAGRAPH
 from flask_cors import CORS
 import fitz  # PyMuPDF
 from flask import Flask, request, render_template
@@ -27,8 +24,29 @@ import textwrap
 import uuid
 import PyPDF2  
 import docx as docx_reader 
-import csv
+from docx import Document
+from docx.enum.text import WD_ALIGN_PARAGRAPH
+import zipfile
 
+def build_filename(username, grade, board, topic, subtopic, difficulty, ext):
+    def clean(x):
+        if not x:
+            return "na"
+        x = str(x).lower().strip()
+        x = x.replace(" ", "-")
+        x = re.sub(r"[^a-z0-9\-]", "", x)
+        return x
+
+    base = "_".join([
+        clean(username),
+        clean(grade),
+        clean(board),
+        clean(topic),
+        clean(subtopic),
+        clean(difficulty)
+    ])
+
+    return f"{base}.{ext}"
 
 
 def is_combo_user(user):
@@ -296,14 +314,18 @@ You are an exam question generator.
 Generate {count} multiple-choice questions on:
 Topic: {topic}
 
-Rules:
-- Each question must have 4 options
-- Clearly specify the correct option index (0–3)
-- Provide a short explanation
+EXPLANATION RULES (MANDATORY):
+- Max 3 lines
+- NO speculation
+- NO assumptions
+- NO self-references
+- NO words like "perhaps", "assume", "let's say"
+- Explain calculation step-by-step
+- End with: "Answer = (option)"
+
 
 IMPORTANT:
 - Respond with ONLY a valid JSON array
-- Do NOT include explanations
 - Do NOT include markdown
 - Do NOT include extra text
 CRITICAL FORMAT RULES (MANDATORY):
@@ -337,8 +359,28 @@ CRITICAL FORMAT RULES (MANDATORY):
 
         for q in raw:
             q["question"] = clean_ai_text(q["question"])
-            q["options"] = [clean_ai_text(opt) for opt in q["options"]]
-            q["explanation"] = clean_ai_text(q["explanation"])
+
+            options = [
+    re.sub(r"^[A-Ea-e][\.\)]\s*", "", clean_ai_text(opt))
+    for opt in q["options"]
+]
+
+            if "None of the above" not in options:
+                options.append("None of the above")
+
+
+            # clean explanation
+            explanation = clean_ai_text(q["explanation"])
+
+            correct = int(q["correct"])
+
+            # 🔒 HARD SAFETY CHECK — correct option MUST exist
+            if correct < 0 or correct >= len(options):
+                correct = 4  # None of the above
+
+            q["options"] = options
+            q["correct"] = correct
+            q["explanation"] = explanation
 
         return raw
 
@@ -347,6 +389,62 @@ CRITICAL FORMAT RULES (MANDATORY):
         print("RAW RESPONSE ↓↓↓")
         print(response.text)
         return []
+
+@app.route("/mock-test")
+@login_required
+def mock_test():
+    return render_template("mock_test.html")
+
+@app.route("/start-full-mock", methods=["POST"])
+@login_required
+def start_full_mock():
+
+    board = current_user.board
+    grade = current_user.grade
+    count = int(request.form.get("question_count", 15))
+
+    # 🔒 Generate FULL syllabus mock
+    questions = generate_full_syllabus_mock(
+        board=board,
+        grade=grade,
+        count=count
+    )
+
+    # ✅ Create test
+    test = MockTest(
+        title=f"Full Syllabus Mock Test ({board.upper()} Grade {grade})",
+        user_id=current_user.id,
+        category="mock",
+        duration_minutes=30
+    )
+    db.session.add(test)
+    db.session.flush()
+
+    for idx, q in enumerate(questions, start=1):
+        options = q["options"]
+        correct = int(q["correct"])
+
+        mq = MockQuestion(
+            test_id=test.id,
+            qno=idx,
+            question_text=clean_ai_text(q["question"]),
+            options_json=json.dumps(options),
+            correct_option_index=correct,
+            explanation=clean_ai_text(q["explanation"])
+        )
+        db.session.add(mq)
+
+    attempt = MockAttempt(
+        user_id=current_user.id,
+        test_id=test.id,
+        total=len(questions)
+    )
+    db.session.add(attempt)
+    db.session.commit()
+
+    return redirect(url_for("take_test", attempt_id=attempt.id))
+
+
 
 
 def start_job_ai_test(job_type, exam_type, authority, past_paper, test_type, count):
@@ -449,14 +547,30 @@ Rules:
     db.session.flush()
 
     for idx, q in enumerate(questions, start=1):
+        options = [clean_ai_text(opt) for opt in q["options"]]
+        if "None of the above" not in options:
+            options.append("None of the above")
+
+
+        explanation = clean_ai_text(q["explanation"])
+        correct = int(q["correct"])
+
+        # 🔒 HARD SAFETY CHECK
+        if correct < 0 or correct >= len(options):
+            correct = 4
+        else:
+            if options[correct] not in explanation:
+                correct = 4
+
         mq = MockQuestion(
             test_id=test.id,
             qno=idx,
             question_text=clean_ai_text(q["question"]),
-            options_json=json.dumps(q["options"]),
-            correct_option_index=int(q["correct"]),
-            explanation=clean_ai_text(q["explanation"])
+            options_json=json.dumps(options),
+            correct_option_index=correct,
+            explanation=explanation
         )
+
         db.session.add(mq)
 
     attempt = MockAttempt(
@@ -473,6 +587,29 @@ Rules:
 @login_required   # optional but recommended
 def jobseekers():
     return render_template("job_seekers.html")
+
+@app.route("/retake-test/<int:test_id>")
+@login_required
+def retake_test(test_id):
+
+    test = MockTest.query.get_or_404(test_id)
+
+    # 🔒 SECURITY CHECK
+    if test.user_id and test.user_id != current_user.id:
+        flash("Unauthorized action", "danger")
+        return redirect(url_for("my_scores"))
+
+    attempt = MockAttempt(
+        user_id=current_user.id,
+        test_id=test.id,
+        total=MockQuestion.query.filter_by(test_id=test.id).count()
+    )
+
+    db.session.add(attempt)
+    db.session.commit()
+
+    return redirect(url_for("take_test", attempt_id=attempt.id))
+
 
 
 @app.route("/start-test", methods=["POST"])
@@ -568,14 +705,24 @@ def start_test():
         if not all(k in q for k in ("question", "options", "correct", "explanation")):
             continue
 
+        options = [clean_ai_text(opt) for opt in q["options"]]
+        if "None of the above" not in options:
+            options.append("None of the above")
+
+
+        correct = int(q["correct"])
+        if correct < 0 or correct > 3:
+            correct = 4
+
         mq = MockQuestion(
             test_id=test.id,
             qno=idx,
             question_text=q["question"],
-            options_json=json.dumps(q["options"]),
-            correct_option_index=int(q["correct"]),
+            options_json=json.dumps(options),
+            correct_option_index=correct,
             explanation=q["explanation"]
         )
+
         db.session.add(mq)
 
     # ✅ Create attempt
@@ -738,6 +885,7 @@ def my_scores():
             "sr_no": idx,
             "attempt_id": attempt.id,
             "test_title": test.title if test else "Mock Test",
+            "test_id": attempt.test_id,   # ✅ ADD THIS
             "score": score,
             "total": total,
             "date": attempt.created_at.strftime("%d %b %Y, %H:%M")
@@ -910,7 +1058,7 @@ def get_text_from_docx(file_storage):
 import pytesseract
 
 def get_text_from_image(file_storage):
-    return None
+    return ""
 
 
 
@@ -1025,7 +1173,6 @@ def features():
 # --- END NEW ROUTES ---
 
 # --- AUTHENTICATION ROUTES ---
-from datetime import datetime
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -1335,7 +1482,6 @@ def google_callback():
 
 
 
-from datetime import datetime
 
 
 
@@ -1344,8 +1490,6 @@ from datetime import datetime
 @app.route('/profile', methods=['GET','POST'])
 @login_required
 def profile():
-    from datetime import datetime
-    import re
 
     is_ajax = request.headers.get("X-Requested-With") == "XMLHttpRequest"
 
@@ -1629,7 +1773,7 @@ def review_attempt(attempt_id):
     "qno": q.qno,
     "question": clean_ai_text(q.question_text),
     "options": [clean_ai_text(o) for o in q.options()],
-    "correct": clean_ai_text(q.correct_option),
+    "correct": f"({chr(97 + q.correct_option_index)}) {clean_ai_text(q.correct_option)}",
     "selected": selected,
     "is_correct": selected == q.correct_option_index,
     "explanation": clean_ai_text(q.explanation)
@@ -1727,19 +1871,61 @@ def exam_combo_page():
         user_board=current_user.board
     )
 
+@app.route("/download-answer-key", methods=["POST"])
+@login_required
+def download_answer_key():
+    username = current_user.name
+    grade = current_user.grade
+    board = current_user.board
+    difficulty = "standard"
+    topic = "answer-key"
+    subtopic = "uploaded"
+    filename = build_filename(
+    username, grade, board, topic, subtopic, difficulty, format
+)
+
+
+    solution_text = request.form.get("solution_text")
+    format = request.form.get("format", "pdf")
+
+    info = {
+        "date": datetime.now().strftime("%d %b %Y"),
+        "marks": "",
+        "sub-title": "Answer Key"
+    }
+
+    if format == "pdf":
+        path = create_pdf(
+            solution_text,
+            "Answer Key",
+            info,
+            "Answer_Key.pdf"
+        )
+        return send_single_file(path, filename)
+
+    elif format == "docx":
+        path = create_docx(
+            solution_text,
+            "Answer Key",
+            info,
+            "Answer_Key.docx"
+        )
+        return send_single_file(path, filename)
+
+    elif format == "txt":
+        path = create_txt(
+            solution_text,
+            "Answer Key",
+            info,
+            "Answer_Key.txt"
+        )
+        return send_single_file(path, filename)
+
 
 @app.route("/generate-exam-combo", methods=["POST"])
 @login_required
 def generate_exam_combo():
     return handle_exam_combo(request)
-
-from docx import Document
-from docx.shared import Pt
-from docx.enum.text import WD_ALIGN_PARAGRAPH
-import io
-import zipfile
-from flask import send_file
-from google import genai
 
 
 def extract_json_from_ai(text, expect="question"):
@@ -1885,32 +2071,42 @@ def normalize_answers(text):
 
     return "\n".join(lines)
 
-def normalize_school_answers(text):
-    """
-    Normalizes SCHOOL answers (NO options, NO a/b/c).
-    Expected output:
-    1) Answer
-    2) Answer
-    """
+def normalize_school_answers(text, expected_count):
     if not text:
         raise ValueError("Empty school answer response")
 
     text = clean_ai_text(text)
 
-    lines = []
+    raw_answers = []
+
     for line in text.splitlines():
         line = line.strip()
+        if not line:
+            continue
 
-        # Accept: 1) Answer OR 1. Answer
-        if re.match(r"^\d+[\)\.]\s+.+", line):
-            # Force consistent format: 1) Answer
-            line = re.sub(r"^(\d+)[\.]", r"\1)", line)
-            lines.append(line)
+        # Strip numbering / junk
+        line = re.sub(
+            r"^(answer\s*)?(q\s*)?\d+[\)\.\:\=\-]*\s*",
+            "",
+            line,
+            flags=re.I
+        )
 
-    if not lines:
-        raise ValueError("No valid school answers detected")
+        if line:
+            raw_answers.append(line)
 
-    return "\n".join(lines)
+    # 🚨 HARD COUNT CHECK (THIS WAS MISSING)
+    if len(raw_answers) != expected_count:
+        raise ValueError(
+            f"Answer count mismatch: expected {expected_count}, got {len(raw_answers)}"
+        )
+
+    return "\n".join(
+        f"{i+1}) {ans}" for i, ans in enumerate(raw_answers)
+    )
+
+
+
 
 
 # --- PDF Generation Class ---
@@ -1986,10 +2182,6 @@ def create_pdf(content, title, sub_title_info, filename):
     pdf.output(file_path)
     return file_path
 
-import io
-import zipfile
-from datetime import datetime
-from google import genai
 from flask import send_file
 import csv
 
@@ -2017,8 +2209,117 @@ def get_combo_syllabus(board, grade):
 
     return list(set(topics))
 
+def normalize_board_grade(board, grade):
+    board = board.lower().strip()
+    grade = str(grade).lower().strip()
+
+    # Board combos
+    if "+" in board:
+        boards = {b.strip() for b in board.split("+")}
+    else:
+        boards = {board}
+
+    # Grade handling
+    if grade == "college":
+        grades = {"college"}
+    elif "-" in grade:              # future-proofing
+        start, end = grade.split("-")
+        grades = {str(i) for i in range(int(start), int(end) + 1)}
+    else:
+        grades = {grade}
+
+    return boards, grades
+
+def get_math_syllabus(board, grade):
+    boards, grades = normalize_board_grade(board, grade)
+    topics = []
+
+    with open(TOPICS_CSV, newline="", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+
+        for row in reader:
+            row_board = row["board"].lower().strip()
+            row_grade = row["grade"].lower().strip()
+            row_subject = row["subject"].lower().strip()
+
+            if (
+                row_board in boards
+                and row_grade in grades
+                and row_subject == "mathematics"
+            ):
+                major = row["major_topic"].strip()
+                minor = row["minor_topic"].strip()
+
+                topics.append(
+                    f"{major} – {minor}" if minor else major
+                )
+
+    return sorted(set(topics))
+
+def generate_full_syllabus_mock(board, grade, count):
+    client = genai.Client(api_key=os.environ.get("GENAI_API_KEY"))
+    syllabus = get_math_syllabus(board, grade)
+
+    if not syllabus:
+        raise ValueError(
+            f"No Mathematics syllabus found for {board.upper()} Grade {grade}"
+        )
+
+    syllabus_text = "\n".join(f"- {t}" for t in syllabus)
+
+    prompt = f"""
+You are a STRICT exam paper setter.
+
+BOARD: {board}
+GRADE: {grade}
+SUBJECT: Mathematics
+
+SYLLABUS (USE ONLY THESE TOPICS):
+{syllabus_text}
+
+RULES:
+- Mathematics ONLY
+- Grade-appropriate difficulty
+- EXACTLY {count} MCQs
+- 4 options + None of the above
+- NO external topics
+- NO answers inside questions
+
+OUTPUT FORMAT (STRICT JSON):
+[
+  {{
+    "question": "...",
+    "options": ["A","B","C","D"],
+    "correct": 0,
+    "explanation": "Short explanation. End with: Answer = (a)"
+  }}
+]
+"""
+
+    response = client.models.generate_content(
+        model="models/gemini-flash-latest",
+        contents=prompt
+    )
+
+    questions = extract_json_from_ai(response.text)
+
+    if not questions:
+        raise ValueError("Failed to generate mock test")
+
+    return questions
+
+
+def send_single_file(file_path, download_name):
+    return send_file(
+        file_path,
+        as_attachment=True,
+        download_name=download_name
+    )
+
 
 def handle_exam_combo(request):
+    username = current_user.name
+    difficulty = "exam"
     grade = request.form.get("grade")
     board = request.form.get("board")
     paper_type = request.form.get("paper_type")
@@ -2027,6 +2328,21 @@ def handle_exam_combo(request):
     include_detailed = request.form.get("include_detailed_solutions") == "1"
     if include_detailed:
         include_solutions = True
+
+    output_format = "pdf"   # exam combo is PDF-only
+
+    base_filename = build_filename(
+        username, grade, board, "exam-paper", paper_type, difficulty, output_format
+    )
+
+    solution_filename = build_filename(
+        username, grade, board, "exam-paper", paper_type + "-solutions", difficulty, output_format
+    )
+
+    zip_filename = build_filename(
+        username, grade, board, "exam-paper", paper_type, difficulty, "zip"
+    )
+
 
 
     if not grade or not board or not paper_type:
@@ -2185,40 +2501,64 @@ Questions:
         worksheet_text,     # ✅ DIRECT QUESTIONS
         title,
         info,
-        filename="Worksheet.pdf"
+        filename=base_filename
     )
 
 
-    files.append(("Worksheet.pdf", ws))
+    # ✅ ONLY WORKSHEET
+    if not include_solutions and not include_detailed:
+        return send_single_file(ws, base_filename)
+
+    files.append((base_filename, ws))
+
 
     if solution_text:
         sol = create_pdf(
             solution_text,
             f"{title} - Solutions",
             info,
-            filename="Answer_Sheet.pdf"
+           filename=solution_filename
         )
-        files.append(("Answer_Sheet.pdf", sol))
+        files.append((solution_filename, sol))
         
     if detailed_solution_text:
-        detailed_path = create_pdf(
-            detailed_solution_text,
-            f"{title} - Detailed Solutions",
-            info,
-            filename="Detailed_Solutions.pdf"
-        )
-        files.append(("Detailed_Solutions.pdf", detailed_path))
+        detailed_filename = build_filename(
+        username, grade, board,
+        "exam-paper",
+        paper_type + "-detailed-solutions",
+        difficulty,
+        output_format
+    )
 
+    detailed_path = create_pdf(
+        detailed_solution_text,
+        f"{title} - Detailed Solutions",
+        info,
+        filename=detailed_filename
+    )
 
+    detailed_filename = build_filename(
+    username, grade, board,
+    "exam-paper",
+    paper_type + "-detailed-solutions",
+    difficulty,
+    output_format
+)
+    files.append((detailed_filename, detailed_path))
 
 
     zip_buffer = io.BytesIO()
+    if len(files) == 1:
+        name, path = files[0]
+        return send_single_file(path, name)
+
+
     with zipfile.ZipFile(zip_buffer, "w") as zipf:
         for name, path in files:
             zipf.write(path, name)
 
     zip_buffer.seek(0)
-    return send_file(zip_buffer, as_attachment=True, download_name="Exam_Papers.zip")
+    return send_file(zip_buffer, as_attachment=True, download_name=zip_filename)
 
 def clear_temp_dir():
     for f in os.listdir(TEMP_DIR):
@@ -2271,7 +2611,36 @@ def contains_answer_like_math(text):
 @app.route('/generate-worksheet', methods=['GET', 'POST'])
 @login_required
 def generate_worksheet():
-    clear_temp_dir() 
+    username = current_user.name
+    grade = request.form.get("grade") or current_user.grade
+    board = request.form.get("board") or current_user.board
+    topic = request.form.get("topic") or request.form.get("job_type") or "worksheet"
+    subtopic = (
+        request.form.get("subtopic")
+        or request.form.get("minor_topic")
+        or "general"
+    )
+    difficulty = request.form.get("difficulty", "standard")
+    
+    output_format = get_output_format()
+
+    base_filename = build_filename(
+        username, grade, board, topic, subtopic, difficulty, output_format
+    )
+
+    solution_filename = build_filename(
+        username, grade, board, topic, subtopic + "-solutions", difficulty, output_format
+    )
+
+    zip_filename = build_filename(
+        username, grade, board, topic, subtopic, difficulty, "zip"
+    )
+
+
+
+
+    
+    
     if request.form.get("grade") == "10-12" or request.form.get("board") == "CBSE-ICSE":
         return jsonify({
             "error": "Combo syllabus must be generated via Exam Papers section."
@@ -2466,11 +2835,13 @@ Questions:
 
                 try:
                     solution_answers_text = generate_with_retry(
-    client,
-    answers_prompt,
-    lambda t: normalize_answers(clean_ai_text(t)),
-    retries=3
-)
+                    client,
+                    answers_prompt,
+                    normalize_answers,
+                    retries=3
+                )
+
+
 
                 except ValueError as e:
                     return jsonify({"error": str(e)}), 500
@@ -2505,64 +2876,84 @@ Questions:
                     worksheet_questions_text,
                     title,
                     info,
-                    filename=f"Worksheet.{output_format}"
-,
+                    filename=base_filename,
                     fmt=output_format
                 )
-                files_to_zip.append((f"Worksheet.{output_format}", ws))
 
-                if include_answers and solution_answers_text:
-                    sol = create_image(
+
+                if not include_answers:
+                    return send_single_file(ws, base_filename)
+
+
+                # ✅ CASE 2 — ZIP
+                files_to_zip.append((base_filename, ws))
+
+                if solution_answers_text:
+                    solution_path = create_image(
                         solution_answers_text,
                         f"{title} - Solutions",
                         info,
-                        filename=f"Solutions.{output_format}",
+                        filename=solution_filename,
                         fmt=output_format
                     )
-                    files_to_zip.append((f"Solutions.{output_format}", sol))
-
+                    files_to_zip.append((solution_filename, solution_path))
 
 
 
             # ---------- TXT ----------
             elif output_format == "txt":
-                ws = create_txt(
+                worksheet_path = create_txt(
                     worksheet_questions_text,
                     title,
                     info,
-                    f"Worksheet.txt"
+                    filename=base_filename
                 )
-                files_to_zip.append(("Worksheet.txt", ws))
 
-                if include_answers and solution_answers_text:
-                    sol = create_txt(
+                # ✅ CASE 1 — ONLY WORKSHEET (NO ZIP)
+                if not include_answers:
+                    return send_single_file(worksheet_path, base_filename)
+
+                # ✅ CASE 2 — WORKSHEET + ANSWERS → ZIP
+                files_to_zip.append((base_filename, worksheet_path))
+
+                if solution_answers_text:
+                    solution_path = create_txt(
                         solution_answers_text,
                         f"{title} - Solutions",
                         info,
-                        f"Solutions.txt"
+                        filename=solution_filename
                     )
-                    files_to_zip.append(("Solutions.txt", sol))
+                    files_to_zip.append((solution_filename, solution_path))
+
+
 
 
 
             # ---------- DOCX ----------
             elif output_format == "docx":
-                ws = create_docx(
+                worksheet_path = create_docx(
                     worksheet_questions_text,
                     title,
                     info,
-                    f"Worksheet.docx"
+                    filename=base_filename
                 )
-                files_to_zip.append(("Worksheet.docx", ws))
 
-                if include_answers and solution_answers_text:
-                    sol = create_docx(
+                # ✅ CASE 1 — ONLY WORKSHEET (NO ZIP)
+                if not include_answers:
+                    return send_single_file(worksheet_path, base_filename)
+
+                # ✅ CASE 2 — WORKSHEET + ANSWERS → ZIP
+                files_to_zip.append((base_filename, worksheet_path))
+
+                if solution_answers_text:
+                    solution_path = create_docx(
                         solution_answers_text,
                         f"{title} - Solutions",
                         info,
-                        f"Solutions.docx"
+                        filename=solution_filename
                     )
-                    files_to_zip.append(("Solutions.docx", sol))
+                    files_to_zip.append((solution_filename, solution_path))
+
 
 
 
@@ -2570,23 +2961,46 @@ Questions:
             # ---------- PDF ----------
             elif output_format == "pdf":
                 worksheet_path = create_pdf(
-                    worksheet_questions_text,   # ✅ DIRECT QUESTIONS
+                    worksheet_questions_text,
                     title,
                     info,
-                    filename="Worksheet.pdf"
+                    filename=base_filename
                 )
 
-                files_to_zip.append(("Worksheet.pdf", worksheet_path))
+                # ✅ CASE 1 — ONLY WORKSHEET (NO ZIP)
+                if not include_answers:
+                    filename = build_filename(
+    username, grade, board, topic, subtopic, difficulty, output_format
+)
+                    return send_single_file(worksheet_path, filename)
 
 
-                if include_answers and solution_answers_text:
+                # ✅ CASE 2 — WORKSHEET + ANSWERS → ZIP
+                ws_name = build_filename(
+    username, grade, board, topic, subtopic, difficulty, output_format
+)
+                files_to_zip.append((ws_name, worksheet_path))
+
+
+                if solution_answers_text:
                     solution_path = create_pdf(
                         solution_answers_text,
                         f"{title} - Solutions",
                         info,
-                        filename="Answer_Sheet.pdf"
+                        filename=solution_filename
                     )
-                    files_to_zip.append(("Answer_Sheet.pdf", solution_path))
+                    sol_name = build_filename(
+                        username,
+                        grade,
+                        board,
+                        topic,
+                        subtopic + "-solutions",
+                        difficulty,
+                        output_format
+                    )
+                    files_to_zip.append((sol_name, solution_path))
+
+
 
 
 
@@ -2598,6 +3012,10 @@ Questions:
 
 
             zip_buffer = io.BytesIO()
+            if len(files_to_zip) == 1:
+                name, path = files_to_zip[0]
+                return send_single_file(path, name)
+
             with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zipf:
                 for name, path in files_to_zip:
                     with open(path, "rb") as f:
@@ -2605,12 +3023,17 @@ Questions:
 
             zip_buffer.seek(0)
             
+            zip_name = build_filename(
+                username, grade, board, topic, subtopic, difficulty, "zip"
+            )
+
             return send_file(
-    zip_buffer,
-    mimetype="application/zip",
-    as_attachment=True,
-    download_name="Job_Worksheet.zip"
-)
+                zip_buffer,
+                mimetype="application/zip",
+                as_attachment=True,
+                download_name=zip_name
+            )
+
 
 
 
@@ -2715,22 +3138,28 @@ Worksheet:
                     worksheet_questions_text,
                     title,
                     info,
-                    filename=f"Worksheet.{output_format}"
-,
+                    filename=base_filename,
                     fmt=output_format
                 )
-                files_to_zip.append((f"Worksheet.{output_format}", ws))
+
+                # ✅ ADD THIS BLOCK ⬇️
+                if not include_answers:
+                    return send_single_file(ws, base_filename)
+
+
+                files_to_zip.append((base_filename, ws))
+
 
 
                 if include_answers and solution_answers_text:
-                    sol = create_image(
+                    solution_path = create_image(
                         solution_answers_text,
                         f"{title} - Solutions",
                         info,
-                        filename=f"Solutions.{output_format}",
+                        filename=solution_filename,
                         fmt=output_format
                     )
-                    files_to_zip.append((f"Solutions.{output_format}", sol))
+                    files_to_zip.append((solution_filename, solution_path))
 
 
 
@@ -2742,18 +3171,22 @@ Worksheet:
                     worksheet_questions_text,
                     title,
                     info,
-                    filename=f"Worksheet.txt"
+                    filename=base_filename
                 )
-                files_to_zip.append(("Worksheet.txt", worksheet_path))
+                if not include_answers:
+                    return send_single_file(worksheet_path, base_filename)
+
+                files_to_zip.append((base_filename, worksheet_path))
 
                 if include_answers and solution_answers_text:
                     solution_path = create_txt(
                         solution_answers_text,
                         f"{title} - Solutions",
                         info,
-                        filename=f"Solutions.txt"
+                        filename=solution_filename
                     )
-                    files_to_zip.append(("Solutions.txt", solution_path))
+                    files_to_zip.append((solution_filename, solution_path))
+
 
 
             # ---------- DOCX ----------
@@ -2763,9 +3196,12 @@ Worksheet:
                     worksheet_questions_text,
                     title,
                     info,
-                    filename= "Worksheet.docx"
+                    filename=base_filename
                 )
-                files_to_zip.append(("Worksheet.docx", worksheet_path))
+                if not include_answers:
+                    return send_single_file(worksheet_path, filename=base_filename)
+
+                files_to_zip.append((base_filename, worksheet_path))
 
                 if include_answers and solution_answers_text:
 
@@ -2773,9 +3209,9 @@ Worksheet:
                         solution_answers_text,
                         f"{title} - Solutions",
                         info,
-                        filename="Solutions.docx"
+                        filename=solution_filename
                     )
-                    files_to_zip.append(("Solutions.docx", solution_path))
+                    files_to_zip.append((solution_filename, solution_path))
 
 
             # ---------- PDF ----------
@@ -2784,10 +3220,17 @@ Worksheet:
                     worksheet_questions_text,   # ✅ DIRECT QUESTIONS
                     title,
                     info,
-                    filename="Worksheet.pdf"
+                    filename=base_filename
                 )
 
-                files_to_zip.append(("Worksheet.pdf", worksheet_path))
+                if not include_answers:
+                    filename = build_filename(
+    username, grade, board, topic, subtopic, difficulty, output_format
+)
+                    return send_single_file(worksheet_path, filename)
+
+
+                files_to_zip.append((base_filename, worksheet_path))
 
 
                 if include_answers and solution_answers_text:
@@ -2795,10 +3238,10 @@ Worksheet:
                         solution_answers_text,
                         f"{title} - Solutions",
                         info,
-                        filename="Solutions.pdf"
+                        filename=solution_filename
                     )
-                    files_to_zip.append(
-                        ("Solutions.pdf", solution_path))
+                    files_to_zip.append((solution_filename, solution_path))
+
                     
 
 
@@ -2812,6 +3255,10 @@ Worksheet:
 
                 
             zip_buffer = io.BytesIO()
+            if len(files_to_zip) == 1:
+                name, path = files_to_zip[0]
+                return send_single_file(path, name)
+
             with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zipf:
                 for zip_name, file_path in files_to_zip:
                     with open(file_path, "rb") as f:
@@ -2823,7 +3270,7 @@ Worksheet:
                 zip_buffer,
                 mimetype="application/zip",
                 as_attachment=True,
-                download_name="Worksheet_Solutions.zip"
+                download_name=zip_filename
             )
             
         # =====================================================
@@ -2935,6 +3382,12 @@ If ANY rule is violated, the response is INVALID.
                 }), 500
             
             worksheet_questions_text = normalize_questions(questions_json)
+            # 🔒 COUNT QUESTIONS (SOURCE OF TRUTH)
+            question_count = len([
+                line for line in worksheet_questions_text.splitlines()
+                if re.match(r"^\d+\)", line)
+            ])
+
             # 🚨 ABSOLUTE BLOCK — worksheet MUST NOT contain answers
             if contains_answer_like_math(worksheet_questions_text):
                 raise ValueError(
@@ -2956,26 +3409,23 @@ If ANY rule is violated, the response is INVALID.
             # -------- ANSWERS ----------
             if include_answers:
                 answers_prompt = f"""
-You are generating ONLY an answer key.
+You are generating ONLY SUBJECTIVE answers.
 
-STRICT RULES (MANDATORY):
-- ONLY answers
-- NO explanations
-- NO questions
-- ONE answer per line
-- Each answer MUST start on a new line
-FORMAT (MANDATORY):
-- ONLY final answers
+🚨 STRICT RULES (NON-NEGOTIABLE):
 - NO options
 - NO (a), (b), (c)
+- NO multiple choice
 - NO explanations
+- NO words like "Answer is"
+- ONLY final answers
+- ONE answer per line
 
-FORMAT:
+FORMAT (MANDATORY):
 1) Answer
 2) Answer
 3) Answer
 
-If you violate format, response is INVALID.
+If you include options or letters, the response is INVALID.
 
 Questions:
 {worksheet_questions_text}
@@ -2986,11 +3436,12 @@ Questions:
                 )
                 try:
                     solution_answers_text = generate_with_retry(
-    client,
-    answers_prompt,
-    normalize_school_answers,
-    retries=3
-)
+                        client,
+                        answers_prompt,
+                        lambda t: normalize_school_answers(t, question_count),
+                        retries=3
+                    )
+
 
                 except ValueError as e:
                     return jsonify({"error": str(e)}), 500
@@ -3023,22 +3474,24 @@ Questions:
                     worksheet_questions_text,
                     title,
                     info,
-                    filename=f"Worksheet.{output_format}"
-,
+                    filename=base_filename,
                     fmt=output_format
                 )
-                files_to_zip.append((f"Worksheet.{output_format}", ws))
+                if not include_answers:
+                    return send_single_file(ws, base_filename)
+
+                files_to_zip.append((base_filename, ws))
 
 
                 if include_answers and solution_answers_text:
-                    sol = create_image(
+                    solution_path = create_image(
                         solution_answers_text,
                         f"{title} - Solutions",
                         info,
-                        filename=f"Solutions.{output_format}",
+                        filename=solution_filename,
                         fmt=output_format
                     )
-                    files_to_zip.append((f"Solutions.{output_format}", sol))
+                    files_to_zip.append((solution_filename, solution_path))
 
 
 
@@ -3049,9 +3502,12 @@ Questions:
                     worksheet_questions_text,
                     title,
                     info,
-                    filename=f"Worksheet.txt"
+                    filename=base_filename
                 )
-                files_to_zip.append(("Worksheet.txt", worksheet_path))
+                if not include_answers:
+                    return send_single_file(worksheet_path, base_filename)
+
+                files_to_zip.append((base_filename, worksheet_path))
             
 
                 if include_answers and solution_answers_text:
@@ -3059,9 +3515,10 @@ Questions:
                         solution_answers_text,
                         f"{title} - Solutions",
                         info,
-                        filename=f"Solutions.txt"
+                        filename=solution_filename
                     )
-                    files_to_zip.append(("Solutions.txt", solution_path))
+                    files_to_zip.append((solution_filename, solution_path))
+
                     
 
 
@@ -3071,9 +3528,12 @@ Questions:
                     worksheet_questions_text,
                     title,
                     info,
-                    filename=f"Worksheet.docx"
+                    filename=base_filename
                 )
-                files_to_zip.append(("Worksheet.docx", worksheet_path))
+                if not include_answers:
+                    return send_single_file(worksheet_path, base_filename)
+
+                files_to_zip.append((base_filename, worksheet_path))
             
 
                 if include_answers and solution_answers_text:
@@ -3081,9 +3541,9 @@ Questions:
                         solution_answers_text,
                         f"{title} - Solutions",
                         info,
-                        filename=f"Solutions.docx"
+                        filename=solution_filename
                     )
-                    files_to_zip.append(("Solutions.docx", solution_path))
+                    files_to_zip.append((solution_filename, solution_path))
                 
 
 
@@ -3093,10 +3553,18 @@ Questions:
                     worksheet_questions_text,   # ✅ DIRECT QUESTIONS
                     title,
                     info,
-                    filename="Worksheet.pdf"
+                    filename=base_filename
                 )
 
-                files_to_zip.append(("Worksheet.pdf", worksheet_path))
+                if not include_answers:
+                    filename = build_filename(
+    username, grade, board, topic, subtopic, difficulty, output_format
+)
+                    return send_single_file(worksheet_path, filename)
+
+
+                files_to_zip.append((base_filename, worksheet_path))
+
 
 
                 if include_answers and solution_answers_text:
@@ -3104,9 +3572,9 @@ Questions:
                         solution_answers_text,
                         f"{title} - Solutions",
                         info,
-                        filename="Solutions.pdf"
+                        filename=solution_filename
                     )
-                    files_to_zip.append(("Solutions.pdf", solution_path))
+                    files_to_zip.append((solution_filename, solution_path))
 
 
             else:
@@ -3117,6 +3585,10 @@ Questions:
 
             
             zip_buffer = io.BytesIO()
+            if len(files_to_zip) == 1:
+                name, path = files_to_zip[0]
+                return send_single_file(path, name)
+
             with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zipf:
                 for zip_name, file_path in files_to_zip:
                     with open(file_path, "rb") as f:
@@ -3124,12 +3596,17 @@ Questions:
 
             zip_buffer.seek(0)
 
+            zip_name = build_filename(
+                username, grade, board, topic, subtopic, difficulty, "zip"
+            )
+
             return send_file(
                 zip_buffer,
                 mimetype="application/zip",
                 as_attachment=True,
-                download_name="mathgen_worksheet.zip"
+                download_name=zip_name
             )
+
 
 
 
