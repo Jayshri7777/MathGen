@@ -2,161 +2,292 @@
 {% block content %}
 
 <style>
-    body {
-        font-family: "Inter", sans-serif;
-    }
-
-    .test-wrapper {
+/* ---------- PAGE BASE ---------- */
+.take-test-container {
     max-width: 900px;
-    margin-left: 40px; 
-    padding-top: 20px;
-    text-align: left;
+    margin: 0 auto;
+    padding: 36px 20px 60px;
 }
-    .test-header-title {
-        font-size: 32px;
-        font-weight: 800;
-        margin-bottom: 5px;
-        color: #2b2b2b;
-    }
 
-    .test-description {
-        font-size: 17px;
-        color: #4a3b3b;
-        margin-bottom: 15px;
-    }
+/* ---------- INFO CARD ---------- */
+.info-card {
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 16px;
+    padding: 20px 24px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+    margin-bottom: 36px;
+}
 
-    .time-left {
-        font-size: 18px;
-        font-weight: 600;
-        margin-bottom: 25px;
-        color: #2b2b2b;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+}
 
-    .question-block {
-        background: rgba(255, 255, 255, 0.5);
-        padding: 20px;
-        margin-bottom: 25px;
-        border-radius: 14px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-    }
+/* ---------- FORM CARD ---------- */
+.test-section {
+    background: rgba(255, 255, 255, 0.55);
+    border-radius: 20px;
+    padding: 36px;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.1);
+}
 
-    .question-text {
-        font-size: 19px;
-        font-weight: 700;
-        margin-bottom: 12px;
-        color: #222;
-    }
+/* ---------- FORM GROUP ---------- */
+.form-group {
+    margin-bottom: 26px;
+}
 
-    .options-list div {
-        margin-bottom: 8px;
-        font-size: 16px;
-        color: #333;
-    }
-
-    .submit-btn {
-    width: 100%;
-    margin-top: 30px;
-    background: linear-gradient(90deg, #a83254, #ff4fa3); 
-    padding: 16px;
-    font-size: 18px;
-    color: white;
+.form-group label {
     font-weight: 700;
-    border-radius: 10px;
+    margin-bottom: 6px;
+    display: block;
+}
+
+/* ---------- DISABLED INPUT ---------- */
+.locked-input {
+    background: #f0f0f0;
+    color: #777;
+    border: 1px solid #ccc;
+    cursor: not-allowed;
+}
+
+/* ---------- TEST PERIOD ---------- */
+.test-period-value {
+    font-size: 20px;
+    font-weight: 800;
+    color: #7a1f1f;
+}
+
+/* ---------- BUTTON ---------- */
+.start-btn {
+    text-align: center;
+    margin-top: 40px;
+}
+
+.start-btn button {
+    background: linear-gradient(135deg, #e56b6f, #ff8fa3);
     border: none;
+    color: white;
+    padding: 14px 36px;
+    font-size: 17px;
+    font-weight: 700;
+    border-radius: 999px;
     cursor: pointer;
-    transition: 0.2s ease;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    box-shadow: 0 12px 28px rgba(229,107,111,0.4);
+}
+/* ---------- LOCKED DISPLAY PILL ---------- */
+.locked-pill {
+    background: linear-gradient(135deg, #f6f6f6, #ededed);
+    border: 1px solid #d5d5d5;
+    border-radius: 12px;
+    padding: 14px 18px;
+    font-size: 15px;
+    font-weight: 600;
+    color: #555;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
 }
 
-.submit-btn:hover {
-    background: #8f2947;      
-    transform: translateY(-2px);
+/* ---------- SELECT WRAPPER ---------- */
+.select-wrapper {
+    position: relative;
 }
 
-
-    .radio-option {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        cursor: pointer;
-    }
-
-    .radio-option input {
-        cursor: pointer;
-        transform: scale(1.2);
-    }
-    /* Override any centering from base.html */
-.page-wrapper, .content, .container, .test-wrapper {
-    width: 95% !important;
-    max-width: none !important;
-    margin: 0 !important;
-    padding-left: 40px !important; /* shift everything left */
-    text-align: left !important;
-    display: block !important;
-}
-.question-block {
-    margin-left: 0 !important;
+.pretty-select {
+    width: 100%;
+    padding: 14px 16px;
+    border-radius: 12px;
+    border: 1px solid #d8a79b;
+    background: #fff;
+    font-size: 15px;
+    font-weight: 600;
+    appearance: none;
+    cursor: pointer;
+    box-shadow: 0 6px 14px rgba(0,0,0,0.06);
 }
 
+/* Custom dropdown arrow */
+.select-wrapper::after {
+    content: "▾";
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 18px;
+    color: #7a1f1f;
+    pointer-events: none;
+}
+
+/* ---------- FORM LABEL ---------- */
+.form-group label {
+    font-weight: 700;
+    font-size: 15px;
+    margin-bottom: 8px;
+    display: block;
+    color: #4b1e1e;
+}
+/* ===== LOCKED INPUT (GREYED OUT BOX) ===== */
+.locked-input {
+    width: 100%;
+    padding: 14px 16px;
+    border-radius: 12px;
+
+    background: linear-gradient(135deg, #eeeeee, #e5e5e5);
+    border: 1.5px solid #cfcfcf;
+
+    font-size: 15px;
+    font-weight: 600;
+    color: #666;
+
+    display: flex;
+    align-items: center;
+
+    box-shadow:
+        inset 0 1px 2px rgba(0,0,0,0.06),
+        0 6px 14px rgba(0,0,0,0.08);
+
+    cursor: not-allowed;
+    user-select: none;
+}
+/* ===== INSTRUCTIONS CARD ===== */
+.instructions-card {
+    background: linear-gradient(180deg, #fff7f5, #ffeae5);
+    border-left: 6px solid #e56b6f;
+    border-radius: 16px;
+
+    padding: 22px 26px;
+    margin: 0 auto 32px;
+    max-width: 900px;
+
+    box-shadow: 0 10px 26px rgba(0,0,0,0.08);
+}
+
+.instructions-card h3 {
+    margin: 0 0 14px;
+    font-size: 20px;
+    font-weight: 700;
+    color: #7a1f1f;
+}
+
+.instructions-card ul {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.instructions-card li {
+    margin-bottom: 10px;
+    font-size: 14.5px;
+    font-weight: 500;
+    color: #5a2a2a;
+    line-height: 1.6;
+}
 
 </style>
 
-<div class="test-wrapper">
+<div class="take-test-container">
 
-    <h2 class="test-header-title">{{ test.title }}</h2>
-    <p class="test-description">{{ test.description }}</p>
-
-    <div class="time-left">⏳ Time Left: <span id="timeLeft">{{ test.duration_minutes }}:00</span></div>
-
-    <form method="POST">
-
-        {% for q in questions %}
-        <div class="question-block">
-
-            <div class="question-text">
-                {{ q.qno }}. {{ q.question_text }}
+    <!-- INFO -->
+    <div class="info-card">
+        <div class="info-row">
+            <div>
+                <p><strong>Student:</strong> {{ current_user.name }}</p>
+                <p><strong>Board:</strong> {{ current_user.board }}</p>
+                <p><strong>Grade:</strong> {{ current_user.grade }}</p>
             </div>
-
-            <div class="options-list">
-                {% for option in q.options %}
-                <label class="radio-option">
-                    <input type="radio" name="q_{{ q.qno }}" value="{{ loop.index0 }}">
-                    {{ option }}
-                </label>
-                {% endfor %}
+            <div style="text-align:right;">
+                <p><strong>Date:</strong> <span id="live-date"></span></p>
+                <p><strong>Time:</strong> <span id="live-time"></span></p>
             </div>
-
         </div>
-        {% endfor %}
+    </div>
 
-        <button class="submit-btn">Submit Test</button>
+    <!-- FORM -->
+    <div class="test-section">
+        <form method="POST" action="{{ url_for('start_full_mock') }}">
 
-    </form>
 
+<!-- INSTRUCTIONS CARD -->
+<div class="instructions-card">
+    <h3>📝 Instructions</h3>
+    <ul>
+        <li>This is a <strong>full syllabus mock test</strong> based on your selected board and grade.</li>
+        <li>All questions are <strong>MCQ-based</strong> and must be attempted within the test duration.</li>
+        <li>Each question carries equal marks. <strong>No negative marking</strong>.</li>
+        <li>Once the test starts, it <strong>cannot be paused or restarted</strong>.</li>
+        <li>Your score will be automatically saved and visible under <strong>My Scores</strong>.</li>
+        <li>Ensure a stable internet connection before starting the test.</li>
+    </ul>
+</div>
+
+            <!-- LOCKED SYLLABUS -->
+<!-- LOCKED SYLLABUS DISPLAY -->
+<!-- TOPIC (LOCKED GREY BOX) -->
+<div class="form-group">
+    <label>Topic</label>
+    <div class="locked-input">
+        📘 Full Syllabus
+    </div>
+    <input type="hidden" name="topic" value="full-syllabus">
+</div>
+
+<!-- SUBTOPIC (LOCKED GREY BOX) -->
+<div class="form-group">
+    <label>Sub-topic</label>
+    <div class="locked-input">
+        📚 All Subtopics Included
+    </div>
+    <input type="hidden" name="minor_topic" value="">
+</div>
+
+
+<!-- QUESTION COUNT -->
+<div class="form-group">
+    <label>Number of Questions</label>
+    <div class="select-wrapper">
+        <select name="question_count" class="pretty-select">
+            <option value="15">15 Questions</option>
+            <option value="30">30 Questions</option>
+            <option value="50">50 Questions</option>
+        </select>
+    </div>
+</div>
+
+            <!-- SUBMIT -->
+            <div class="start-btn">
+                <button type="submit">🚀 Start Full Mock Test</button>
+            </div>
+
+        </form>
+    </div>
 </div>
 
 <script>
-    let totalSeconds = {{ test.duration_minutes }} * 60;
+function updateDateTime() {
+    const now = new Date();
+    document.getElementById("live-date").innerText =
+        now.toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
+    document.getElementById("live-time").innerText =
+        now.toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit' });
+}
+updateDateTime();
+setInterval(updateDateTime, 60000);
 
-    function updateTimer() {
-        let minutes = Math.floor(totalSeconds / 60);
-        let seconds = totalSeconds % 60;
+const radios = document.querySelectorAll("input[name='test_type']");
+const testPeriod = document.getElementById("test-period");
 
-        document.getElementById("timeLeft").textContent =
-            `${minutes}:${seconds.toString().padStart(2, '0')}`;
+function updateTestPeriod() {
+    const now = new Date();
+    const type = document.querySelector("input[name='test_type']:checked").value;
 
-        if (totalSeconds <= 0) {
-            document.forms[0].submit();
-        } else {
-            totalSeconds--;
-            setTimeout(updateTimer, 1000);
-        }
-    }
+    if (type === "daily")
+        testPeriod.innerText = "Today | 4:00 PM – 5:00 PM";
+    else if (type === "weekly")
+        testPeriod.innerText = "Sunday | 10:00 AM – 12:00 PM";
+    else
+        testPeriod.innerText = "Month End | 10:00 AM – 1:00 PM";
+}
 
-    updateTimer();
+radios.forEach(r => r.addEventListener("change", updateTestPeriod));
+updateTestPeriod();
 </script>
 
 {% endblock %}
