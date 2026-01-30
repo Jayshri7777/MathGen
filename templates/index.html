@@ -278,6 +278,90 @@ body {
     display: flex;
     flex-direction: column;
 }
+.action-hint {
+    max-width: 650px;
+    margin: 30px auto 16px;
+    text-align: center;
+    font-size: 13px;
+    color: #7a4a4a;
+    line-height: 1.5;
+}
+.action-hint strong {
+    color: #5a1f1f;
+}
+.generate-btn.dual {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    margin-top: 24px;
+}
+
+/* Button size control */
+.generate-btn.dual button {
+    min-width: 220px;
+    padding: 14px 24px;
+    font-size: 15px;
+}
+
+/* Primary button slightly stronger */
+.generate-btn.dual button:first-child {
+    min-width: 240px;
+}
+
+/* Prevent full-width stretching */
+.generate-btn.dual {
+    max-width: 520px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+
+.generate-btn.dual button.secondary-btn {
+    background: linear-gradient(135deg, #b07a7a, #cfa5a5);
+    box-shadow: 0 6px 14px rgba(0,0,0,0.15);
+}
+/* ===== ACTION FOOTER FIX ===== */
+.action-footer {
+    margin-top: 32px;
+    padding-top: 28px;
+    border-top: 1px dashed #d8a79b;
+}
+
+.generate-btn.dual {
+    margin-top: 20px;   /* 👈 reduce vertical gap */
+}
+@media (max-width: 600px) {
+    .generate-btn.dual {
+        flex-direction: column;
+    }
+
+    .generate-btn.dual button {
+        width: 100%;
+    }
+}
+/* ===== RE-DOWNLOAD BUTTON STATES ===== */
+
+/* Default (DISABLED) – grey */
+.generate-btn.dual button.secondary-btn {
+    background: linear-gradient(135deg, #cfa5a5, #e6bcbc);
+    color: #fff;
+    box-shadow: none;
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+/* ENABLED – turn RED */
+.generate-btn.dual button.secondary-btn:not(:disabled) {
+    background: linear-gradient(135deg, #7a1f2b, #a83246);
+    box-shadow: 0 8px 20px rgba(122, 31, 43, 0.35);
+    opacity: 1;
+    cursor: pointer;
+}
+
+/* Optional hover polish */
+.generate-btn.dual button.secondary-btn:not(:disabled):hover {
+    transform: translateY(-1px);
+}
 
 
 
@@ -340,7 +424,7 @@ body {
             <!-- TOPIC -->
             <div class="form-group">
                 <label>Topic</label>
-                <select class="pretty-select" name="topic" id="topic" disabled>
+                <select class="pretty-select" name="topic" id="topic">
                     <option value="">Loading topics...</option>
                 </select>
             </div>
@@ -421,32 +505,60 @@ body {
         <p class="upload-hint">
             We’ll analyze your worksheet and generate an accurate answer sheet.
         </p>
-        </div> <!-- END ws-grid -->
+        </div> <!-- END upload-zone -->
+
+
+
+</div> <!-- END ws-card -->
+
 
     </div>
+    
+</div>
+<div class="action-footer">
+
+    <div class="answer-key-bar">
+        <label class="checkbox-group">
+            <input type="checkbox" name="answer_key" value="1">
+            Include Answer Key
+        </label>
+    </div>
+
+    <div class="action-hint">
+        <p>
+            <strong>Generate New Worksheet</strong> creates a fresh set of questions.
+            <br>
+            <strong>Re-download Worksheet</strong> keeps the same questions.
+        </p>
+    </div>
+
+    <div class="generate-btn dual">
+        <button
+            type="submit"
+            name="action"
+            value="new"
+            id="generateNewBtn"
+            disabled
+        >
+            🆕 Generate New Worksheet
+        </button>
+
+<button
+    type="submit"
+    name="action"
+    value="same"
+    id="regenerateBtn"
+    class="secondary-btn"
+    {% if not has_last_worksheet %}disabled{% endif %}
+>
+            🔁 Re-download Worksheet
+        </button>
+    </div>
+
 </div>
 
     </div>
-</div>
 
-
-<!-- COMMON ANSWER KEY OPTION -->
-<!-- COMMON ANSWER KEY OPTION (THIN) -->
-<div class="answer-key-bar">
-    <label class="checkbox-group">
-        <input type="checkbox" name="answer_key" value="1">
-        Include Answer Key
-    </label>
-</div>
-
-
-
-
-<div class="generate-btn">
-<button type="submit" id="generateBtn" disabled>
-    ✨ Generate Worksheet
-</button>
-</div>
 
 </form>
 </div>
@@ -458,14 +570,16 @@ const board = document.getElementById("board");
 const topic = document.getElementById("topic");
 const difficulty = document.querySelector("select[name='difficulty']");
 const worksheetFile = document.querySelector("input[name='worksheet_file']");
-const generateBtn = document.getElementById("generateBtn");
+const generateNewBtn = document.getElementById("generateNewBtn");
+const regenerateBtn = document.getElementById("regenerateBtn");
+
 
 function checkFormValidity() {
-    if (!worksheetFile || !generateBtn) return;
+    if (!worksheetFile || !generateNewBtn) return;
 
     // ✅ UPLOAD MODE ALWAYS WINS
 if (worksheetFile.files.length > 0) {
-    generateBtn.disabled = false;
+    generateNewBtn.disabled = false;
     return;
 }
 
@@ -477,7 +591,7 @@ const schoolValid =
     document.getElementById("school-format").value &&
     topic.value;
 
-generateBtn.disabled = !schoolValid;
+generateNewBtn.disabled = !schoolValid;
 
 
 }
@@ -565,33 +679,42 @@ async function loadTopics() {
         return;
     }
 
-    try {
-        const res = await fetch(`/get-topics?grade=${grade}&board=${board}`);
-        if (!res.ok) throw new Error("Failed to fetch topics");
+try {
+    const res = await fetch(`/get-topics?grade=${grade}&board=${board}`, {
+        headers: {
+            "X-Requested-With": "XMLHttpRequest"
+        },
+        credentials: "same-origin"
+    });
 
-        const topics = await res.json();
+    if (!res.ok) throw new Error("Failed to fetch topics");
 
-        topicSelect.innerHTML = "<option value=''>Select Topic</option>";
+    const topics = await res.json();
 
-        if (topics.length === 0) {
-            topicSelect.innerHTML = "<option>No topics found</option>";
-            return;
-        }
+    topicSelect.innerHTML = "<option value=''>Select Topic</option>";
 
-        topics.forEach(t => {
-            const opt = document.createElement("option");
-            opt.value = t;
-            opt.textContent = t;
-            topicSelect.appendChild(opt);
-        });
-
-        topicSelect.disabled = false;
-        checkFormValidity();
-
-    } catch (err) {
-        console.error(err);
-        topicSelect.innerHTML = "<option>Error loading topics</option>";
+    if (topics.length === 0) {
+        topicSelect.innerHTML = "<option>No topics found</option>";
+        topicSelect.disabled = true;
+        return;
     }
+
+    topics.forEach(t => {
+        const opt = document.createElement("option");
+        opt.value = t;
+        opt.textContent = t;
+        topicSelect.appendChild(opt);
+    });
+
+    topicSelect.disabled = false;   // ✅ ENABLE IT HERE
+    checkFormValidity();
+
+} catch (err) {
+    console.error(err);
+    topicSelect.innerHTML = "<option>Error loading topics</option>";
+    topicSelect.disabled = true;
+}
+
 }
 
 document.addEventListener("DOMContentLoaded", () => {
