@@ -1885,21 +1885,19 @@ def download_answer_key():
         return send_single_file(path, filename)
 
 def worksheet_signature(data: dict) -> str:
-    """
-    Generates a stable hash for worksheet-defining inputs.
-    FORMAT is intentionally excluded.
-    """
     relevant = {
-        "grade": data.get("grade"),
-        "board": data.get("board"),
+        "grade": data.get("grade") or current_user.grade,
+        "board": data.get("board") or current_user.board,
         "topic": data.get("topic"),
-        "subtopic": data.get("subtopic"),
-        "difficulty": data.get("difficulty"),
-        "question_count": data.get("question_count") or 15,
-        "worksheet_type": data.get("worksheet_type"),
+        "subtopic": data.get("subtopic") or data.get("minor_topic"),
+        "difficulty": data.get("difficulty", "standard"),
+        "question_count": int(data.get("question_count", 15)),
+        "worksheet_type": data.get("worksheet_type", "school"),
     }
+
     raw = json.dumps(relevant, sort_keys=True)
     return hashlib.sha256(raw.encode()).hexdigest()
+
 
 
 @app.route("/generate-exam-combo", methods=["POST"])
@@ -3400,6 +3398,7 @@ Questions:
         "signature": worksheet_signature(request.form), 
         "questions": worksheet_questions_text,
         "solutions": solution_answers_text,
+        "include_answers": include_answers,
         "title": title,
         "info": info,
         "username": username,
