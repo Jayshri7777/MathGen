@@ -758,5 +758,34 @@ const inputs = generatorPanel.querySelectorAll(
 // Run on file change
 worksheetFileInput?.addEventListener("change", toggleGeneratorByUpload);
 </script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const regenerateBtn = document.getElementById("regenerateBtn");
+    if (!regenerateBtn) return;
+
+    // These inputs invalidate the last worksheet
+    const invalidateIds = [
+        "topic",
+        "subtopic",
+        "difficulty",
+        "school-format"
+    ];
+
+    invalidateIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+
+        el.addEventListener("change", () => {
+            regenerateBtn.disabled = true;
+        });
+    });
+});
+</script>
+{% if has_last_worksheet %}
+<script>
+    // Auto-download AFTER page reload
+    window.location.href = "{{ url_for('download_last_worksheet') }}";
+</script>
+{% endif %}
 
 {% endblock %}
