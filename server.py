@@ -256,6 +256,22 @@ def load_topics():
             topics.append(row)
     return topics
 
+@app.route("/download-last-worksheet")
+@login_required
+def download_last_worksheet():
+    cached = session.get("last_worksheet")
+    if not cached:
+        return redirect(url_for("serve_index"))
+
+    file_path = cached.get("file_path")
+    filename = cached.get("filename")
+
+    if not file_path or not os.path.exists(file_path):
+        return redirect(url_for("serve_index"))
+
+    return send_file(file_path, as_attachment=True, download_name=filename)
+
+
 def generate_with_retry(client, prompt, normalize_fn, retries=3):
     for attempt in range(retries):
         response = client.models.generate_content(
@@ -1326,11 +1342,22 @@ def login():
         phone = re.sub(r"\D", "", login_identifier)
         user = User.query.filter_by(phone_number="+91" + phone).first()
 
-    if not user or not user.password_hash or not user.check_password(password):
+    if not user:
         return jsonify({
             "success": False,
-            "error": "Invalid email/phone or password."
+            "error": "Account does not exist. Please register first."
         })
+    if not user.password_hash:
+        return jsonify({
+            "success": False,
+            "error": "This account uses Google login. Please sign in with Google."
+        })
+    if not user.check_password(password):
+        return jsonify({
+            "success": False,
+            "error": "Incorrect password. Please try again."
+        })
+
 
     login_user(user, remember=False)
     
@@ -1910,13 +1937,26 @@ def extract_json_from_ai(text):
     if not text:
         raise ValueError("Empty AI response")
 
+    # Extract JSON array
     match = re.search(r"\[[\s\S]*\]", text)
     if not match:
         raise ValueError("No JSON array found")
 
     json_text = match.group(0)
 
+    # 🔥 HARD SANITIZATION (CRITICAL)
+    json_text = json_text.replace("\\times", "×")
+    json_text = json_text.replace("\\div", "÷")
+    json_text = json_text.replace("\\sqrt", "√")
+    json_text = json_text.replace("\\frac", "/")
+    json_text = json_text.replace("\\angle", "∠")
+    json_text = json_text.replace("\\circ", "°")
+
+    # 🚨 Kill ALL remaining single backslashes
+    json_text = re.sub(r"\\(?![\"\\/bfnrt])", "", json_text)
+
     return json.loads(json_text)
+
 
 
 
@@ -3408,6 +3448,8 @@ Questions:
         "subtopic": subtopic,
         "difficulty": difficulty
         }
+        session.modified = True
+
 
         
         # 🔥 BUILD FILENAMES (AFTER CONTENT IS FINAL)
@@ -3516,6 +3558,7 @@ Questions:
                     username, grade, board, topic, subtopic, difficulty, output_format
         )
                 return send_single_file(worksheet_path, filename)
+
 
 
             files_to_zip.append((base_filename, worksheet_path))
