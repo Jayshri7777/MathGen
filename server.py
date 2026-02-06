@@ -34,18 +34,24 @@ def build_filename(username, grade, board, topic, subtopic, difficulty, ext):
         x = str(x).lower().strip()
         x = x.replace(" ", "-")
         x = re.sub(r"[^a-z0-9\-]", "", x)
-        return x
+        return x[:25]  # 🔥 LIMIT EACH PART
 
-    base = "_".join([
+    parts = [
         clean(username),
         clean(grade),
         clean(board),
         clean(topic),
         clean(subtopic),
         clean(difficulty)
-    ])
+    ]
+
+    base = "_".join(filter(None, parts))
+
+    # 🔥 FINAL SAFETY CUT (Windows-safe)
+    base = base[:120]
 
     return f"{base}.{ext}"
+
 
 
 def is_combo_user(user):
@@ -261,15 +267,80 @@ def load_topics():
 def download_last_worksheet():
     cached = session.get("last_worksheet")
     if not cached:
+        flash("No previous worksheet found", "warning")
         return redirect(url_for("serve_index"))
 
-    file_path = cached.get("file_path")
-    filename = cached.get("filename")
+    fmt = request.args.get("format", "pdf")
 
-    if not file_path or not os.path.exists(file_path):
+    questions = cached["questions"]
+    solutions = cached.get("solutions")
+    include_answers = cached.get("include_answers", False)
+
+    title = cached["title"]
+    info = cached["info"]
+
+    username = cached["username"]
+    grade = cached["grade"]
+    board = cached["board"]
+    topic = cached["topic"]
+    subtopic = cached["subtopic"]
+    difficulty = cached["difficulty"]
+
+    base_filename = build_filename(
+        username, grade, board, topic, subtopic, difficulty, fmt
+    )
+
+    solution_filename = build_filename(
+        username, grade, board, topic, subtopic + "-solutions", difficulty, fmt
+    )
+
+    zip_filename = build_filename(
+        username, grade, board, topic, subtopic, difficulty, "zip"
+    )
+
+    files = []
+
+    # ---- worksheet ----
+    if fmt == "pdf":
+        ws = create_pdf(questions, title, info, base_filename)
+    elif fmt == "docx":
+        ws = create_docx(questions, title, info, base_filename)
+    elif fmt == "txt":
+        ws = create_txt(questions, title, info, base_filename)
+    elif fmt in ["png", "jpg", "gif"]:
+        ws = create_image(questions, title, info, base_filename, fmt=fmt)
+    else:
+        flash("Invalid format", "danger")
         return redirect(url_for("serve_index"))
 
-    return send_file(file_path, as_attachment=True, download_name=filename)
+    # ✅ If NO answers → behave exactly like before
+    if not include_answers or not solutions:
+        return send_file(ws, as_attachment=True, download_name=base_filename)
+
+    files.append((base_filename, ws))
+
+    # ---- answers ----
+    if fmt == "pdf":
+        sol = create_pdf(solutions, f"{title} - Solutions", info, solution_filename)
+    elif fmt == "docx":
+        sol = create_docx(solutions, f"{title} - Solutions", info, solution_filename)
+    elif fmt == "txt":
+        sol = create_txt(solutions, f"{title} - Solutions", info, solution_filename)
+    else:
+        sol = create_image(solutions, f"{title} - Solutions", info, solution_filename, fmt=fmt)
+
+    files.append((solution_filename, sol))
+
+    # ---- zip both ----
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zipf:
+        for name, path in files:
+            zipf.write(path, name)
+
+    zip_buffer.seek(0)
+    return send_file(zip_buffer, as_attachment=True, download_name=zip_filename)
+
+
 
 
 def generate_with_retry(client, prompt, normalize_fn, retries=3):
@@ -2038,8 +2109,14 @@ def normalize_questions(questions_json):
         question = clean_ai_text(q.get("question", "")).strip()
 
         # 🚨 BLOCK answers sneaking in
-        if re.match(r"^[-+]?\d|^\(.*\)$", question):
-            raise ValueError("Answer detected where question expected")
+        # allow math questions that contain words or symbols
+        if (
+            re.fullmatch(r"[-+]?\d+(\.\d+)?", question) or
+            re.fullmatch(r"\(.*\)", question)
+        ):
+            # instead of crashing → SKIP this item
+            continue
+
 
         lines.append(f"{i}) {question}")
         lines.append("")
@@ -3448,7 +3525,6 @@ Questions:
         "subtopic": subtopic,
         "difficulty": difficulty
         }
-        session.modified = True
 
 
         
