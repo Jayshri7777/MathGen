@@ -316,9 +316,9 @@ body {
 }
 
 
-.generate-btn.dual button.secondary-btn {
-    background: linear-gradient(135deg, #b07a7a, #cfa5a5);
-    box-shadow: 0 6px 14px rgba(0,0,0,0.15);
+
+.generate-btn.dual .secondary-btn[style*="pointer-events:none"] {
+    cursor: not-allowed;
 }
 /* ===== ACTION FOOTER FIX ===== */
 .action-footer {
@@ -342,7 +342,7 @@ body {
 /* ===== RE-DOWNLOAD BUTTON STATES ===== */
 
 /* Default (DISABLED) – grey */
-.generate-btn.dual button.secondary-btn {
+.generate-btn.dual .secondary-btn {
     background: linear-gradient(135deg, #cfa5a5, #e6bcbc);
     color: #fff;
     box-shadow: none;
@@ -350,18 +350,17 @@ body {
     cursor: not-allowed;
 }
 
-/* ENABLED – turn RED */
-.generate-btn.dual button.secondary-btn:not(:disabled) {
+.generate-btn.dual .secondary-btn:not([style*="pointer-events:none"]) {
     background: linear-gradient(135deg, #7a1f2b, #a83246);
     box-shadow: 0 8px 20px rgba(122, 31, 43, 0.35);
     opacity: 1;
     cursor: pointer;
 }
 
-/* Optional hover polish */
-.generate-btn.dual button.secondary-btn:not(:disabled):hover {
+.generate-btn.dual .secondary-btn:not([style*="pointer-events:none"]):hover {
     transform: translateY(-1px);
 }
+
 
 </style>
 
@@ -541,16 +540,24 @@ body {
             🆕 Generate New Worksheet
         </button>
 
-<button
-    type="submit"
-    name="action"
-    value="same"
+<a
+    href="#"
     id="regenerateBtn"
     class="secondary-btn"
-    {% if not has_last_worksheet %}disabled{% endif %}
+    style="
+        text-decoration:none;
+        display:inline-flex;
+        align-items:center;
+        justify-content:center;
+        {% if not has_last_worksheet %}
+        pointer-events:none;
+        opacity:0.5;
+        {% endif %}
+    "
 >
-            🔁 Re-download Worksheet
-        </button>
+    🔁 Re-download Worksheet
+</a>
+
     </div>
 
 </div>
@@ -759,33 +766,17 @@ const inputs = generatorPanel.querySelectorAll(
 worksheetFileInput?.addEventListener("change", toggleGeneratorByUpload);
 </script>
 <script>
-document.addEventListener("DOMContentLoaded", () => {
-    const regenerateBtn = document.getElementById("regenerateBtn");
-    if (!regenerateBtn) return;
+const redownloadBtn = document.getElementById("regenerateBtn");
+const formatSelect = document.getElementById("school-format");
 
-    // These inputs invalidate the last worksheet
-    const invalidateIds = [
-        "topic",
-        "subtopic",
-        "difficulty",
-        "school-format"
-    ];
+if (redownloadBtn && formatSelect) {
+    redownloadBtn.addEventListener("click", (e) => {
+        e.preventDefault();
 
-    invalidateIds.forEach(id => {
-        const el = document.getElementById(id);
-        if (!el) return;
-
-        el.addEventListener("change", () => {
-            regenerateBtn.disabled = true;
-        });
+        const format = formatSelect.value || "pdf";
+        window.location.href = `/download-last-worksheet?format=${format}`;
     });
-});
+}
 </script>
-{% if has_last_worksheet %}
-<script>
-    // Auto-download AFTER page reload
-    window.location.href = "{{ url_for('download_last_worksheet') }}";
-</script>
-{% endif %}
 
 {% endblock %}
